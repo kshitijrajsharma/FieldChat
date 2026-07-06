@@ -1,18 +1,7 @@
 # FieldChat
 
-Collect field data while chatting. FieldChat is a group chat where every
-message is a geotagged field observation: send a photo, voice note, or a
-one-tap label, and it drops a pin on a shared map,
-offline first.
-
+Collect field data while chatting. FieldChat is a field mapping application that is done by chatting. 
 a Flutter codebase that ships to iOS and Android.
-
-## Status
-
-Milestone M0: project scaffold and design system. The app boots into a
-three-tab shell (Chats, Map, Me) rendered with the FieldChat design system.
-Backend (Supabase), end-to-end encryption, the live map, and offline tiles
-arrive in later milestones.
 
 ## Architecture
 
@@ -60,17 +49,4 @@ just run            # run on a connected device or emulator
 just build-android  # release APK
 just build-ios      # release IPA (macOS only)
 just doctor         # toolchain status
-```
-
-## Project layout
-
-```
-lib/
-  app/         app root and the three-tab shell
-  design/      colours, spacing, typography, theme, brand mark, widgets
-  features/    chats, map, me, onboarding
-assets/
-  fonts/       Hanken Grotesk, Caveat
-  icon/        source app icons
-design/         brand sheets and wireframes (reference, not shipped)
 ```
