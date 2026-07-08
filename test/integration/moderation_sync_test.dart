@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:fieldchat/data/local/database.dart';
@@ -46,7 +48,7 @@ Future<void> _waitFor(
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
-  test('moderation settings propagate to a joiner through group-meta', () async {
+  test('moderation settings propagate to a joiner', () async {
     final transport = InMemoryTransport();
     final blobs = InMemoryBlobStore();
     final owner = _Device('owner', transport, blobs);
@@ -80,7 +82,7 @@ void main() {
     });
   });
 
-  test('defaults hold on a fresh group and survive a meta round-trip', () async {
+  test('defaults hold on a fresh group and survive a round-trip', () async {
     final transport = InMemoryTransport();
     final blobs = InMemoryBlobStore();
     final owner = _Device('owner', transport, blobs);
@@ -113,5 +115,35 @@ void main() {
           g.allowOutsideArea &&
           g.gpsLimitM == null;
     });
+  });
+
+  test('a cover photo set by the owner reaches a joiner', () async {
+    final transport = InMemoryTransport();
+    final blobs = InMemoryBlobStore();
+    final owner = _Device('owner', transport, blobs);
+    final joiner = _Device('joiner', transport, blobs);
+    addTearDown(() async {
+      await owner.dispose();
+      await joiner.dispose();
+      await transport.dispose();
+    });
+
+    final group = await owner.groups.createGroup(
+      name: 'Harbour survey',
+      identity: await IdentityKeys.generate(),
+      hotKeys: const [],
+    );
+    final link = owner.groups.inviteLinkFor(group);
+    await joiner.groups.joinViaLink(link, await IdentityKeys.generate());
+
+    final photo = Uint8List.fromList(List<int>.generate(64, (i) => i % 256));
+    await owner.groups.updateGroupPhoto(group.id, photo);
+
+    await _waitFor(() async {
+      final g = await joiner.db.groupById(group.id);
+      return g?.photo != null && g!.photo!.length == photo.length;
+    });
+    final joined = await joiner.db.groupById(group.id);
+    expect(joined!.photo, equals(photo));
   });
 }

@@ -29,7 +29,7 @@ void main() {
   test('searchByName matches case-insensitively, ignoring distance', () async {
     final dir = InMemoryPublicDirectory();
     await dir.publish(at('Riverside cleanup', 27.70, 85.30));
-    await dir.publish(at('River survey', 40.00, 20.00)); // far away
+    await dir.publish(at('River survey', 40.5, 20.5)); // far away
     await dir.publish(at('Forest watch', 27.70, 85.30));
 
     final found = await dir.searchByName('river');

@@ -71,6 +71,23 @@ class GroupService {
     final rootKey = base64Encode(identity.signingPublic);
     final agreementKey = base64Encode(identity.agreementPublic);
 
+    String? photoBlobId;
+    String? photoKey;
+    if (photo != null) {
+      photoBlobId = _uuid.v4();
+      photoKey = base64Encode(await GroupCipher.generateKey());
+      await db
+          .into(db.mediaBlobs)
+          .insert(
+            MediaBlobsCompanion.insert(
+              id: photoBlobId,
+              bytes: photo,
+              mime: 'image/jpeg',
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
+    }
+
     await db
         .into(db.groups)
         .insert(
@@ -84,6 +101,8 @@ class GroupService {
             isPublic: Value(isPublic),
             adminRootKey: Value(rootKey),
             photo: Value(photo),
+            photoBlobId: Value(photoBlobId),
+            photoKey: Value(photoKey),
           ),
         );
     await _storeSelfIdentity(rootKey, agreementKey);
@@ -213,6 +232,8 @@ class GroupService {
     final self = await db.profileById(currentUserId);
     await sync.publishGroupMeta(
       groupId: groupId,
+      photoBlobId: group.photoBlobId,
+      photoKeyB64: group.photoKey,
       meta: {
         'name': group.name,
         'description': group.description,
@@ -240,11 +261,43 @@ class GroupService {
     );
   }
 
-  /// Sets or clears the group's cover photo (stored locally on this device).
-  Future<void> updateGroupPhoto(String groupId, Uint8List? photo) =>
-      (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
-        GroupsCompanion(photo: Value(photo)),
+  /// Sets or clears the group's cover photo and shares it with members through
+  /// the encrypted blob path. A new photo gets a fresh blob id and key, staged
+  /// locally so the sync drain uploads it; republishing the metadata carries
+  /// the reference. Clearing drops it locally only.
+  Future<void> updateGroupPhoto(String groupId, Uint8List? photo) async {
+    if (photo == null) {
+      await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
+        const GroupsCompanion(
+          photo: Value(null),
+          photoBlobId: Value(null),
+          photoKey: Value(null),
+        ),
       );
+      await _publishFullMeta(groupId);
+      return;
+    }
+    final blobId = _uuid.v4();
+    final key = base64Encode(await GroupCipher.generateKey());
+    await db
+        .into(db.mediaBlobs)
+        .insert(
+          MediaBlobsCompanion.insert(
+            id: blobId,
+            bytes: photo,
+            mime: 'image/jpeg',
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+    await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
+      GroupsCompanion(
+        photo: Value(photo),
+        photoBlobId: Value(blobId),
+        photoKey: Value(key),
+      ),
+    );
+    await _publishFullMeta(groupId);
+  }
 
   /// Renames the group and republishes its metadata so members converge.
   Future<void> renameGroup(String groupId, String name) async {

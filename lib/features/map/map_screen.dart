@@ -373,19 +373,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final focusId = widget.focusMessageId;
     if (focusId != null && await _focusMessage(focusId)) return;
 
+    // A field map opens where you are standing, so center on the live fix first
+    // and fall back to the group's points or task area only when no location is
+    // available yet.
+    if (await _centerOnMe()) return;
     if ((collection['features'] as List).isNotEmpty) {
       await _centerOnData(collection);
     } else if (_aoiGeoJson != null) {
       await _frameAoi();
-    } else {
-      await _centerOnMe();
     }
   }
 
-  Future<void> _centerOnMe() async {
+  Future<bool> _centerOnMe() async {
     final me = _lastLocation ?? await currentUserLatLng();
-    if (me == null) return;
-    await _controller?.animateCamera(CameraUpdate.newLatLngZoom(me, 15));
+    if (me == null) return false;
+    await _controller?.animateCamera(CameraUpdate.newLatLngZoom(me, 16.5));
+    return true;
   }
 
   /// Frames the group's task area, if it has one.

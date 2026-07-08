@@ -594,6 +594,28 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     type: DriftSqlType.blob,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _photoBlobIdMeta = const VerificationMeta(
+    'photoBlobId',
+  );
+  @override
+  late final GeneratedColumn<String> photoBlobId = GeneratedColumn<String>(
+    'photo_blob_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _photoKeyMeta = const VerificationMeta(
+    'photoKey',
+  );
+  @override
+  late final GeneratedColumn<String> photoKey = GeneratedColumn<String>(
+    'photo_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -633,6 +655,8 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     allowOutsideArea,
     gpsLimitM,
     photo,
+    photoBlobId,
+    photoKey,
     createdAt,
     archivedAt,
   ];
@@ -758,6 +782,21 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         photo.isAcceptableOrUnknown(data['photo']!, _photoMeta),
       );
     }
+    if (data.containsKey('photo_blob_id')) {
+      context.handle(
+        _photoBlobIdMeta,
+        photoBlobId.isAcceptableOrUnknown(
+          data['photo_blob_id']!,
+          _photoBlobIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('photo_key')) {
+      context.handle(
+        _photoKeyMeta,
+        photoKey.isAcceptableOrUnknown(data['photo_key']!, _photoKeyMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -835,6 +874,14 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         DriftSqlType.blob,
         data['${effectivePrefix}photo'],
       ),
+      photoBlobId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_blob_id'],
+      ),
+      photoKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_key'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -873,6 +920,12 @@ class Group extends DataClass implements Insertable<Group> {
   final bool allowOutsideArea;
   final int? gpsLimitM;
   final Uint8List? photo;
+
+  /// The cover photo shared with members: its encrypted blob id in object
+  /// storage and the base64 key to decrypt it. Both null when there is no
+  /// synced photo. The bytes themselves live in [photo] once fetched.
+  final String? photoBlobId;
+  final String? photoKey;
   final DateTime createdAt;
   final DateTime? archivedAt;
   const Group({
@@ -890,6 +943,8 @@ class Group extends DataClass implements Insertable<Group> {
     required this.allowOutsideArea,
     this.gpsLimitM,
     this.photo,
+    this.photoBlobId,
+    this.photoKey,
     required this.createdAt,
     this.archivedAt,
   });
@@ -919,6 +974,12 @@ class Group extends DataClass implements Insertable<Group> {
     }
     if (!nullToAbsent || photo != null) {
       map['photo'] = Variable<Uint8List>(photo);
+    }
+    if (!nullToAbsent || photoBlobId != null) {
+      map['photo_blob_id'] = Variable<String>(photoBlobId);
+    }
+    if (!nullToAbsent || photoKey != null) {
+      map['photo_key'] = Variable<String>(photoKey);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || archivedAt != null) {
@@ -953,6 +1014,12 @@ class Group extends DataClass implements Insertable<Group> {
       photo: photo == null && nullToAbsent
           ? const Value.absent()
           : Value(photo),
+      photoBlobId: photoBlobId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoBlobId),
+      photoKey: photoKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoKey),
       createdAt: Value(createdAt),
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
@@ -980,6 +1047,8 @@ class Group extends DataClass implements Insertable<Group> {
       allowOutsideArea: serializer.fromJson<bool>(json['allowOutsideArea']),
       gpsLimitM: serializer.fromJson<int?>(json['gpsLimitM']),
       photo: serializer.fromJson<Uint8List?>(json['photo']),
+      photoBlobId: serializer.fromJson<String?>(json['photoBlobId']),
+      photoKey: serializer.fromJson<String?>(json['photoKey']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
     );
@@ -1002,6 +1071,8 @@ class Group extends DataClass implements Insertable<Group> {
       'allowOutsideArea': serializer.toJson<bool>(allowOutsideArea),
       'gpsLimitM': serializer.toJson<int?>(gpsLimitM),
       'photo': serializer.toJson<Uint8List?>(photo),
+      'photoBlobId': serializer.toJson<String?>(photoBlobId),
+      'photoKey': serializer.toJson<String?>(photoKey),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
     };
@@ -1022,6 +1093,8 @@ class Group extends DataClass implements Insertable<Group> {
     bool? allowOutsideArea,
     Value<int?> gpsLimitM = const Value.absent(),
     Value<Uint8List?> photo = const Value.absent(),
+    Value<String?> photoBlobId = const Value.absent(),
+    Value<String?> photoKey = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> archivedAt = const Value.absent(),
   }) => Group(
@@ -1039,6 +1112,8 @@ class Group extends DataClass implements Insertable<Group> {
     allowOutsideArea: allowOutsideArea ?? this.allowOutsideArea,
     gpsLimitM: gpsLimitM.present ? gpsLimitM.value : this.gpsLimitM,
     photo: photo.present ? photo.value : this.photo,
+    photoBlobId: photoBlobId.present ? photoBlobId.value : this.photoBlobId,
+    photoKey: photoKey.present ? photoKey.value : this.photoKey,
     createdAt: createdAt ?? this.createdAt,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
   );
@@ -1072,6 +1147,10 @@ class Group extends DataClass implements Insertable<Group> {
           : this.allowOutsideArea,
       gpsLimitM: data.gpsLimitM.present ? data.gpsLimitM.value : this.gpsLimitM,
       photo: data.photo.present ? data.photo.value : this.photo,
+      photoBlobId: data.photoBlobId.present
+          ? data.photoBlobId.value
+          : this.photoBlobId,
+      photoKey: data.photoKey.present ? data.photoKey.value : this.photoKey,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
@@ -1096,6 +1175,8 @@ class Group extends DataClass implements Insertable<Group> {
           ..write('allowOutsideArea: $allowOutsideArea, ')
           ..write('gpsLimitM: $gpsLimitM, ')
           ..write('photo: $photo, ')
+          ..write('photoBlobId: $photoBlobId, ')
+          ..write('photoKey: $photoKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt')
           ..write(')'))
@@ -1118,6 +1199,8 @@ class Group extends DataClass implements Insertable<Group> {
     allowOutsideArea,
     gpsLimitM,
     $driftBlobEquality.hash(photo),
+    photoBlobId,
+    photoKey,
     createdAt,
     archivedAt,
   );
@@ -1139,6 +1222,8 @@ class Group extends DataClass implements Insertable<Group> {
           other.allowOutsideArea == this.allowOutsideArea &&
           other.gpsLimitM == this.gpsLimitM &&
           $driftBlobEquality.equals(other.photo, this.photo) &&
+          other.photoBlobId == this.photoBlobId &&
+          other.photoKey == this.photoKey &&
           other.createdAt == this.createdAt &&
           other.archivedAt == this.archivedAt);
 }
@@ -1158,6 +1243,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<bool> allowOutsideArea;
   final Value<int?> gpsLimitM;
   final Value<Uint8List?> photo;
+  final Value<String?> photoBlobId;
+  final Value<String?> photoKey;
   final Value<DateTime> createdAt;
   final Value<DateTime?> archivedAt;
   final Value<int> rowid;
@@ -1176,6 +1263,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.allowOutsideArea = const Value.absent(),
     this.gpsLimitM = const Value.absent(),
     this.photo = const Value.absent(),
+    this.photoBlobId = const Value.absent(),
+    this.photoKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1195,6 +1284,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.allowOutsideArea = const Value.absent(),
     this.gpsLimitM = const Value.absent(),
     this.photo = const Value.absent(),
+    this.photoBlobId = const Value.absent(),
+    this.photoKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1217,6 +1308,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Expression<bool>? allowOutsideArea,
     Expression<int>? gpsLimitM,
     Expression<Uint8List>? photo,
+    Expression<String>? photoBlobId,
+    Expression<String>? photoKey,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? archivedAt,
     Expression<int>? rowid,
@@ -1236,6 +1329,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       if (allowOutsideArea != null) 'allow_outside_area': allowOutsideArea,
       if (gpsLimitM != null) 'gps_limit_m': gpsLimitM,
       if (photo != null) 'photo': photo,
+      if (photoBlobId != null) 'photo_blob_id': photoBlobId,
+      if (photoKey != null) 'photo_key': photoKey,
       if (createdAt != null) 'created_at': createdAt,
       if (archivedAt != null) 'archived_at': archivedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1257,6 +1352,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Value<bool>? allowOutsideArea,
     Value<int?>? gpsLimitM,
     Value<Uint8List?>? photo,
+    Value<String?>? photoBlobId,
+    Value<String?>? photoKey,
     Value<DateTime>? createdAt,
     Value<DateTime?>? archivedAt,
     Value<int>? rowid,
@@ -1276,6 +1373,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       allowOutsideArea: allowOutsideArea ?? this.allowOutsideArea,
       gpsLimitM: gpsLimitM ?? this.gpsLimitM,
       photo: photo ?? this.photo,
+      photoBlobId: photoBlobId ?? this.photoBlobId,
+      photoKey: photoKey ?? this.photoKey,
       createdAt: createdAt ?? this.createdAt,
       archivedAt: archivedAt ?? this.archivedAt,
       rowid: rowid ?? this.rowid,
@@ -1327,6 +1426,12 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     if (photo.present) {
       map['photo'] = Variable<Uint8List>(photo.value);
     }
+    if (photoBlobId.present) {
+      map['photo_blob_id'] = Variable<String>(photoBlobId.value);
+    }
+    if (photoKey.present) {
+      map['photo_key'] = Variable<String>(photoKey.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1356,6 +1461,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
           ..write('allowOutsideArea: $allowOutsideArea, ')
           ..write('gpsLimitM: $gpsLimitM, ')
           ..write('photo: $photo, ')
+          ..write('photoBlobId: $photoBlobId, ')
+          ..write('photoKey: $photoKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt, ')
           ..write('rowid: $rowid')
@@ -5511,6 +5618,8 @@ typedef $$GroupsTableCreateCompanionBuilder =
       Value<bool> allowOutsideArea,
       Value<int?> gpsLimitM,
       Value<Uint8List?> photo,
+      Value<String?> photoBlobId,
+      Value<String?> photoKey,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -5531,6 +5640,8 @@ typedef $$GroupsTableUpdateCompanionBuilder =
       Value<bool> allowOutsideArea,
       Value<int?> gpsLimitM,
       Value<Uint8List?> photo,
+      Value<String?> photoBlobId,
+      Value<String?> photoKey,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -5673,6 +5784,16 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<Uint8List> get photo => $composableBuilder(
     column: $table.photo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoBlobId => $composableBuilder(
+    column: $table.photoBlobId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoKey => $composableBuilder(
+    column: $table.photoKey,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5841,6 +5962,16 @@ class $$GroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get photoBlobId => $composableBuilder(
+    column: $table.photoBlobId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get photoKey => $composableBuilder(
+    column: $table.photoKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5916,6 +6047,14 @@ class $$GroupsTableAnnotationComposer
 
   GeneratedColumn<Uint8List> get photo =>
       $composableBuilder(column: $table.photo, builder: (column) => column);
+
+  GeneratedColumn<String> get photoBlobId => $composableBuilder(
+    column: $table.photoBlobId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get photoKey =>
+      $composableBuilder(column: $table.photoKey, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -6047,6 +6186,8 @@ class $$GroupsTableTableManager
                 Value<bool> allowOutsideArea = const Value.absent(),
                 Value<int?> gpsLimitM = const Value.absent(),
                 Value<Uint8List?> photo = const Value.absent(),
+                Value<String?> photoBlobId = const Value.absent(),
+                Value<String?> photoKey = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -6065,6 +6206,8 @@ class $$GroupsTableTableManager
                 allowOutsideArea: allowOutsideArea,
                 gpsLimitM: gpsLimitM,
                 photo: photo,
+                photoBlobId: photoBlobId,
+                photoKey: photoKey,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,
@@ -6085,6 +6228,8 @@ class $$GroupsTableTableManager
                 Value<bool> allowOutsideArea = const Value.absent(),
                 Value<int?> gpsLimitM = const Value.absent(),
                 Value<Uint8List?> photo = const Value.absent(),
+                Value<String?> photoBlobId = const Value.absent(),
+                Value<String?> photoKey = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -6103,6 +6248,8 @@ class $$GroupsTableTableManager
                 allowOutsideArea: allowOutsideArea,
                 gpsLimitM: gpsLimitM,
                 photo: photo,
+                photoBlobId: photoBlobId,
+                photoKey: photoKey,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,

@@ -211,6 +211,8 @@ class SyncService {
   Future<void> publishGroupMeta({
     required String groupId,
     required Map<String, dynamic> meta,
+    String? photoBlobId,
+    String? photoKeyB64,
     DateTime? at,
   }) async {
     final createdAt = at ?? DateTime.now();
@@ -221,6 +223,11 @@ class SyncService {
       kind: MessageKind.groupMeta,
       createdAtMs: createdAt.millisecondsSinceEpoch,
       body: jsonEncode(meta),
+      // The cover photo rides the same encrypted blob path as message media:
+      // the drain uploads it, a receiving device fetches it in _applyGroupMeta.
+      mediaId: photoBlobId,
+      mediaMime: photoBlobId == null ? null : 'image/jpeg',
+      mediaKeyB64: photoKeyB64,
     );
     await _enqueuePayload(payload);
   }
@@ -582,6 +589,32 @@ class SyncService {
         await (db.delete(db.hotKeys)..where((h) => h.id.equals(row.id))).go();
       }
     }
+
+    await _applyGroupPhoto(payload);
+  }
+
+  /// Fetches the shared cover photo a meta references, when this device lacks
+  /// that blob. Applying is additive: a meta that carries no photo
+  /// leaves the current one untouched, so a republish from a member who never
+  /// downloaded it cannot wipe everyone's photo.
+  Future<void> _applyGroupPhoto(MessagePayload payload) async {
+    final blobId = payload.mediaId;
+    final keyB64 = payload.mediaKeyB64;
+    if (blobId == null || keyB64 == null) return;
+    final current = await db.groupById(payload.groupId);
+    if (current?.photoBlobId == blobId) return;
+    final cipher = await blobStore.get(blobId);
+    if (cipher == null) return;
+    final clear = await GroupCipher.decryptBytes(cipher, base64Decode(keyB64));
+    await (db.update(
+      db.groups,
+    )..where((g) => g.id.equals(payload.groupId))).write(
+      GroupsCompanion(
+        photo: Value(clear),
+        photoBlobId: Value(blobId),
+        photoKey: Value(keyB64),
+      ),
+    );
   }
 
   Future<void> _applyLocal(

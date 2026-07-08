@@ -47,6 +47,12 @@ class Groups extends Table {
   IntColumn get gpsLimitM => integer().nullable()();
 
   BlobColumn get photo => blob().nullable()();
+
+  /// The cover photo shared with members: its encrypted blob id in object
+  /// storage and the base64 key to decrypt it. Both null when there is no
+  /// synced photo. The bytes themselves live in [photo] once fetched.
+  TextColumn get photoBlobId => text().nullable()();
+  TextColumn get photoKey => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get archivedAt => dateTime().nullable()();
 
@@ -197,7 +203,7 @@ class LocalDatabase extends _$LocalDatabase {
     : super(executor ?? driftDatabase(name: 'fieldchat'));
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -238,6 +244,10 @@ class LocalDatabase extends _$LocalDatabase {
         await m.addColumn(groups, groups.allowMemberPlace);
         await m.addColumn(groups, groups.allowOutsideArea);
         await m.addColumn(groups, groups.gpsLimitM);
+      }
+      if (from < 11) {
+        await m.addColumn(groups, groups.photoBlobId);
+        await m.addColumn(groups, groups.photoKey);
       }
     },
   );

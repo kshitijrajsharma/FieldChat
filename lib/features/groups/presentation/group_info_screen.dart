@@ -261,43 +261,24 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     return (lat, lng);
   }
 
-  Future<void> _editDescription(String groupId, String? current) async {
-    final controller = TextEditingController(text: current);
-    final saved = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Group description'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          minLines: 2,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            hintText: 'What are you mapping, and how?',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (saved == null) return;
-    await ref
-        .read(groupServiceProvider)
-        .setDescription(groupId, saved.isEmpty ? null : saved);
-    final group = await ref.read(databaseProvider).groupById(groupId);
-    if (group != null && group.isPublic) {
-      final center = await _groupCenter(groupId, group.aoiGeoJson);
-      if (center != null) await _publishToDirectory(group, center);
+  /// Persists an inline edit of the group's name and description, then keeps
+  /// the public listing current. Only changed fields are written.
+  Future<void> _saveIdentity(
+    Group group,
+    String name,
+    String? description,
+  ) async {
+    final service = ref.read(groupServiceProvider);
+    if (name.isNotEmpty && name != group.name) {
+      await service.renameGroup(group.id, name);
+    }
+    if (description != group.description) {
+      await service.setDescription(group.id, description);
+    }
+    final updated = await ref.read(databaseProvider).groupById(group.id);
+    if (updated != null && updated.isPublic) {
+      final center = await _groupCenter(group.id, updated.aoiGeoJson);
+      if (center != null) await _publishToDirectory(updated, center);
     }
     _reload();
   }
@@ -379,11 +360,14 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              _Identity(
+              _EditableIdentity(
                 name: group.name,
                 description: group.description,
                 photo: group.photo,
+                canEdit: iAmAdmin,
                 onEditPhoto: _editPhoto,
+                onSave: (name, description) =>
+                    unawaited(_saveIdentity(group, name, description)),
               ),
               if (!iAmAdmin)
                 _AdminInviteWatcher(
@@ -442,8 +426,6 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                 _AdminCard(
                   isPublic: group.isPublic,
                   onTogglePublic: (value) => _setPublic(group.id, value),
-                  onEditDescription: () =>
-                      _editDescription(group.id, group.description),
                   onArchive: () => _archive(group.id),
                   onDelete: () => _delete(group.id),
                 ),
@@ -509,29 +491,73 @@ Future<void> _editHotKeys(
   }
 }
 
-class _Identity extends StatelessWidget {
-  const _Identity({
+/// The group's photo, name and description. An admin edits the name and
+/// description in place: tapping the pencil reveals the fields, and tapping
+/// anywhere outside them saves and closes, so no separate button is needed.
+class _EditableIdentity extends StatefulWidget {
+  const _EditableIdentity({
     required this.name,
     required this.photo,
+    required this.canEdit,
     required this.onEditPhoto,
+    required this.onSave,
     this.description,
   });
 
   final String name;
   final String? description;
   final Uint8List? photo;
+  final bool canEdit;
   final VoidCallback onEditPhoto;
+  final void Function(String name, String? description) onSave;
+
+  @override
+  State<_EditableIdentity> createState() => _EditableIdentityState();
+}
+
+class _EditableIdentityState extends State<_EditableIdentity> {
+  bool _editing = false;
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.name,
+  );
+  late final TextEditingController _descriptionController =
+      TextEditingController(text: widget.description ?? '');
+
+  @override
+  void didUpdateWidget(_EditableIdentity oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_editing) {
+      _nameController.text = widget.name;
+      _descriptionController.text = widget.description ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _commit() {
+    if (!_editing) return;
+    setState(() => _editing = false);
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim();
+    widget.onSave(name, description.isEmpty ? null : description);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final description = widget.description;
     return Column(
       children: [
         GestureDetector(
-          onTap: onEditPhoto,
+          onTap: widget.onEditPhoto,
           child: Stack(
             alignment: Alignment.bottomRight,
             children: [
-              GroupAvatar(photo: photo, size: 72, radius: 22),
+              GroupAvatar(photo: widget.photo, size: 72, radius: 22),
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
@@ -548,20 +574,76 @@ class _Identity extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Text(name, style: Theme.of(context).textTheme.titleLarge),
-        Text(
-          'Mapping group',
-          style: Theme.of(context).textTheme.bodySmall!.copyWith(
-            color: AppColors.textMuted,
+        if (_editing)
+          TapRegion(
+            onTapOutside: (_) => _commit(),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _nameController,
+                  autofocus: true,
+                  textAlign: TextAlign.center,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: Theme.of(context).textTheme.titleLarge,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    hintText: 'Group name',
+                    border: InputBorder.none,
+                  ),
+                ),
+                TextField(
+                  controller: _descriptionController,
+                  textAlign: TextAlign.center,
+                  minLines: 1,
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: const TextStyle(fontSize: 13, color: AppColors.ink),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    hintText: 'What are you mapping, and how?',
+                    border: InputBorder.none,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else ...[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  widget.name,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              if (widget.canEdit)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+                  onPressed: () => setState(() => _editing = true),
+                ),
+            ],
           ),
-        ),
-        if (description != null && description!.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
           Text(
-            description!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: AppColors.ink),
+            'Mapping group',
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
+          if (description != null && description.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: AppColors.ink),
+            ),
+          ],
         ],
       ],
     );
@@ -712,14 +794,12 @@ class _AdminCard extends StatelessWidget {
   const _AdminCard({
     required this.isPublic,
     required this.onTogglePublic,
-    required this.onEditDescription,
     required this.onArchive,
     required this.onDelete,
   });
 
   final bool isPublic;
   final ValueChanged<bool> onTogglePublic;
-  final VoidCallback onEditDescription;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
 
@@ -741,16 +821,6 @@ class _AdminCard extends StatelessWidget {
               subtitle: const Text('Discoverable by people nearby'),
               value: isPublic,
               onChanged: onTogglePublic,
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.notes, color: AppColors.ink),
-              title: const Text('Edit description'),
-              trailing: const Icon(
-                Icons.chevron_right,
-                color: AppColors.textFaint,
-              ),
-              onTap: onEditDescription,
             ),
             const Divider(height: 1),
             ListTile(
