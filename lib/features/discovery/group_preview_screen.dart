@@ -257,6 +257,7 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
 
   Widget _openButton() => PrimaryButton(
     label: _joining ? 'Joining…' : 'Join group',
+    loading: _joining,
     onPressed: _joining ? null : () => unawaited(_join()),
   );
 
@@ -275,11 +276,14 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
           onPressed: () => unawaited(_requestToJoin()),
         );
       case _RequestState.requesting:
-        return const PrimaryButton(label: 'Requesting…');
+        return const PrimaryButton(label: 'Requesting…', loading: true);
       case _RequestState.pending:
-        return const PrimaryButton(label: 'Waiting for approval…');
+        return const PrimaryButton(
+          label: 'Waiting for approval…',
+          loading: true,
+        );
       case _RequestState.joining:
-        return const PrimaryButton(label: 'Joining…');
+        return const PrimaryButton(label: 'Joining…', loading: true);
     }
   }
 

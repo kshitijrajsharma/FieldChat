@@ -315,6 +315,15 @@ class GroupService {
     await _publishFullMeta(groupId);
   }
 
+  /// Sets or clears the group's mapping area (task area) and republishes, so
+  /// members converge on it and out-of-area enforcement uses the new shape.
+  Future<void> setMappingArea(String groupId, String? aoiGeoJson) async {
+    await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
+      GroupsCompanion(aoiGeoJson: Value(aoiGeoJson)),
+    );
+    await _publishFullMeta(groupId);
+  }
+
   /// Marks the group public (discoverable) or private, and republishes.
   Future<void> setPublic(String groupId, {required bool isPublic}) async {
     await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(

@@ -15,7 +15,6 @@ import 'package:fieldchat/features/groups/hot_key_icons.dart';
 import 'package:fieldchat/features/map/map_tap_sheet.dart';
 import 'package:fieldchat/features/map/marker_images.dart';
 import 'package:fieldchat/features/map/point_sheet.dart';
-import 'package:fieldchat/features/map/user_location.dart';
 import 'package:fieldchat/features/onboarding/coach_tip.dart';
 import 'package:fieldchat/features/track/track_recorder.dart';
 import 'package:flutter/material.dart';
@@ -84,6 +83,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _outsideAoi = false;
   bool _aoiInView = false;
   LatLng? _lastLocation;
+  bool _pendingInitialCenter = false;
   List<Message> _pointMessages = const [];
   Map<String, HotKey> _hotKeysById = const {};
 
@@ -130,6 +130,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// location puck, so it holds whichever reports first.
   void _updateLocation(double lat, double lng) {
     _lastLocation = LatLng(lat, lng);
+    // The first fix after opening recenters on the user, so the map lands where
+    // you are standing even when no location was ready at style-load time.
+    if (_pendingInitialCenter) {
+      _pendingInitialCenter = false;
+      unawaited(
+        _controller?.animateCamera(
+          CameraUpdate.newLatLngZoom(LatLng(lat, lng), 16.5),
+        ),
+      );
+    }
     final aoi = _aoiGeoJson;
     if (aoi == null) return;
     final outside = !pointInAoi(aoi, lat, lng);
@@ -373,22 +383,52 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final focusId = widget.focusMessageId;
     if (focusId != null && await _focusMessage(focusId)) return;
 
-    // A field map opens where you are standing, so center on the live fix first
-    // and fall back to the group's points or task area only when no location is
-    // available yet.
-    if (await _centerOnMe()) return;
+    // A field map opens where you are standing. Center on a fix already held;
+    // otherwise frame the group's points or area as a placeholder and recenter
+    // on the first location that arrives (handled in _updateLocation).
+    final me = _lastLocation;
+    if (me != null) {
+      await _controller?.animateCamera(CameraUpdate.newLatLngZoom(me, 16.5));
+      return;
+    }
+    _pendingInitialCenter = true;
     if ((collection['features'] as List).isNotEmpty) {
       await _centerOnData(collection);
     } else if (_aoiGeoJson != null) {
       await _frameAoi();
     }
+    unawaited(_seekInitialLocation());
   }
 
-  Future<bool> _centerOnMe() async {
-    final me = _lastLocation ?? await currentUserLatLng();
-    if (me == null) return false;
-    await _controller?.animateCamera(CameraUpdate.newLatLngZoom(me, 16.5));
-    return true;
+  /// Looks up a location off the map's own updates, so a device that is slow to
+  /// stream a fix (common on iOS first open) still recenters. Uses the cached
+  /// fix first, then a time-bounded lookup; the result recenters only while an
+  /// initial center is still pending.
+  Future<void> _seekInitialLocation() async {
+    if (!await ensureLocationPermission()) return;
+    var target = _lastLocation;
+    if (target == null) {
+      final last = await Geolocator.getLastKnownPosition();
+      if (last != null) target = LatLng(last.latitude, last.longitude);
+    }
+    if (target == null) {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            timeLimit: Duration(seconds: 8),
+          ),
+        );
+        target = LatLng(pos.latitude, pos.longitude);
+      } on TimeoutException {
+        return;
+      }
+    }
+    if (!_pendingInitialCenter || !mounted) return;
+    _pendingInitialCenter = false;
+    _lastLocation = target;
+    await _controller?.animateCamera(
+      CameraUpdate.newLatLngZoom(target, 16.5),
+    );
   }
 
   /// Frames the group's task area, if it has one.

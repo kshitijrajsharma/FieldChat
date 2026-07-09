@@ -129,6 +129,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
               const Spacer(),
               PrimaryButton(
                 label: _busy ? 'Joining…' : 'Join',
+                loading: _busy,
                 onPressed: _busy ? null : _join,
               ),
             ],

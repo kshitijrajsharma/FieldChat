@@ -12,6 +12,7 @@ import 'package:fieldchat/features/discovery/public_directory.dart';
 import 'package:fieldchat/features/export/geojson.dart';
 import 'package:fieldchat/features/groups/group_member_view.dart';
 import 'package:fieldchat/features/groups/group_service.dart';
+import 'package:fieldchat/features/groups/presentation/area_draw_screen.dart';
 import 'package:fieldchat/features/groups/presentation/export_sheet.dart';
 import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
 import 'package:fieldchat/features/groups/presentation/hot_key_editor_screen.dart';
@@ -40,9 +41,21 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
   final _picker = ImagePicker();
   late Future<Group?> _groupFuture = _loadGroup();
   bool _caching = false;
+  bool _saving = false;
 
   Future<Group?> _loadGroup() =>
       ref.read(databaseProvider).groupById(widget.groupId);
+
+  /// Runs a group mutation while showing the top progress bar, so a save that
+  /// waits on the network reads as working rather than stuck.
+  Future<void> _guard(Future<void> Function() op) async {
+    if (mounted) setState(() => _saving = true);
+    try {
+      await op();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   void _reload() {
     setState(() {
@@ -57,11 +70,13 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       imageQuality: 75,
     );
     if (file == null) return;
-    final bytes = squareJpegThumbnail(await file.readAsBytes());
-    await ref
-        .read(groupServiceProvider)
-        .updateGroupPhoto(widget.groupId, bytes);
-    _reload();
+    await _guard(() async {
+      final bytes = squareJpegThumbnail(await file.readAsBytes());
+      await ref
+          .read(groupServiceProvider)
+          .updateGroupPhoto(widget.groupId, bytes);
+      _reload();
+    });
   }
 
   Future<void> _makeOffline(Group group) async {
@@ -103,7 +118,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
 
   /// Toggles join approval and, for a public group, republishes the directory
   /// listing so it withholds or restores the key to match.
-  Future<void> _setJoinApproval(String groupId, bool value) async {
+  Future<void> _setJoinApproval(String groupId, bool value) => _guard(() async {
     await ref.read(groupServiceProvider).setJoinApproval(groupId, value: value);
     final group = await ref.read(databaseProvider).groupById(groupId);
     if (group != null && group.isPublic) {
@@ -111,28 +126,31 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       if (center != null) await _publishToDirectory(group, center);
     }
     _reload();
-  }
+  });
 
-  Future<void> _setAllowMemberExport(String groupId, bool value) async {
-    await ref
-        .read(groupServiceProvider)
-        .setAllowMemberExport(groupId, value: value);
-    _reload();
-  }
+  Future<void> _setAllowMemberExport(String groupId, bool value) =>
+      _guard(() async {
+        await ref
+            .read(groupServiceProvider)
+            .setAllowMemberExport(groupId, value: value);
+        _reload();
+      });
 
-  Future<void> _setAllowMemberPlace(String groupId, bool value) async {
-    await ref
-        .read(groupServiceProvider)
-        .setAllowMemberPlace(groupId, value: value);
-    _reload();
-  }
+  Future<void> _setAllowMemberPlace(String groupId, bool value) =>
+      _guard(() async {
+        await ref
+            .read(groupServiceProvider)
+            .setAllowMemberPlace(groupId, value: value);
+        _reload();
+      });
 
-  Future<void> _setAllowOutsideArea(String groupId, bool value) async {
-    await ref
-        .read(groupServiceProvider)
-        .setAllowOutsideArea(groupId, value: value);
-    _reload();
-  }
+  Future<void> _setAllowOutsideArea(String groupId, bool value) =>
+      _guard(() async {
+        await ref
+            .read(groupServiceProvider)
+            .setAllowOutsideArea(groupId, value: value);
+        _reload();
+      });
 
   /// Picks the accuracy cap for sent points. Off clears it; the presets bound
   /// the metres a fix may carry before a send is refused.
@@ -155,10 +173,12 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       ),
     );
     if (chosen == null) return;
-    await ref
-        .read(groupServiceProvider)
-        .setGpsLimit(groupId, chosen == 0 ? null : chosen);
-    _reload();
+    await _guard(() async {
+      await ref
+          .read(groupServiceProvider)
+          .setGpsLimit(groupId, chosen == 0 ? null : chosen);
+      _reload();
+    });
   }
 
   Future<void> _acceptAdmin(String groupId) async {
@@ -170,7 +190,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     );
   }
 
-  Future<void> _setPublic(String groupId, bool value) async {
+  Future<void> _setPublic(String groupId, bool value) => _guard(() async {
     final directory = ref.read(publicDirectoryProvider);
     if (!value) {
       await ref.read(groupServiceProvider).setPublic(groupId, isPublic: false);
@@ -194,7 +214,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     await ref.read(groupServiceProvider).setPublic(groupId, isPublic: true);
     await _publishToDirectory(group!, center);
     _reload();
-  }
+  });
 
   /// Writes the group's public listing (name, description, centre) to the
   /// directory. Called when going public and again when the description changes
@@ -267,20 +287,43 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     Group group,
     String name,
     String? description,
-  ) async {
-    final service = ref.read(groupServiceProvider);
-    if (name.isNotEmpty && name != group.name) {
-      await service.renameGroup(group.id, name);
+  ) {
+    if (name == group.name && description == group.description) {
+      return Future<void>.value();
     }
-    if (description != group.description) {
-      await service.setDescription(group.id, description);
-    }
-    final updated = await ref.read(databaseProvider).groupById(group.id);
-    if (updated != null && updated.isPublic) {
-      final center = await _groupCenter(group.id, updated.aoiGeoJson);
-      if (center != null) await _publishToDirectory(updated, center);
-    }
-    _reload();
+    return _guard(() async {
+      final service = ref.read(groupServiceProvider);
+      if (name.isNotEmpty && name != group.name) {
+        await service.renameGroup(group.id, name);
+      }
+      if (description != group.description) {
+        await service.setDescription(group.id, description);
+      }
+      final updated = await ref.read(databaseProvider).groupById(group.id);
+      if (updated != null && updated.isPublic) {
+        final center = await _groupCenter(group.id, updated.aoiGeoJson);
+        if (center != null) await _publishToDirectory(updated, center);
+      }
+      _reload();
+    });
+  }
+
+  /// Draws or replaces the group's mapping area after creation, then keeps the
+  /// public listing current.
+  Future<void> _editMappingArea(String groupId) async {
+    final geoJson = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(builder: (_) => const AreaDrawScreen()),
+    );
+    if (geoJson == null) return;
+    await _guard(() async {
+      await ref.read(groupServiceProvider).setMappingArea(groupId, geoJson);
+      final group = await ref.read(databaseProvider).groupById(groupId);
+      if (group != null && group.isPublic) {
+        final center = await _groupCenter(groupId, group.aoiGeoJson);
+        if (center != null) await _publishToDirectory(group, center);
+      }
+      _reload();
+    });
   }
 
   Future<void> _archive(String groupId) async {
@@ -342,7 +385,15 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.paper,
-      appBar: AppBar(title: const Text('Group info')),
+      appBar: AppBar(
+        title: const Text('Group info'),
+        bottom: _saving
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            : null,
+      ),
       body: FutureBuilder<Group?>(
         future: _groupFuture,
         builder: (context, snapshot) {
@@ -388,6 +439,9 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
               _ManageCard(
                 caching: _caching,
                 canExport: iAmAdmin || group.allowMemberExport,
+                canEditArea: iAmAdmin,
+                hasArea: group.aoiGeoJson != null,
+                onEditArea: () => unawaited(_editMappingArea(group.id)),
                 onEditHotKeys: () => _editHotKeys(context, ref, group.id),
                 onMakeOffline: () => _makeOffline(group),
                 onExport: () => showModalBottomSheet<void>(
@@ -1348,6 +1402,9 @@ class _ManageCard extends StatelessWidget {
   const _ManageCard({
     required this.caching,
     required this.canExport,
+    required this.canEditArea,
+    required this.hasArea,
+    required this.onEditArea,
     required this.onEditHotKeys,
     required this.onMakeOffline,
     required this.onExport,
@@ -1355,6 +1412,9 @@ class _ManageCard extends StatelessWidget {
 
   final bool caching;
   final bool canExport;
+  final bool canEditArea;
+  final bool hasArea;
+  final VoidCallback onEditArea;
   final VoidCallback onEditHotKeys;
   final VoidCallback onMakeOffline;
   final VoidCallback onExport;
@@ -1380,6 +1440,26 @@ class _ManageCard extends StatelessWidget {
               ),
               onTap: onEditHotKeys,
             ),
+            if (canEditArea) ...[
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.map_outlined,
+                  color: AppColors.ink,
+                ),
+                title: Text(hasArea ? 'Edit mapping area' : 'Set mapping area'),
+                subtitle: Text(
+                  hasArea
+                      ? 'Redraw the task area on the map'
+                      : 'Draw the task area on the map',
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textFaint,
+                ),
+                onTap: onEditArea,
+              ),
+            ],
             const Divider(height: 1),
             ListTile(
               leading: const Icon(

@@ -851,11 +851,19 @@ class _Composer extends StatelessWidget {
                       color: AppColors.ink,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.send,
-                      color: AppColors.white,
-                      size: 19,
-                    ),
+                    child: sending
+                        ? const Padding(
+                            padding: EdgeInsets.all(11),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.send,
+                            color: AppColors.white,
+                            size: 19,
+                          ),
                   ),
                 ),
               ],

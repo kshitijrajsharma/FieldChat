@@ -117,6 +117,38 @@ void main() {
     });
   });
 
+  test('a mapping area set after creation reaches a joiner', () async {
+    final transport = InMemoryTransport();
+    final blobs = InMemoryBlobStore();
+    final owner = _Device('owner', transport, blobs);
+    final joiner = _Device('joiner', transport, blobs);
+    addTearDown(() async {
+      await owner.dispose();
+      await joiner.dispose();
+      await transport.dispose();
+    });
+
+    final group = await owner.groups.createGroup(
+      name: 'Ridge survey',
+      identity: await IdentityKeys.generate(),
+      hotKeys: const [],
+    );
+    expect((await owner.db.groupById(group.id))?.aoiGeoJson, isNull);
+    final link = owner.groups.inviteLinkFor(group);
+    await joiner.groups.joinViaLink(link, await IdentityKeys.generate());
+
+    const aoi =
+        '{"type":"Feature","geometry":{"type":"Polygon","coordinates":'
+        '[[[85.30,27.70],[85.31,27.70],[85.31,27.71],[85.30,27.71],'
+        '[85.30,27.70]]]}}';
+    await owner.groups.setMappingArea(group.id, aoi);
+
+    await _waitFor(() async {
+      final g = await joiner.db.groupById(group.id);
+      return g?.aoiGeoJson == aoi;
+    });
+  });
+
   test('a cover photo set by the owner reaches a joiner', () async {
     final transport = InMemoryTransport();
     final blobs = InMemoryBlobStore();

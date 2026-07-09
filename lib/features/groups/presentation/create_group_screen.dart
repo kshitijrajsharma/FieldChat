@@ -306,6 +306,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
               ),
               child: PrimaryButton(
                 label: _busy ? 'Creating…' : 'Create group',
+                loading: _busy,
                 onPressed: (_busy || _controller.text.trim().isEmpty)
                     ? null
                     : _create,

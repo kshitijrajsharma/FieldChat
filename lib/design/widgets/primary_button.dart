@@ -9,6 +9,7 @@ class PrimaryButton extends StatelessWidget {
     required this.label,
     this.onPressed,
     this.trailingIcon,
+    this.loading = false,
     super.key,
   });
 
@@ -16,9 +17,14 @@ class PrimaryButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final IconData? trailingIcon;
 
+  /// Shows a spinner and blocks taps while an action is in flight, so a slow
+  /// create, join or export reads as working rather than stuck.
+  final bool loading;
+
   @override
   Widget build(BuildContext context) {
-    final disabled = onPressed == null;
+    // While loading the button keeps its active ink look so the spinner reads.
+    final disabled = onPressed == null && !loading;
     final foreground = disabled ? AppColors.textFaint : AppColors.white;
     return SizedBox(
       width: double.infinity,
@@ -26,13 +32,24 @@ class PrimaryButton extends StatelessWidget {
         color: disabled ? AppColors.mist : AppColors.ink,
         borderRadius: BorderRadius.circular(AppRadii.field),
         child: InkWell(
-          onTap: onPressed,
+          onTap: loading ? null : onPressed,
           borderRadius: BorderRadius.circular(AppRadii.field),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (loading) ...[
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: foreground,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
                 Text(
                   label,
                   style: TextStyle(
@@ -41,7 +58,7 @@ class PrimaryButton extends StatelessWidget {
                     color: foreground,
                   ),
                 ),
-                if (trailingIcon != null) ...[
+                if (trailingIcon != null && !loading) ...[
                   const SizedBox(width: 8),
                   Icon(trailingIcon, size: 18, color: foreground),
                 ],
