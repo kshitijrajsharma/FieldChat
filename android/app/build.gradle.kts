@@ -17,7 +17,7 @@ if (hasKeystore) {
 }
 
 android {
-    namespace = "app.fieldchat.fieldchat"
+    namespace = "app.fieldchat"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "app.fieldchat.fieldchat"
+        applicationId = "app.fieldchat"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
