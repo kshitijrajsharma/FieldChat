@@ -85,6 +85,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   TrackRecorder? _tracker;
   bool _sourcesReady = false;
   bool _styledOnce = false;
+  bool _paintedOnce = false;
   bool _satellite = false;
   String? _aoiGeoJson;
   bool _canPlace = true;
@@ -158,6 +159,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Future<void> _onCameraIdle() async {
     final controller = _controller;
     if (controller == null) return;
+    // The first paint after a style load does not always draw the symbols on
+    // iOS until the map redraws. The camera settling is that first redraw, so
+    // push the points once more here.
+    if (_sourcesReady && !_paintedOnce) {
+      _paintedOnce = true;
+      await _refreshPins();
+    }
     final bounds = _dataBounds();
     final view = await controller.getVisibleRegion();
     final inView = bounds == null || _boundsIntersect(view, bounds);
@@ -223,6 +231,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
             myLocationEnabled: true,
             myLocationRenderMode: MyLocationRenderMode.compass,
+            // Drop the rotation compass below the header and GPS strip so the
+            // top bars never cover it.
+            compassViewPosition: CompassViewPosition.topRight,
+            compassViewMargins: const Point(16, 176),
             onMapCreated: (controller) =>
                 _controller = controller..onFeatureTapped.add(_onFeatureTapped),
             onStyleLoadedCallback: _onStyleLoaded,
@@ -306,6 +318,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   Future<void> _toggleBasemap() async {
     _sourcesReady = false;
+    _paintedOnce = false;
     setState(() => _satellite = !_satellite);
   }
 
@@ -878,41 +891,53 @@ class _MapHeader extends StatelessWidget {
       color: AppColors.white,
       borderRadius: BorderRadius.circular(14),
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
+      child: SizedBox(
+        height: 46,
+        child: Stack(
           children: [
-            InkWell(
-              onTap: () => Navigator.of(context).maybePop(),
+            // The group name is centred; the back affordance floats over the
+            // left so a long name stays visually centred in the bar.
+            Positioned.fill(
               child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.chevron_left,
-                      size: 18,
-                      color: AppColors.ink,
+                padding: const EdgeInsets.symmetric(horizontal: 88),
+                child: Center(
+                  child: Text(
+                    groupName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
                     ),
-                    Text(
-                      backLabel,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                groupName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                onTap: () => Navigator.of(context).maybePop(),
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.chevron_left,
+                        size: 20,
+                        color: AppColors.ink,
+                      ),
+                      Text(
+                        backLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -953,70 +978,251 @@ class _LegendBar extends StatelessWidget {
   final Set<String> hidden;
   final ValueChanged<String> onToggle;
 
+  // Above this many tags the bar scrolls and pins an expand button that opens
+  // the full list; at or below it the tags just hug the bar.
+  static const _maxHug = 3;
+
   @override
   Widget build(BuildContext context) {
+    final sorted = [...entries]..sort((a, b) => b.count.compareTo(a.count));
+    final many = sorted.length > _maxHug;
+
     return SafeArea(
       top: false,
-      child: Material(
-        color: AppColors.white.withValues(alpha: 0.96),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-          child: SizedBox(
-            height: 34,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: entries.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 7),
-              itemBuilder: (context, i) {
-                final entry = entries[i];
-                final on = !hidden.contains(entry.tagKey);
-                return InkWell(
-                  onTap: () => onToggle(entry.tagKey),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: on
-                          ? entry.color.withValues(alpha: 0.16)
-                          : AppColors.mist,
-                      border: Border.all(
-                        color: on
-                            ? entry.color.withValues(alpha: 0.55)
-                            : Colors.transparent,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: on ? entry.color : AppColors.textFaint,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${entry.label} · ${entry.count}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: on ? AppColors.ink : AppColors.textFaint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+      minimum: const EdgeInsets.only(bottom: 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth - 24;
+          final chips = ListView.separated(
+            scrollDirection: Axis.horizontal,
+            shrinkWrap: !many,
+            physics: many
+                ? const ClampingScrollPhysics()
+                : const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            itemCount: sorted.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 6),
+            itemBuilder: (context, i) =>
+                _chip(sorted[i], on: !hidden.contains(sorted[i].tagKey)),
+          );
+          return Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Material(
+                color: AppColors.white.withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(22),
+                elevation: 2,
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  height: 46,
+                  child: many
+                      ? Row(
+                          children: [
+                            Expanded(child: chips),
+                            _ExpandButton(
+                              onTap: () =>
+                                  unawaited(_showAllTags(context, sorted)),
+                            ),
+                          ],
+                        )
+                      : chips,
+                ),
+              ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showAllTags(
+    BuildContext context,
+    List<_LegendEntry> all,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          _TagSheet(entries: all, hidden: hidden, onToggle: onToggle),
+    );
+  }
+
+  Widget _chip(_LegendEntry entry, {required bool on}) {
+    return InkWell(
+      onTap: () => onToggle(entry.tagKey),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: on ? entry.color.withValues(alpha: 0.16) : AppColors.mist,
+          border: Border.all(
+            color: on
+                ? entry.color.withValues(alpha: 0.55)
+                : Colors.transparent,
           ),
         ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: on ? entry.color : AppColors.textFaint,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '${entry.label} · ${entry.count}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: on ? AppColors.ink : AppColors.textFaint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The pinned button at the end of a crowded legend; opens the full tag list.
+class _ExpandButton extends StatelessWidget {
+  const _ExpandButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: const BoxDecoration(
+          border: Border(left: BorderSide(color: AppColors.mist)),
+        ),
+        child: const Icon(
+          Icons.keyboard_arrow_up,
+          size: 20,
+          color: AppColors.ink,
+        ),
+      ),
+    );
+  }
+}
+
+/// The full tag list as a bottom drawer: every tag with its count and a
+/// show/hide toggle that filters the map live.
+class _TagSheet extends StatefulWidget {
+  const _TagSheet({
+    required this.entries,
+    required this.hidden,
+    required this.onToggle,
+  });
+
+  final List<_LegendEntry> entries;
+  final Set<String> hidden;
+  final ValueChanged<String> onToggle;
+
+  @override
+  State<_TagSheet> createState() => _TagSheetState();
+}
+
+class _TagSheetState extends State<_TagSheet> {
+  late final Set<String> _hidden = {...widget.hidden};
+
+  void _toggle(String key) {
+    setState(() {
+      if (!_hidden.remove(key)) _hidden.add(key);
+    });
+    widget.onToggle(key);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.mist,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Tags',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [for (final entry in widget.entries) _row(entry)],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(_LegendEntry entry) {
+    final on = !_hidden.contains(entry.tagKey);
+    return ListTile(
+      onTap: () => _toggle(entry.tagKey),
+      leading: Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: on ? entry.color : AppColors.textFaint,
+        ),
+      ),
+      title: Text(
+        entry.label,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: on ? AppColors.ink : AppColors.textFaint,
+        ),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${entry.count}',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: on ? AppColors.textSecondary : AppColors.textFaint,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Icon(
+            on ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            size: 18,
+            color: on ? AppColors.ink : AppColors.textFaint,
+          ),
+        ],
       ),
     );
   }

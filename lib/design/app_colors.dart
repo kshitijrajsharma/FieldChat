@@ -23,6 +23,7 @@ abstract final class AppColors {
   static const Color amber = Color(0xFFE0922A);
   static const Color amberText = Color(0xFFA8741A);
   static const Color gpsStrong = Color(0xFF22A75A);
+  static const Color gpsGood = Color(0xFF3E8E5A);
   static const Color danger = Color(0xFFC0392B);
 }
 
