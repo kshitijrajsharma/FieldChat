@@ -417,6 +417,30 @@ class LocalDatabase extends _$LocalDatabase {
   Future<List<Message>> pendingMessages() =>
       (select(messages)..where((m) => m.sendState.equals('pending'))).get();
 
+  /// Live count of this device's captures not yet uploaded, so the UI can
+  /// reassure the user their field data is saved and show upload progress.
+  Stream<int> watchPendingCount() {
+    final count = messages.id.count();
+    final query = selectOnly(messages)
+      ..addColumns([count])
+      ..where(
+        messages.sendState.equals('pending') & messages.deletedAt.isNull(),
+      );
+    return query.map((row) => row.read(count) ?? 0).watchSingle();
+  }
+
+  Stream<int> watchPendingCountFor(String groupId) {
+    final count = messages.id.count();
+    final query = selectOnly(messages)
+      ..addColumns([count])
+      ..where(
+        messages.groupId.equals(groupId) &
+            messages.sendState.equals('pending') &
+            messages.deletedAt.isNull(),
+      );
+    return query.map((row) => row.read(count) ?? 0).watchSingle();
+  }
+
   Future<Uint8List?> mediaBytes(String id) async {
     final blob = await (select(
       mediaBlobs,

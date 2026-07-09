@@ -93,7 +93,7 @@ Future<bool> showMapTapSheet({
                         Icons.add_location_alt_outlined,
                         size: 16,
                       ),
-                      label: const Text('Add here'),
+                      label: const Text('Add a point'),
                     ),
                   ),
                 ],

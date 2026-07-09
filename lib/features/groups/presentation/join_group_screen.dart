@@ -97,7 +97,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 minLines: 1,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'https://kshitijrajsharma.github.io/FieldChat/...',
+                  hintText: 'Paste the invite link here',
                   errorText: _error,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadii.field),

@@ -37,9 +37,9 @@ class MapTabScreen extends ConsumerStatefulWidget {
 class _MapTabScreenState extends ConsumerState<MapTabScreen> {
   MapLibreMapController? _controller;
   List<_MapArea> _areas = const [];
-  Map<int, Offset> _labelOffsets = const {};
+  List<_AreaCluster> _areaClusters = const [];
   List<PublicGroup> _communities = const [];
-  Map<int, Offset> _communityOffsets = const {};
+  List<_CommunityCluster> _communityClusters = const [];
   bool _showCommunities = false;
   bool _ready = false;
   LatLng? _myLocation;
@@ -65,7 +65,8 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
             myLocationEnabled: true,
             myLocationRenderMode: MyLocationRenderMode.compass,
             onMapCreated: (controller) =>
-                _controller = controller..onFeatureTapped.add(_onAreaTapped),
+                _controller = controller
+                  ..onFeatureTapped.add(_onFeatureTapped),
             onStyleLoadedCallback: _onStyleLoaded,
             onUserLocationUpdated: (location) => _myLocation = LatLng(
               location.position.latitude,
@@ -74,19 +75,34 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
             onCameraIdle: _reposition,
           ),
           if (!_showCommunities)
-            for (final entry in _labelOffsets.entries)
-              _AreaLabel(
-                area: _areas[entry.key],
-                offset: entry.value,
-                onTap: () => unawaited(_openGroup(_areas[entry.key].group)),
-              ),
+            for (final cluster in _areaClusters)
+              if (cluster.members.length == 1)
+                _AreaLabel(
+                  area: cluster.members.first,
+                  offset: cluster.offset,
+                  onTap: () =>
+                      unawaited(_openGroup(cluster.members.first.group)),
+                )
+              else
+                _CommunityClusterCard(
+                  count: cluster.members.length,
+                  offset: cluster.offset,
+                  onTap: () => unawaited(_zoomInto(cluster.center)),
+                ),
           if (_showCommunities)
-            for (final entry in _communityOffsets.entries)
-              _CommunityMarker(
-                group: _communities[entry.key],
-                offset: entry.value,
-                onTap: () => _openCommunity(_communities[entry.key]),
-              ),
+            for (final cluster in _communityClusters)
+              if (cluster.members.length == 1)
+                _CommunityCard(
+                  group: cluster.members.first,
+                  offset: cluster.offset,
+                  onTap: () => _openCommunity(cluster.members.first),
+                )
+              else
+                _CommunityClusterCard(
+                  count: cluster.members.length,
+                  offset: cluster.offset,
+                  onTap: () => unawaited(_zoomInto(cluster.center)),
+                ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(10),
@@ -94,8 +110,8 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                   ? (_communities.isEmpty && _ready
                         ? const _CommunitiesEmptyHint()
                         : const _TitleCard(
-                            title: 'Communities nearby',
-                            subtitle: 'Tap a group to preview and join',
+                            title: 'Groups near you',
+                            subtitle: 'Within 25 km · tap a group to preview',
                           ))
                   : (_areas.isEmpty && _ready
                         ? const _EmptyHint()
@@ -103,6 +119,27 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                             title: 'Your map areas',
                             subtitle: 'Tap an area to open its group map',
                           )),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            bottom: 92,
+            child: Material(
+              color: AppColors.white,
+              shape: const CircleBorder(),
+              elevation: 3,
+              child: InkWell(
+                onTap: () => unawaited(_recenter()),
+                customBorder: const CircleBorder(),
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.my_location,
+                    size: 22,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
             ),
           ),
           Positioned(
@@ -122,18 +159,31 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
     );
   }
 
+  /// Recenters the map, so it is always one tap back after panning or zooming
+  /// out. On Nearby it reframes the whole 25 km search area; on My groups it
+  /// centers on the user.
+  Future<void> _recenter() async {
+    final me = _myLocation ?? await currentUserLatLng();
+    final controller = _controller;
+    if (me == null || controller == null) return;
+    _myLocation = me;
+    if (_showCommunities) {
+      await _frameRadius(me, 25);
+    } else {
+      await controller.animateCamera(CameraUpdate.newLatLngZoom(me, 15));
+    }
+  }
+
   Future<void> _setView({required bool communities}) async {
     if (communities == _showCommunities) return;
     setState(() => _showCommunities = communities);
     final controller = _controller;
     if (communities) {
       // Hide the user's own areas while browsing public groups.
-      await controller?.setGeoJsonSource('areas', {
-        'type': 'FeatureCollection',
-        'features': <dynamic>[],
-      });
+      await controller?.setGeoJsonSource('areas', _emptyCollection());
       await _loadCommunities();
     } else {
+      await controller?.setGeoJsonSource('radius', _emptyCollection());
       await _refreshAreas();
     }
     await _reposition();
@@ -143,6 +193,11 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
     final me = _myLocation ?? await currentUserLatLng();
     if (me == null) return;
     _myLocation = me;
+    await _controller?.setGeoJsonSource('radius', {
+      'type': 'FeatureCollection',
+      'features': [_radiusRingFeature(me, 25)],
+    });
+    await _frameRadius(me, 25);
     final groups = await ref
         .read(publicDirectoryProvider)
         .nearby(lat: me.latitude, lng: me.longitude, radiusKm: 25);
@@ -161,12 +216,53 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
 
   Future<void> _onStyleLoaded() async {
     await _refreshAreas();
+    final controller = _controller;
+    if (controller != null) {
+      await controller.addGeoJsonSource('radius', _emptyCollection());
+      await controller.addLineLayer(
+        'radius',
+        'radius-line',
+        const LineLayerProperties(
+          lineColor: '#E0922A',
+          lineWidth: 1.5,
+          lineOpacity: 0.7,
+          lineDasharray: [2, 2],
+        ),
+      );
+    }
     _ready = true;
     if (_areas.isEmpty) {
       await _centerOnMe();
     } else {
       await _frameAll();
     }
+  }
+
+  Map<String, dynamic> _emptyCollection() => {
+    'type': 'FeatureCollection',
+    'features': <dynamic>[],
+  };
+
+  /// Frames the whole 25 km search circle so the user sees how far Nearby
+  /// reaches.
+  Future<void> _frameRadius(LatLng center, double km) async {
+    final controller = _controller;
+    if (controller == null) return;
+    final dLat = km * 1000 / 111320;
+    final dLng =
+        km * 1000 / (111320 * math.cos(center.latitude * math.pi / 180));
+    await controller.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(center.latitude - dLat, center.longitude - dLng),
+          northeast: LatLng(center.latitude + dLat, center.longitude + dLng),
+        ),
+        left: 30,
+        right: 30,
+        top: 120,
+        bottom: 90,
+      ),
+    );
   }
 
   Future<void> _centerOnMe() async {
@@ -247,8 +343,9 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
     await _reposition();
   }
 
-  /// Projects the active overlay's world points to screen offsets so the label
-  /// cards or community markers sit over their locations. Runs on camera idle.
+  /// Positions the overlay cards over their world points on camera idle. My
+  /// groups place one label per area; communities are clustered client-side so
+  /// nearby groups merge into a single "N groups" card instead of overlapping.
   Future<void> _reposition() async {
     final controller = _controller;
     if (controller == null || !mounted) return;
@@ -258,30 +355,114 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
         : 1;
     final size = media.size;
 
-    Future<Map<int, Offset>> project(List<LatLng> centers) async {
-      final offsets = <int, Offset>{};
-      for (var i = 0; i < centers.length; i++) {
-        final screen = await controller.toScreenLocation(centers[i]);
-        offsets[i] = Offset(
-          (screen.x / ratio).clamp(98.0, size.width - 98.0),
-          (screen.y / ratio).clamp(90.0, size.height - 90.0),
-        );
+    Future<Offset?> project(LatLng at) async {
+      final screen = await controller.toScreenLocation(at);
+      final dx = screen.x / ratio;
+      final dy = screen.y / ratio;
+      // Skip points off screen so cards do not pile up at the edges.
+      if (dx < -40 ||
+          dx > size.width + 40 ||
+          dy < -40 ||
+          dy > size.height + 40) {
+        return null;
       }
-      return offsets;
+      return Offset(
+        dx.clamp(96.0, size.width - 96.0),
+        dy.clamp(90.0, size.height - 90.0),
+      );
     }
 
     if (_showCommunities) {
-      final offsets = await project([
-        for (final g in _communities) LatLng(g.centerLat, g.centerLng),
-      ]);
-      if (mounted) setState(() => _communityOffsets = offsets);
-    } else {
-      final offsets = await project([for (final a in _areas) a.center]);
-      if (mounted) setState(() => _labelOffsets = offsets);
+      final placed = <(Offset, LatLng)>[];
+      for (final group in _communities) {
+        final center = LatLng(group.centerLat, group.centerLng);
+        final offset = await project(center);
+        placed.add((offset ?? Offset.infinite, center));
+      }
+      final clusters = <_CommunityCluster>[];
+      for (final group in _clusterByProximity(placed)) {
+        clusters.add(
+          _CommunityCluster(
+            offset: group.offset,
+            center: group.center,
+            members: [for (final i in group.indices) _communities[i]],
+          ),
+        );
+      }
+      if (mounted) setState(() => _communityClusters = clusters);
+      return;
     }
+
+    final placed = <(Offset, LatLng)>[];
+    for (final area in _areas) {
+      final offset = await project(area.center);
+      placed.add((offset ?? Offset.infinite, area.center));
+    }
+    final clusters = <_AreaCluster>[];
+    for (final group in _clusterByProximity(placed)) {
+      clusters.add(
+        _AreaCluster(
+          offset: group.offset,
+          center: group.center,
+          members: [for (final i in group.indices) _areas[i]],
+        ),
+      );
+    }
+    if (mounted) setState(() => _areaClusters = clusters);
   }
 
-  void _onAreaTapped(
+  /// Greedily merges cards whose screen positions are within a card's width of
+  /// each other, so a dense area shows one count card that splits into
+  /// individual cards as the user zooms in. Off-screen points (infinite offset)
+  /// are dropped.
+  List<({Offset offset, LatLng center, List<int> indices})> _clusterByProximity(
+    List<(Offset, LatLng)> placed,
+  ) {
+    const threshold = 76.0;
+    final onScreen = [
+      for (var i = 0; i < placed.length; i++)
+        if (placed[i].$1.isFinite) i,
+    ];
+    final used = <int>{};
+    final clusters = <({Offset offset, LatLng center, List<int> indices})>[];
+    for (final i in onScreen) {
+      if (used.contains(i)) continue;
+      used.add(i);
+      final indices = <int>[i];
+      var sumX = placed[i].$1.dx;
+      var sumY = placed[i].$1.dy;
+      for (final j in onScreen) {
+        if (used.contains(j)) continue;
+        if ((placed[i].$1 - placed[j].$1).distance <= threshold) {
+          used.add(j);
+          indices.add(j);
+          sumX += placed[j].$1.dx;
+          sumY += placed[j].$1.dy;
+        }
+      }
+      final n = indices.length;
+      clusters.add((
+        offset: Offset(sumX / n, sumY / n),
+        center: LatLng(
+          indices.map((k) => placed[k].$2.latitude).reduce((a, b) => a + b) / n,
+          indices.map((k) => placed[k].$2.longitude).reduce((a, b) => a + b) /
+              n,
+        ),
+        indices: indices,
+      ));
+    }
+    return clusters;
+  }
+
+  /// Zooms toward a cluster so it separates into its individual groups.
+  Future<void> _zoomInto(LatLng center) async {
+    final zoom = (_controller?.cameraPosition?.zoom ?? 11) + 2;
+    await _controller?.animateCamera(
+      CameraUpdate.newLatLngZoom(center, zoom),
+    );
+  }
+
+  void _onFeatureTapped(
     math.Point<double> point,
     LatLng coordinates,
     String id,
@@ -297,7 +478,11 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
   Future<void> _openGroup(Group group) async {
     final staged = await Navigator.of(context).push<Object?>(
       MaterialPageRoute<Object?>(
-        builder: (_) => MapScreen(groupId: group.id, groupName: group.name),
+        builder: (_) => MapScreen(
+          groupId: group.id,
+          groupName: group.name,
+          backLabel: 'Back',
+        ),
       ),
     );
     // A point tapped on the group map opens its thread, staged to drop there.
@@ -405,6 +590,32 @@ List<List<double>> _cornersOf(List<double> bounds) {
   ];
 }
 
+/// A GeoJSON ring approximating a [km] circle around [center], drawn on the
+/// Nearby view so the search radius is visible, not just described.
+Map<String, dynamic> _radiusRingFeature(LatLng center, double km) {
+  const steps = 72;
+  final metres = km * 1000;
+  final latRad = center.latitude * math.pi / 180;
+  final ring = <List<double>>[
+    for (var i = 0; i <= steps; i++)
+      [
+        center.longitude +
+            (metres * math.sin(2 * math.pi * i / steps)) /
+                (111320 * math.cos(latRad)),
+        center.latitude +
+            (metres * math.cos(2 * math.pi * i / steps)) / 111320,
+      ],
+  ];
+  return {
+    'type': 'Feature',
+    'properties': <String, dynamic>{},
+    'geometry': {
+      'type': 'Polygon',
+      'coordinates': [ring],
+    },
+  };
+}
+
 class _MapArea {
   const _MapArea({
     required this.group,
@@ -456,64 +667,83 @@ class _AreaLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: offset.dx - 90,
+      left: offset.dx - 92,
       top: offset.dy - 26,
-      width: 180,
+      width: 184,
       child: Center(
-        child: Material(
-          color: area.hasAoi ? AppColors.ink : AppColors.white,
-          borderRadius: BorderRadius.circular(9),
-          elevation: 3,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(9),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          area.group.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: area.hasAoi
-                                ? AppColors.white
-                                : AppColors.ink,
-                          ),
-                        ),
-                        Text(
-                          '${_plural(area.points, 'point')} · '
-                          '${_plural(area.mappers, 'mapper')}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: area.hasAoi
-                                ? AppColors.white.withValues(alpha: 0.72)
-                                : AppColors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 14,
-                    color: area.hasAoi ? AppColors.white : AppColors.textMuted,
-                  ),
-                ],
+        child: _MapCard(
+          onTap: onTap,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.location_on,
+                size: 15,
+                color: AppColors.ink,
               ),
-            ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      area.group.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    Text(
+                      '${_plural(area.points, 'point')} · '
+                      '${area.mappers} '
+                      '${area.mappers == 1 ? 'person' : 'people'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The shared card used for every marker overlay on the map tabs, so groups,
+/// communities and clusters look identical: a light card with a hairline
+/// border and a soft shadow.
+class _MapCard extends StatelessWidget {
+  const _MapCard({required this.child, required this.onTap});
+
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.white,
+      elevation: 3,
+      shadowColor: AppColors.ink.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(11),
+        side: const BorderSide(color: AppColors.mist),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          child: child,
         ),
       ),
     );
@@ -588,7 +818,7 @@ class _MapToggle extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _Segment(
-              label: 'Mine',
+              label: 'My groups',
               selected: !showCommunities,
               enabled: true,
               onTap: () => onChanged(false),
@@ -646,9 +876,37 @@ class _Segment extends StatelessWidget {
   }
 }
 
-/// A public group pinned at its centre on the Map tab's Communities view.
-class _CommunityMarker extends StatelessWidget {
-  const _CommunityMarker({
+/// One card on the Communities map: a single group, or a merged group of
+/// nearby ones with a shared screen position and geographic centre.
+class _CommunityCluster {
+  const _CommunityCluster({
+    required this.offset,
+    required this.members,
+    required this.center,
+  });
+
+  final Offset offset;
+  final List<PublicGroup> members;
+  final LatLng center;
+}
+
+/// One card on the My-groups map: a single area, or nearby areas merged so far
+/// apart groups do not all cram the screen at once.
+class _AreaCluster {
+  const _AreaCluster({
+    required this.offset,
+    required this.members,
+    required this.center,
+  });
+
+  final Offset offset;
+  final List<_MapArea> members;
+  final LatLng center;
+}
+
+/// A single public group shown as a clean grey card over its location.
+class _CommunityCard extends StatelessWidget {
+  const _CommunityCard({
     required this.group,
     required this.offset,
     required this.onTap,
@@ -661,43 +919,93 @@ class _CommunityMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: offset.dx - 90,
-      top: offset.dy - 22,
-      width: 180,
+      left: offset.dx - 92,
+      top: offset.dy - 18,
+      width: 184,
       child: Center(
-        child: Material(
-          color: AppColors.ink,
-          borderRadius: BorderRadius.circular(9),
-          elevation: 3,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(9),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.explore,
-                    size: 14,
+        child: _MapCard(
+          onTap: onTap,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.location_on,
+                size: 15,
+                color: AppColors.ink,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  group.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A merged group of nearby communities, shown as a grey count card that
+/// zooms in to split apart when tapped.
+class _CommunityClusterCard extends StatelessWidget {
+  const _CommunityClusterCard({
+    required this.count,
+    required this.offset,
+    required this.onTap,
+  });
+
+  final int count;
+  final Offset offset;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: offset.dx - 70,
+      top: offset.dy - 18,
+      width: 140,
+      child: Center(
+        child: _MapCard(
+          onTap: onTap,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.ink,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.white,
                   ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      group.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              const Text(
+                'groups',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
           ),
         ),
       ),

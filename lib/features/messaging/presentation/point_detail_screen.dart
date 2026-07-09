@@ -102,6 +102,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
           groupId: widget.groupId,
           groupName: group?.name ?? 'Map',
           focusMessageId: widget.message.id,
+          backLabel: 'Back',
         ),
       ),
     );
@@ -184,7 +185,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text('Point'),
+        title: const Text('Point detail'),
         actions: [
           if (canDelete)
             IconButton(

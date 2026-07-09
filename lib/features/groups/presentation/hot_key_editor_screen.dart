@@ -117,6 +117,7 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
   late int _color =
       widget.existing?.colorValue ?? TagColors.palette.first.toARGB32();
   late String? _icon = widget.existing?.iconName;
+  String _iconQuery = '';
 
   @override
   void dispose() {
@@ -126,74 +127,91 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final iconEntries = kHotKeyIcons.entries.toList();
+    final matches = [
+      for (final entry in kHotKeyIcons.entries)
+        if (_iconQuery.isEmpty || entry.key.contains(_iconQuery)) entry,
+    ];
     return AlertDialog(
       title: Text(widget.existing == null ? 'New tag' : 'Edit tag'),
       content: SizedBox(
         width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Label, e.g. Pothole',
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _controller,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Label, e.g. Pothole',
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Wrap(
-              spacing: AppSpacing.md,
-              children: [
-                for (final color in TagColors.palette)
-                  GestureDetector(
-                    onTap: () => setState(() => _color = color.toARGB32()),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _color == color.toARGB32()
-                              ? AppColors.ink
-                              : Colors.transparent,
-                          width: 3,
+              const SizedBox(height: AppSpacing.lg),
+              Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.md,
+                children: [
+                  for (final color in TagColors.palette)
+                    GestureDetector(
+                      onTap: () => setState(() => _color = color.toARGB32()),
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _color == color.toARGB32()
+                                ? AppColors.ink
+                                : Colors.transparent,
+                            width: 3,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            const Text(
-              'Icon (optional)',
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 160,
-              child: GridView.count(
-                crossAxisCount: 6,
-                mainAxisSpacing: 6,
-                crossAxisSpacing: 6,
-                children: [
-                  _IconChoice(
-                    selected: _icon == null,
-                    onTap: () => setState(() => _icon = null),
-                    child: const Icon(Icons.block, size: 18),
-                  ),
-                  for (final entry in iconEntries)
-                    _IconChoice(
-                      selected: _icon == entry.key,
-                      onTap: () => setState(() => _icon = entry.key),
-                      child: Icon(entry.value, size: 18),
-                    ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              const Text(
+                'Icon (optional)',
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                onChanged: (value) =>
+                    setState(() => _iconQuery = value.trim().toLowerCase()),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  hintText: 'Search icons (tree, water, sign…)',
+                  prefixIcon: Icon(Icons.search, size: 18),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SizedBox(
+                height: 150,
+                child: GridView.count(
+                  crossAxisCount: 6,
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  children: [
+                    if (_iconQuery.isEmpty)
+                      _IconChoice(
+                        selected: _icon == null,
+                        onTap: () => setState(() => _icon = null),
+                        child: const Icon(Icons.block, size: 18),
+                      ),
+                    for (final entry in matches)
+                      _IconChoice(
+                        selected: _icon == entry.key,
+                        onTap: () => setState(() => _icon = entry.key),
+                        child: Icon(entry.value, size: 18),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

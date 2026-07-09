@@ -27,15 +27,37 @@ abstract final class AppColors {
 }
 
 /// Hot-key tag colours. Each tag carries one of these as its dot and pin
-/// colour, and the same colour filters it on the map.
+/// colour, and the same colour filters it on the map. Tones are muted and a
+/// touch dark so they sit with the warm UI while staying legible on the light
+/// map.
 abstract final class TagColors {
   const TagColors._();
 
   static const Color ink = AppColors.ink;
-  static const Color amber = AppColors.amber;
-  static const Color purple = Color(0xFF7B6FC4);
-  static const Color red = Color(0xFFC4615E);
-  static const Color blue = Color(0xFF3E7CC4);
+  static const Color amber = Color(0xFFC0801F);
+  static const Color purple = Color(0xFF6E5DA6);
+  static const Color red = Color(0xFFB0503D);
+  static const Color blue = Color(0xFF3466A0);
+  static const Color forest = Color(0xFF3C7A4E);
+  static const Color teal = Color(0xFF2C7A70);
+  static const Color sienna = Color(0xFF8C5A3B);
+  static const Color olive = Color(0xFF6F7A35);
+  static const Color rose = Color(0xFFA44A72);
+  static const Color indigo = Color(0xFF464C88);
+  static const Color slate = Color(0xFF566069);
 
-  static const List<Color> palette = <Color>[ink, amber, purple, red, blue];
+  static const List<Color> palette = <Color>[
+    ink,
+    amber,
+    red,
+    sienna,
+    olive,
+    forest,
+    teal,
+    blue,
+    indigo,
+    purple,
+    rose,
+    slate,
+  ];
 }

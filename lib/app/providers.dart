@@ -111,6 +111,18 @@ final syncingGroupsProvider = StreamProvider<Set<String>>(
   (ref) => ref.watch(syncServiceProvider).syncingGroups,
 );
 
+/// Live count of captures not yet uploaded (device-wide), so the app can show
+/// upload progress and reassure the user nothing is lost offline.
+final pendingUploadCountProvider = StreamProvider<int>(
+  (ref) => ref.watch(databaseProvider).watchPendingCount(),
+);
+
+// Family provider type is verbose; the declaration is clear in context.
+// ignore: specify_nonobvious_property_types
+final pendingUploadForProvider = StreamProvider.family<int, String>(
+  (ref, groupId) => ref.watch(databaseProvider).watchPendingCountFor(groupId),
+);
+
 /// Live latest message per group, driving the chats list preview so it updates
 /// as messages arrive.
 // ignore: specify_nonobvious_property_types

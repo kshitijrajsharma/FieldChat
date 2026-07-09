@@ -157,7 +157,7 @@ class _SearchField extends StatelessWidget {
       textInputAction: TextInputAction.search,
       onChanged: onChanged,
       decoration: InputDecoration(
-        hintText: 'Search communities by name',
+        hintText: 'Search communities',
         prefixIcon: const Icon(Icons.search, size: 20),
         isDense: true,
         enabledBorder: OutlineInputBorder(

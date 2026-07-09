@@ -236,7 +236,7 @@ class _MetaRow extends StatelessWidget {
       children: [
         if (message.locationPending)
           const Text(
-            'location pending',
+            'Finding location…',
             style: TextStyle(fontSize: 11, color: AppColors.amberText),
           )
         else if (message.accuracyM != null)

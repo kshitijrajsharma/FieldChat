@@ -26,7 +26,10 @@ class GroupPlaceLine extends StatelessWidget {
         if (text.isEmpty) return const SizedBox.shrink();
         return Text(
           text,
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
         );
       },
     );

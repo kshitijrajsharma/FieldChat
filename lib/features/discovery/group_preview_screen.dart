@@ -189,6 +189,7 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -201,7 +202,7 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
                       _mapperLine(group.mapperCount),
                       style: const TextStyle(
                         fontSize: 12,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -288,7 +289,7 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
   }
 
   String _mapperLine(int count) {
-    if (count <= 0) return 'No mappers yet';
-    return count == 1 ? '1 mapper' : '$count mappers';
+    if (count <= 0) return 'No one has added points yet';
+    return count == 1 ? '1 person' : '$count people';
   }
 }

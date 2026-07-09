@@ -159,7 +159,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     final chosen = await showDialog<int>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
-        title: const Text('GPS accuracy limit'),
+        title: const Text('Require good GPS'),
         children: [
           for (final preset in presets)
             ListTile(
@@ -439,6 +439,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
               _ManageCard(
                 caching: _caching,
                 canExport: iAmAdmin || group.allowMemberExport,
+                exportForEveryone: group.allowMemberExport,
                 canEditArea: iAmAdmin,
                 hasArea: group.aoiGeoJson != null,
                 onEditArea: () => unawaited(_editMappingArea(group.id)),
@@ -813,7 +814,7 @@ class _ModerationCard extends StatelessWidget {
                   color: AppColors.ink,
                 ),
                 title: const Text('Allow points outside the area'),
-                subtitle: const Text('Off blocks sending beyond the task '
+                subtitle: const Text('Off blocks sending beyond the mapping '
                     'area'),
                 value: allowOutsideArea,
                 onChanged: onToggleOutsideArea,
@@ -825,11 +826,11 @@ class _ModerationCard extends StatelessWidget {
                 Icons.gps_fixed,
                 color: AppColors.ink,
               ),
-              title: const Text('GPS accuracy limit'),
+              title: const Text('Require good GPS'),
               subtitle: Text(
                 gpsLimitM == null
-                    ? 'Off. Points send at any accuracy'
-                    : 'Refuse points weaker than ±$gpsLimitM m',
+                    ? 'Off. Send at any GPS accuracy'
+                    : 'Block points less accurate than ±$gpsLimitM m',
               ),
               trailing: const Icon(
                 Icons.chevron_right,
@@ -1076,7 +1077,9 @@ class _MembersCard extends ConsumerWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.group_outlined, color: AppColors.ink),
-              title: Text('Members · ${members.length}'),
+              // The count is always the true group total; a non-admin still
+              // only sees the admins plus themselves listed below.
+              title: Text('Members · ${allMembers.length}'),
               trailing: TextButton.icon(
                 onPressed: () => unawaited(
                   SharePlus.instance.share(
@@ -1402,6 +1405,7 @@ class _ManageCard extends StatelessWidget {
   const _ManageCard({
     required this.caching,
     required this.canExport,
+    required this.exportForEveryone,
     required this.canEditArea,
     required this.hasArea,
     required this.onEditArea,
@@ -1412,6 +1416,7 @@ class _ManageCard extends StatelessWidget {
 
   final bool caching;
   final bool canExport;
+  final bool exportForEveryone;
   final bool canEditArea;
   final bool hasArea;
   final VoidCallback onEditArea;
@@ -1467,7 +1472,8 @@ class _ManageCard extends StatelessWidget {
                 color: AppColors.ink,
               ),
               title: const Text('Make available offline'),
-              subtitle: const Text('Save this area’s map tiles'),
+              subtitle: const Text('Save the map here so it works with no '
+                  'signal'),
               trailing: caching
                   ? const SizedBox(
                       width: 18,
@@ -1485,7 +1491,11 @@ class _ManageCard extends StatelessWidget {
                   color: AppColors.ink,
                 ),
                 title: const Text('Export data'),
-                subtitle: const Text('Admins only'),
+                subtitle: Text(
+                  exportForEveryone
+                      ? 'Download this group’s points and photos'
+                      : 'Admins only',
+                ),
                 trailing: const Icon(
                   Icons.chevron_right,
                   color: AppColors.textFaint,

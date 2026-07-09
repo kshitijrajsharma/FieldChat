@@ -21,6 +21,7 @@ import 'package:fieldchat/features/messaging/presentation/message_bubble.dart';
 import 'package:fieldchat/features/messaging/presentation/point_detail_screen.dart';
 import 'package:fieldchat/features/onboarding/coach_tip.dart';
 import 'package:fieldchat/features/settings/privacy_provider.dart';
+import 'package:fieldchat/features/sync/presentation/pending_upload_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,8 +70,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
   String _statsLabel(int points, int mappers) {
     if (points == 0) return 'No points yet';
     final pointText = points == 1 ? '1 point' : '$points points';
-    final mapperText = mappers == 1 ? '1 mapper' : '$mappers mappers';
-    return '$pointText · $mapperText';
+    final peopleText = mappers == 1 ? '1 person' : '$mappers people';
+    return '$pointText · $peopleText';
   }
 
   /// Fetches the group's full history and reconciles any gap, for the pull to
@@ -82,7 +83,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     try {
       await ref.read(syncServiceProvider).resync(widget.groupId);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Synced the full history')),
+        const SnackBar(content: Text('Up to date')),
       );
     } finally {
       if (mounted) setState(() => _resyncing = false);
@@ -223,8 +224,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     final accuracy = geo.accuracyM;
     if (limit != null && accuracy != null && accuracy > limit) {
       _blockedSnack(
-        'GPS accuracy is ±${accuracy.round()} m, weaker than the group '
-        'limit of ±$limit m. Move to open sky and try again.',
+        'GPS is only accurate to ±${accuracy.round()} m right now. Move to '
+        'open sky and try again.',
       );
       return false;
     }
@@ -237,7 +238,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         lng != null &&
         !pointInAoi(aoi, lat, lng)) {
       if (!group.allowOutsideArea) {
-        _blockedSnack('This point is outside the task area.');
+        _blockedSnack('This point is outside the mapping area.');
         return false;
       }
       return _confirmOutsideArea();
@@ -256,9 +257,9 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Outside the task area'),
+        title: const Text('Outside the mapping area'),
         content: const Text(
-          'This point falls outside the group task area. Send it anyway?',
+          'This point is outside the group mapping area. Send it anyway?',
         ),
         actions: [
           TextButton(
@@ -435,7 +436,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Sync full history',
+            tooltip: 'Refresh this group',
             icon: _resyncing
                 ? const SizedBox(
                     width: 18,
@@ -463,15 +464,14 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             ),
             child: LiveGpsStrip(),
           ),
+          PendingUploadBanner(groupId: widget.groupId),
           const CoachTip(
             tipKey: 'thread',
             message: 'Tap a tag, then Send to drop a mapped point here.',
           ),
           const CoachTip(
             tipKey: 'thread-sync',
-            message:
-                'Missing older points? Pull down or tap sync to fetch the '
-                'full history.',
+            message: 'Not seeing older points? Pull down to refresh.',
           ),
           Expanded(
             child: Stack(
@@ -491,7 +491,17 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                 messages.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(child: Text('$error')),
+                  error: (error, _) => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.xl),
+                      child: Text(
+                        'Could not load this group. Check your connection '
+                        'and pull down to try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textMuted),
+                      ),
+                    ),
+                  ),
                   data: (items) => items.isEmpty && isSyncing
                       ? const Center(child: _SyncingHint())
                       : RefreshIndicator(
@@ -548,7 +558,6 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
           ),
           if (_stagedPoint != null)
             _StagedPointBanner(
-              point: _stagedPoint!,
               onClear: () => setState(() => _stagedPoint = null),
             ),
           if (anonymous) const _AnonymousBar(),
@@ -648,9 +657,8 @@ class _AnonymousBar extends StatelessWidget {
 /// Sits above the composer while a map-tapped location is pending, showing
 /// where the next send will land and offering to clear it.
 class _StagedPointBanner extends StatelessWidget {
-  const _StagedPointBanner({required this.point, required this.onClear});
+  const _StagedPointBanner({required this.onClear});
 
-  final StagedPoint point;
   final VoidCallback onClear;
 
   @override
@@ -667,11 +675,10 @@ class _StagedPointBanner extends StatelessWidget {
             color: AppColors.white,
           ),
           const SizedBox(width: 8),
-          Expanded(
+          const Expanded(
             child: Text(
-              'Placing on map · ${point.lat.toStringAsFixed(5)}, '
-              '${point.lng.toStringAsFixed(5)}',
-              style: const TextStyle(
+              'Your next message drops a point at this map spot',
+              style: TextStyle(
                 color: AppColors.white,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
@@ -746,7 +753,7 @@ class _SyncingHint extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.md),
         Text(
-          'Syncing group…',
+          'Loading messages…',
           style: TextStyle(fontSize: 13, color: AppColors.textMuted),
         ),
       ],

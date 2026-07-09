@@ -10,6 +10,7 @@ import 'package:fieldchat/features/groups/presentation/create_group_screen.dart'
 import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
 import 'package:fieldchat/features/groups/presentation/join_group_screen.dart';
 import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:fieldchat/features/sync/presentation/pending_upload_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,16 +38,33 @@ class ChatsHomeScreen extends ConsumerWidget {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
-      body: groups.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('$error')),
-        data: (items) => items.isEmpty
-            ? const _EmptyState()
-            : ListView.separated(
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(indent: 74),
-                itemBuilder: (context, i) => _GroupTile(items[i]),
+      body: Column(
+        children: [
+          const PendingUploadBanner(),
+          Expanded(
+            child: groups.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.xl),
+                  child: Text(
+                    'Could not load your groups. Check your connection and '
+                    'try again.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
+                ),
               ),
+              data: (items) => items.isEmpty
+                  ? const _EmptyState()
+                  : ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const Divider(indent: 74),
+                      itemBuilder: (context, i) => _GroupTile(items[i]),
+                    ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: (groups.asData?.value.isEmpty ?? true)
           ? null
@@ -226,7 +244,7 @@ String _previewFor(Message? message) {
     'photo' => 'Photo',
     'video' => 'Video',
     'voice' => 'Voice note',
-    _ => 'Location',
+    _ => 'Dropped a point',
   };
 }
 

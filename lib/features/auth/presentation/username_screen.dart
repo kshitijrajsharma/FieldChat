@@ -79,7 +79,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                 autocorrect: false,
                 textInputAction: TextInputAction.done,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9_]')),
+                  FilteringTextInputFormatter.allow(RegExp('[a-z0-9_]')),
                   LengthLimitingTextInputFormatter(20),
                 ],
                 style: const TextStyle(
@@ -89,6 +89,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                 decoration: InputDecoration(
                   prefixText: '@',
                   hintText: 'ward7_mapper',
+                  helperText: '3 to 20 characters. Lowercase letters, numbers '
+                      'and _.',
                   errorText: _error,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
@@ -114,6 +116,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
               const Spacer(),
               PrimaryButton(
                 label: _busy ? 'Saving…' : 'Continue',
+                loading: _busy,
                 onPressed: _busy ? null : _submit,
               ),
               const SizedBox(height: AppSpacing.xl),

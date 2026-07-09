@@ -255,8 +255,8 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       ],
                     ),
                     const Text(
-                      'Quick tags everyone taps while sending. They caption '
-                      'the capture and colour its pin on the map.',
+                      'Quick tags everyone taps while sending. They label the '
+                      'message and colour its pin on the map.',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,

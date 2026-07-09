@@ -32,11 +32,16 @@ class MapScreen extends ConsumerStatefulWidget {
     required this.groupId,
     required this.groupName,
     this.focusMessageId,
+    this.backLabel = 'Chat',
     super.key,
   });
 
   final String groupId;
   final String groupName;
+
+  /// Label on the back control, so the map reads correctly whether it was
+  /// opened from a chat or from the Map tab.
+  final String backLabel;
 
   /// When set, the map centers on this point and opens its detail sheet once
   /// the pins are ready. Used when arriving from a point's mini-map.
@@ -59,6 +64,9 @@ class MapScreen extends ConsumerStatefulWidget {
         'type': 'raster',
         'tiles': [_esriTiles],
         'tileSize': 256,
+        // Esri imagery stops at ~z19; cap the source so MapLibre overzooms
+        // (stretches) the last tiles instead of showing blank ones past it.
+        'maxzoom': 19,
         'attribution': 'Imagery (c) Esri',
       },
     },
@@ -86,6 +94,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _pendingInitialCenter = false;
   List<Message> _pointMessages = const [];
   Map<String, HotKey> _hotKeysById = const {};
+  List<_LegendEntry> _legend = const [];
+  final Set<String> _hiddenTags = {};
+
+  static const _othersKey = '__others__';
 
   @override
   void initState() {
@@ -213,6 +225,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             bottom: 100,
             child: _RecenterButton(onTap: () => unawaited(_recenter())),
           ),
+          Positioned(
+            left: 16,
+            bottom: 100,
+            child: _BasemapToggle(
+              satellite: _satellite,
+              onTap: _toggleBasemap,
+            ),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(10),
@@ -220,8 +240,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 children: [
                   _MapHeader(
                     groupName: widget.groupName,
-                    satellite: _satellite,
-                    onToggleBasemap: _toggleBasemap,
+                    backLabel: widget.backLabel,
                   ),
                   const SizedBox(height: 8),
                   Material(
@@ -245,9 +264,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 44,
+              bottom: _legend.isEmpty ? 44 : 70,
               child: Center(
                 child: _ZoomToAreaPill(onTap: () => unawaited(_frameAoi())),
+              ),
+            ),
+          if (_legend.isNotEmpty)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _LegendBar(
+                entries: _legend,
+                hidden: _hiddenTags,
+                onToggle: (key) => unawaited(_toggleTag(key)),
               ),
             ),
         ],
@@ -585,14 +615,63 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await _controller?.setGeoJsonSource('points', await _featureCollection());
   }
 
+  /// Shows or hides a tag's points on the map from the legend.
+  Future<void> _toggleTag(String key) async {
+    setState(() {
+      if (!_hiddenTags.remove(key)) _hiddenTags.add(key);
+    });
+    await _refreshPins();
+  }
+
   Future<Map<String, dynamic>> _featureCollection() async {
     final db = ref.read(databaseProvider);
     final messages = await db.messagesFor(widget.groupId);
     final hotKeys = await db.hotKeysFor(widget.groupId);
     final hotKeyIds = {for (final h in hotKeys) h.id};
-    final byId = {for (final m in messages) m.id: m};
 
-    final collection = buildFeatureCollection(messages, hotKeys);
+    String keyFor(Message m) {
+      final tag = m.tagId;
+      return tag != null && hotKeyIds.contains(tag) ? tag : _othersKey;
+    }
+
+    // Live per-tag counts over located points, plus an "Others" bucket for
+    // untagged ones, feeding the map legend.
+    final counts = <String, int>{};
+    for (final m in messages) {
+      if (m.lat == null || m.lng == null || m.deletedAt != null) continue;
+      counts.update(keyFor(m), (v) => v + 1, ifAbsent: () => 1);
+    }
+    final legend = <_LegendEntry>[
+      for (final h in hotKeys)
+        if ((counts[h.id] ?? 0) > 0)
+          _LegendEntry(
+            tagKey: h.id,
+            label: h.label,
+            color: Color(h.colorValue),
+            count: counts[h.id]!,
+          ),
+      if ((counts[_othersKey] ?? 0) > 0)
+        _LegendEntry(
+          tagKey: _othersKey,
+          label: 'Others',
+          color: AppColors.textMuted,
+          count: counts[_othersKey]!,
+        ),
+    ];
+    if (mounted) setState(() => _legend = legend);
+
+    // Drop points whose tag the user has toggled off.
+    final visible = [
+      for (final m in messages)
+        if (!(m.lat != null &&
+            m.lng != null &&
+            m.deletedAt == null &&
+            _hiddenTags.contains(keyFor(m))))
+          m,
+    ];
+    final byId = {for (final m in visible) m.id: m};
+
+    final collection = buildFeatureCollection(visible, hotKeys);
     final features = collection['features'] as List;
     final ordered = <Message>[];
     for (var i = 0; i < features.length; i++) {
@@ -708,7 +787,7 @@ class _ZoomToAreaPill extends StatelessWidget {
               Icon(Icons.crop_free, size: 18, color: AppColors.amber),
               SizedBox(width: 8),
               Text(
-                'Zoom to task area',
+                'Zoom to mapping area',
                 style: TextStyle(
                   color: AppColors.ink,
                   fontSize: 14,
@@ -724,15 +803,10 @@ class _ZoomToAreaPill extends StatelessWidget {
 }
 
 class _MapHeader extends StatelessWidget {
-  const _MapHeader({
-    required this.groupName,
-    required this.satellite,
-    required this.onToggleBasemap,
-  });
+  const _MapHeader({required this.groupName, required this.backLabel});
 
   final String groupName;
-  final bool satellite;
-  final VoidCallback onToggleBasemap;
+  final String backLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -746,14 +820,18 @@ class _MapHeader extends StatelessWidget {
           children: [
             InkWell(
               onTap: () => Navigator.of(context).maybePop(),
-              child: const Padding(
-                padding: EdgeInsets.all(4),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
                 child: Row(
                   children: [
-                    Icon(Icons.chevron_left, size: 18, color: AppColors.ink),
+                    const Icon(
+                      Icons.chevron_left,
+                      size: 18,
+                      color: AppColors.ink,
+                    ),
                     Text(
-                      'Chat',
-                      style: TextStyle(
+                      backLabel,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),
@@ -774,19 +852,156 @@ class _MapHeader extends StatelessWidget {
                 ),
               ),
             ),
-            InkWell(
-              onTap: onToggleBasemap,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  satellite ? Icons.map_outlined : Icons.satellite_alt_outlined,
-                  size: 20,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One entry in the map legend: a quick tag (or the "Others" bucket) with its
+/// colour and how many points carry it.
+class _LegendEntry {
+  const _LegendEntry({
+    required this.tagKey,
+    required this.label,
+    required this.color,
+    required this.count,
+  });
+
+  final String tagKey;
+  final String label;
+  final Color color;
+  final int count;
+}
+
+/// A horizontal legend and filter at the bottom of the map: each quick tag with
+/// its live count, tapped to show or hide those points. Everything shows by
+/// default; deselecting a tag hides it and untagged points fall under "Others".
+class _LegendBar extends StatelessWidget {
+  const _LegendBar({
+    required this.entries,
+    required this.hidden,
+    required this.onToggle,
+  });
+
+  final List<_LegendEntry> entries;
+  final Set<String> hidden;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.white.withValues(alpha: 0.96),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          child: SizedBox(
+            height: 34,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: entries.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 7),
+              itemBuilder: (context, i) {
+                final entry = entries[i];
+                final on = !hidden.contains(entry.tagKey);
+                return InkWell(
+                  onTap: () => onToggle(entry.tagKey),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: on
+                          ? entry.color.withValues(alpha: 0.16)
+                          : AppColors.mist,
+                      border: Border.all(
+                        color: on
+                            ? entry.color.withValues(alpha: 0.55)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: on ? entry.color : AppColors.textFaint,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${entry.label} · ${entry.count}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: on ? AppColors.ink : AppColors.textFaint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A Google-style basemap switch: a small tile previewing the mode you would
+/// switch to (satellite while on the street map, and the street map while on
+/// satellite), with a label.
+class _BasemapToggle extends StatelessWidget {
+  const _BasemapToggle({required this.satellite, required this.onTap});
+
+  final bool satellite;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final toSatellite = !satellite;
+    return Material(
+      color: AppColors.white,
+      elevation: 3,
+      shadowColor: AppColors.ink.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: AppColors.mist),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(11, 9, 14, 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                toSatellite ? Icons.satellite_alt : Icons.map_outlined,
+                size: 18,
+                color: AppColors.ink,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                toSatellite ? 'Satellite' : 'Map',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.ink,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

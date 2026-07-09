@@ -91,7 +91,10 @@ class _GpsDetailSheetState extends ConsumerState<_GpsDetailSheet>
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            Text('GPS detail', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Your location',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSpacing.md),
             if (location == null)
               const Padding(
@@ -174,7 +177,7 @@ class _QualityBanner extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            strong ? 'Strong fix' : 'Weak fix',
+            strong ? 'GPS strong' : 'GPS weak',
             style: TextStyle(fontWeight: FontWeight.w700, color: tone),
           ),
           const Spacer(),
