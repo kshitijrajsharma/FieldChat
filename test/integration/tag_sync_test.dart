@@ -145,13 +145,12 @@ Future<_Device> _makeDevice(
   MessageTransport transport,
   InMemoryBlobStore blobs, {
   IdentityKeys? identity,
-}) async =>
-    _Device(
-      userId,
-      identity ?? await IdentityKeys.generate(),
-      transport,
-      blobs,
-    );
+}) async => _Device(
+  userId,
+  identity ?? await IdentityKeys.generate(),
+  transport,
+  blobs,
+);
 
 Future<Set<String>> _tagLabels(_Device device, String groupId) async =>
     (await device.db.hotKeysFor(groupId)).map((t) => t.label).toSet();
@@ -206,8 +205,7 @@ void main() {
 
     await _waitFor(() async {
       final labels = await _tagLabels(joiner, group.id);
-      return labels.length == 2 &&
-          labels.containsAll({'Graffiti', 'Pothole'});
+      return labels.length == 2 && labels.containsAll({'Graffiti', 'Pothole'});
     });
   });
 
@@ -277,9 +275,9 @@ void main() {
     );
 
     await _waitFor(() async {
-      final located = (await joiner.db.messagesFor(group.id))
-          .where((m) => m.lat != null && m.lng != null)
-          .toList();
+      final located = (await joiner.db.messagesFor(
+        group.id,
+      )).where((m) => m.lat != null && m.lng != null).toList();
       return located.length == 1;
     });
   });
@@ -323,12 +321,12 @@ void main() {
     );
 
     await _waitFor(() async {
-      final labels = (await rejoined.db.hotKeysFor(group.id))
-          .map((t) => t.label)
-          .toSet();
-      final points = (await rejoined.db.messagesFor(group.id))
-          .where((m) => m.lat != null)
-          .length;
+      final labels = (await rejoined.db.hotKeysFor(
+        group.id,
+      )).map((t) => t.label).toSet();
+      final points = (await rejoined.db.messagesFor(
+        group.id,
+      )).where((m) => m.lat != null).length;
       return labels.containsAll({'Alpha', 'Beta'}) && points == 1;
     });
   });

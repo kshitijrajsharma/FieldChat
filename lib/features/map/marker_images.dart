@@ -110,10 +110,15 @@ Future<Uint8List> buildHeadingConeImage({
     )
     ..close();
 
-  final shader = ui.Gradient.radial(apex, radius, [
-    color.withValues(alpha: 0.55),
-    color.withValues(alpha: 0),
-  ], [0, 1]);
+  final shader = ui.Gradient.radial(
+    apex,
+    radius,
+    [
+      color.withValues(alpha: 0.55),
+      color.withValues(alpha: 0),
+    ],
+    [0, 1],
+  );
   canvas.drawPath(wedge, Paint()..shader = shader);
 
   final image = await recorder.endRecording().toImage(

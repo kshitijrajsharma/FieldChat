@@ -48,8 +48,7 @@ Future<_Device> _makeDevice(
   String userId,
   InMemoryTransport transport,
   InMemoryBlobStore blobs,
-) async =>
-    _Device(userId, await IdentityKeys.generate(), transport, blobs);
+) async => _Device(userId, await IdentityKeys.generate(), transport, blobs);
 
 Future<void> _waitFor(
   Future<bool> Function() condition, {

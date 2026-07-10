@@ -323,9 +323,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                   const SizedBox(height: AppSpacing.md),
                   _NoteTitle(
                     text: message.body!,
-                    onTap: canEdit
-                        ? () => _startNoteEdit(message.body!)
-                        : null,
+                    onTap: canEdit ? () => _startNoteEdit(message.body!) : null,
                   ),
                 ] else if (canEdit) ...[
                   const SizedBox(height: AppSpacing.md),

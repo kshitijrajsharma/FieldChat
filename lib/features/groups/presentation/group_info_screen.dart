@@ -813,8 +813,10 @@ class _ModerationCard extends StatelessWidget {
                 color: AppColors.ink,
               ),
               title: const Text('Allow everyone to export'),
-              subtitle: const Text('Members can download the data, not just '
-                  'admins'),
+              subtitle: const Text(
+                'Members can download the data, not just '
+                'admins',
+              ),
               value: allowMemberExport,
               onChanged: onToggleMemberExport,
             ),
@@ -825,8 +827,10 @@ class _ModerationCard extends StatelessWidget {
                 color: AppColors.ink,
               ),
               title: const Text('Allow members to place points'),
-              subtitle: const Text('Off means members can only send their '
-                  'live GPS point'),
+              subtitle: const Text(
+                'Off means members can only send their '
+                'live GPS point',
+              ),
               value: allowMemberPlace,
               onChanged: onToggleMemberPlace,
             ),
@@ -837,8 +841,10 @@ class _ModerationCard extends StatelessWidget {
                 color: AppColors.ink,
               ),
               title: const Text('Allow everyone to add or delete tags'),
-              subtitle: const Text('Off means only admins change the quick '
-                  'tags'),
+              subtitle: const Text(
+                'Off means only admins change the quick '
+                'tags',
+              ),
               value: allowMemberTags,
               onChanged: onToggleMemberTags,
             ),
@@ -850,8 +856,10 @@ class _ModerationCard extends StatelessWidget {
                   color: AppColors.ink,
                 ),
                 title: const Text('Allow points outside the area'),
-                subtitle: const Text('Off blocks sending beyond the mapping '
-                    'area'),
+                subtitle: const Text(
+                  'Off blocks sending beyond the mapping '
+                  'area',
+                ),
                 value: allowOutsideArea,
                 onChanged: onToggleOutsideArea,
               ),
@@ -1508,8 +1516,10 @@ class _ManageCard extends StatelessWidget {
                 color: AppColors.ink,
               ),
               title: const Text('Make available offline'),
-              subtitle: const Text('Save the map here so it works with no '
-                  'signal'),
+              subtitle: const Text(
+                'Save the map here so it works with no '
+                'signal',
+              ),
               trailing: caching
                   ? const SizedBox(
                       width: 18,

@@ -45,13 +45,12 @@ Future<_Device> _makeDevice(
   InMemoryTransport transport,
   InMemoryBlobStore blobs, {
   IdentityKeys? identity,
-}) async =>
-    _Device(
-      userId,
-      identity ?? await IdentityKeys.generate(),
-      transport,
-      blobs,
-    );
+}) async => _Device(
+  userId,
+  identity ?? await IdentityKeys.generate(),
+  transport,
+  blobs,
+);
 
 Future<void> _waitFor(
   Future<bool> Function() condition, {
@@ -138,9 +137,9 @@ void main() {
     );
 
     await _waitFor(() async {
-      final labels = (await rejoined.db.hotKeysFor(group.id))
-          .map((t) => t.label)
-          .toSet();
+      final labels = (await rejoined.db.hotKeysFor(
+        group.id,
+      )).map((t) => t.label).toSet();
       return labels.containsAll({'Tree', 'Bin'});
     });
   });

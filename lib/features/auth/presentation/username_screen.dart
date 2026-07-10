@@ -89,7 +89,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                 decoration: InputDecoration(
                   prefixText: '@',
                   hintText: 'ward7_mapper',
-                  helperText: '3 to 20 characters. Lowercase letters, numbers '
+                  helperText:
+                      '3 to 20 characters. Lowercase letters, numbers '
                       'and _.',
                   errorText: _error,
                   contentPadding: const EdgeInsets.symmetric(

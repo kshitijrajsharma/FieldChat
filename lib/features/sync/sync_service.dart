@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:cryptography/cryptography.dart' show SecretBoxAuthenticationError;
+import 'package:cryptography/cryptography.dart'
+    show SecretBoxAuthenticationError;
 import 'package:drift/drift.dart';
 import 'package:fieldchat/data/local/database.dart';
 import 'package:fieldchat/features/capture/gps_gate.dart';

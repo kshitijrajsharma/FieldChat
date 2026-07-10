@@ -54,9 +54,9 @@ void main() {
     );
 
     // Once drained, the encrypted blob is on the store keyed by its media id.
-    Future<String> mediaIdOf() async => (await db.messagesFor(group.id))
-        .firstWhere((m) => m.id == messageId)
-        .mediaId!;
+    Future<String> mediaIdOf() async => (await db.messagesFor(
+      group.id,
+    )).firstWhere((m) => m.id == messageId).mediaId!;
     await _waitFor(() async => await blobs.get(await mediaIdOf()) != null);
     final mediaId = await mediaIdOf();
 

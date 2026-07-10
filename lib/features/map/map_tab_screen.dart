@@ -65,8 +65,7 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
             myLocationEnabled: true,
             myLocationRenderMode: MyLocationRenderMode.compass,
             onMapCreated: (controller) =>
-                _controller = controller
-                  ..onFeatureTapped.add(_onFeatureTapped),
+                _controller = controller..onFeatureTapped.add(_onFeatureTapped),
             onStyleLoadedCallback: _onStyleLoaded,
             onUserLocationUpdated: (location) => _myLocation = LatLng(
               location.position.latitude,
@@ -602,8 +601,7 @@ Map<String, dynamic> _radiusRingFeature(LatLng center, double km) {
         center.longitude +
             (metres * math.sin(2 * math.pi * i / steps)) /
                 (111320 * math.cos(latRad)),
-        center.latitude +
-            (metres * math.cos(2 * math.pi * i / steps)) / 111320,
+        center.latitude + (metres * math.cos(2 * math.pi * i / steps)) / 111320,
       ],
   ];
   return {

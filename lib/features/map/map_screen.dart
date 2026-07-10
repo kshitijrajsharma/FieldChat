@@ -805,7 +805,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // The Mine/All switch filters the map (and its legend counts) by author.
     final selfId = ref.read(currentUserIdProvider);
     final messages = _mineOnly
-        ? [for (final m in all) if (m.senderId == selfId) m]
+        ? [
+            for (final m in all)
+              if (m.senderId == selfId) m,
+          ]
         : all;
     final hotKeys = await db.hotKeysFor(widget.groupId);
     final hotKeyIds = {for (final h in hotKeys) h.id};
