@@ -736,37 +736,37 @@ class _HotKeyBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (hotKeys.isEmpty) return const SizedBox.shrink();
     final showMore = hotKeys.length > 6;
-    final chips = Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-      child: SizedBox(
-        height: 36,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: hotKeys.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 7),
-          itemBuilder: (context, i) {
-            final hotKey = hotKeys[i];
-            return HotKeyChip(
-              label: hotKey.label,
-              color: Color(hotKey.colorValue),
-              icon: hotKeyIcon(hotKey.iconName),
-              selected: hotKey.id == selectedId,
-              onTap: () => onSelect(hotKey.id),
-            );
-          },
-        ),
+    final tagList = SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: hotKeys.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 7),
+        itemBuilder: (context, i) {
+          final hotKey = hotKeys[i];
+          return HotKeyChip(
+            label: hotKey.label,
+            color: Color(hotKey.colorValue),
+            icon: hotKeyIcon(hotKey.iconName),
+            selected: hotKey.id == selectedId,
+            onTap: () => onSelect(hotKey.id),
+          );
+        },
       ),
     );
-    if (!showMore) return chips;
-    // The handle floats on the thread background above the white chip bar, the
-    // way the map's expand pill sits over the map, so no white band frames it.
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _MoreTagsHandle(onOpen: () => unawaited(_pickTag(context))),
-        const SizedBox(height: 4),
-        chips,
-      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      // With many tags, the row keeps to one line and a grid button pinned at
+      // the end opens the full set, so nothing sits in a bar above the tags.
+      child: showMore
+          ? Row(
+              children: [
+                Expanded(child: tagList),
+                const SizedBox(width: 8),
+                _MoreTagsButton(onTap: () => unawaited(_pickTag(context))),
+              ],
+            )
+          : tagList,
     );
   }
 
@@ -783,54 +783,27 @@ class _HotKeyBar extends StatelessWidget {
   }
 }
 
-/// A compact chevron pill above the tag row when there are many tags. Drag it
-/// up or tap it to open the full tag drawer, which drags back down to close.
-class _MoreTagsHandle extends StatefulWidget {
-  const _MoreTagsHandle({required this.onOpen});
+/// A compact grid button pinned at the end of the tag row when there are many
+/// tags. Tapping it opens the full set of tags as a grid.
+class _MoreTagsButton extends StatelessWidget {
+  const _MoreTagsButton({required this.onTap});
 
-  final VoidCallback onOpen;
-
-  @override
-  State<_MoreTagsHandle> createState() => _MoreTagsHandleState();
-}
-
-class _MoreTagsHandleState extends State<_MoreTagsHandle> {
-  double _dragY = 0;
-  bool _opened = false;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: widget.onOpen,
-      onVerticalDragStart: (_) {
-        _dragY = 0;
-        _opened = false;
-      },
-      onVerticalDragUpdate: (details) {
-        _dragY += details.delta.dy;
-        if (!_opened && _dragY < -12) {
-          _opened = true;
-          widget.onOpen();
-        }
-      },
-      onVerticalDragEnd: (details) {
-        if (!_opened && (details.primaryVelocity ?? 0) < -100) {
-          widget.onOpen();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        color: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 2),
-          decoration: BoxDecoration(
-            color: AppColors.mist,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            Icons.keyboard_arrow_up,
-            size: 20,
+    return Material(
+      color: AppColors.mist,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 36,
+          height: 36,
+          child: Icon(
+            Icons.grid_view_rounded,
+            size: 18,
             color: AppColors.ink,
           ),
         ),
@@ -883,35 +856,25 @@ class _TagPickerSheet extends StatelessWidget {
               ),
             ),
             Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final hotKey in hotKeys)
-                    ListTile(
-                      onTap: () {
-                        onSelect(hotKey.id);
-                        Navigator.of(context).pop();
-                      },
-                      leading: CircleAvatar(
-                        radius: 13,
-                        backgroundColor: Color(hotKey.colorValue),
-                        child: hotKeyIcon(hotKey.iconName) == null
-                            ? null
-                            : Icon(
-                                hotKeyIcon(hotKey.iconName),
-                                size: 15,
-                                color: AppColors.white,
-                              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final hotKey in hotKeys)
+                      HotKeyChip(
+                        label: hotKey.label,
+                        color: Color(hotKey.colorValue),
+                        icon: hotKeyIcon(hotKey.iconName),
+                        selected: hotKey.id == selectedId,
+                        onTap: () {
+                          onSelect(hotKey.id);
+                          Navigator.of(context).pop();
+                        },
                       ),
-                      title: Text(
-                        hotKey.label,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      trailing: hotKey.id == selectedId
-                          ? const Icon(Icons.check, color: AppColors.ink)
-                          : null,
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 8),

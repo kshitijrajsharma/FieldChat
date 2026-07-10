@@ -161,7 +161,6 @@ class SupabasePublicDirectory implements PublicDirectory {
               for (final tag in tags)
                 DirectoryTag.fromJson(tag as Map<String, dynamic>),
             ],
-      mapperCount: (row['mapper_count'] as num?)?.toInt() ?? 0,
       aoiGeoJson: row['aoi'] as String?,
       joinApproval: row['join_approval'] as bool? ?? false,
       distanceM: distanceM,

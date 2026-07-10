@@ -63,7 +63,6 @@ void main() {
         centerLat: 27.70,
         centerLng: 85.30,
         encKey: 'k',
-        mapperCount: 3,
         aoiGeoJson: '{"type":"Polygon"}',
         tags: [
           DirectoryTag(label: 'Bin', colorValue: 42, iconName: 'delete'),
@@ -73,7 +72,6 @@ void main() {
 
     final found = (await dir.nearby(lat: 27.70, lng: 85.30)).single;
 
-    expect(found.mapperCount, 3);
     expect(found.aoiGeoJson, '{"type":"Polygon"}');
     expect(found.tags.single.label, 'Bin');
     expect(found.tags.single.iconName, 'delete');

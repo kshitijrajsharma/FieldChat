@@ -47,8 +47,8 @@ Future<void> publishGroupListing(
 }
 
 /// Republishes the listing for a public group when the caller is an admin, so
-/// the nearby preview stays in step as points and mappers change. A no-op for
-/// private groups, non-admins, or groups with no locatable centre.
+/// the nearby preview stays in step with the group's name, tags, and area. A
+/// no-op for private groups, non-admins, or groups with no locatable centre.
 Future<void> refreshPublicListing(WidgetRef ref, String groupId) async {
   final db = ref.read(databaseProvider);
   final group = await db.groupById(groupId);

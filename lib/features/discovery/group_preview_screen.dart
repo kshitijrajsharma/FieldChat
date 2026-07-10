@@ -196,16 +196,6 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
                   Center(
                     child: GroupPlaceLine(group: group, units: units),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Center(
-                    child: Text(
-                      _mappersLine(group.mapperCount),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
                   if (group.tags.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.lg),
                     Wrap(
@@ -286,9 +276,5 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
       case _RequestState.joining:
         return const PrimaryButton(label: 'Joining…', loading: true);
     }
-  }
-
-  String _mappersLine(int count) {
-    return count == 1 ? '1 mapper' : '$count mappers';
   }
 }

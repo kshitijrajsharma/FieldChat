@@ -87,6 +87,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _styledOnce = false;
   bool _paintedOnce = false;
   bool _pointsSettled = false;
+  bool _mapStyled = false;
   bool _satellite = false;
   final Set<String> _pinImageKeys = {};
   String? _aoiGeoJson;
@@ -106,11 +107,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
     unawaited(_startTracking());
-    // Failsafe: never leave the loading chip up if the style load stalls.
+    // Failsafes: never leave a loading overlay up if a load stalls. The map
+    // cover waits longer because a cold style fetch can be slow.
     unawaited(
       Future<void>.delayed(const Duration(seconds: 6)).then((_) {
         if (mounted && !_pointsSettled) {
           setState(() => _pointsSettled = true);
+        }
+      }),
+    );
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 15)).then((_) {
+        if (mounted && !_mapStyled) {
+          setState(() => _mapStyled = true);
         }
       }),
     );
@@ -265,7 +274,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
             onCameraIdle: () => unawaited(_onCameraIdle()),
           ),
-          if (!_pointsSettled)
+          if (!_mapStyled)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: AppColors.mist,
+                child: Center(child: _MapLoadingChip(label: 'Loading map…')),
+              ),
+            )
+          else if (!_pointsSettled)
             const Positioned.fill(
               child: IgnorePointer(child: Center(child: _MapLoadingChip())),
             ),
@@ -355,12 +371,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _paintedOnce = false;
     // A style reload drops the registered images, so let them be re-added.
     _pinImageKeys.clear();
-    setState(() => _satellite = !_satellite);
+    // Cover the map again until the new style paints, not a black flash.
+    setState(() {
+      _satellite = !_satellite;
+      _mapStyled = false;
+    });
   }
 
   Future<void> _onStyleLoaded() async {
     final controller = _controller;
     if (controller == null) return;
+    // The style has loaded, so its background layer now paints instead of the
+    // bare (black) GL surface: drop the neutral loading cover.
+    if (mounted && !_mapStyled) setState(() => _mapStyled = true);
 
     final group = await ref.read(databaseProvider).groupById(widget.groupId);
     final aoi = group?.aoiGeoJson;
@@ -937,7 +960,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 /// A small centred chip shown over the map while the points are loading in, so
 /// an empty-looking map reads as loading rather than broken.
 class _MapLoadingChip extends StatelessWidget {
-  const _MapLoadingChip();
+  const _MapLoadingChip({this.label = 'Loading points…'});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -945,12 +970,12 @@ class _MapLoadingChip extends StatelessWidget {
       color: AppColors.white,
       borderRadius: BorderRadius.circular(22),
       elevation: 3,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(
@@ -958,10 +983,10 @@ class _MapLoadingChip extends StatelessWidget {
                 color: AppColors.amber,
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
-              'Loading points…',
-              style: TextStyle(
+              label,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
