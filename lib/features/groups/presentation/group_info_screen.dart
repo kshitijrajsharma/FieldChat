@@ -8,6 +8,7 @@ import 'package:fieldchat/data/local/database_provider.dart';
 import 'package:fieldchat/design/app_colors.dart';
 import 'package:fieldchat/design/app_spacing.dart';
 import 'package:fieldchat/features/auth/application/auth_providers.dart';
+import 'package:fieldchat/features/discovery/listing_publisher.dart';
 import 'package:fieldchat/features/discovery/public_directory.dart';
 import 'package:fieldchat/features/export/geojson.dart';
 import 'package:fieldchat/features/groups/group_member_view.dart';
@@ -46,30 +47,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(_refreshPublicListing());
+    unawaited(refreshPublicListing(ref, widget.groupId));
   }
 
   Future<Group?> _loadGroup() =>
       ref.read(databaseProvider).groupById(widget.groupId);
-
-  /// When an admin opens a public group, republishes its directory listing so
-  /// the nearby preview reflects points and tags added since it was last
-  /// published, instead of a stale "no one has added points yet".
-  Future<void> _refreshPublicListing() async {
-    final group = await ref.read(databaseProvider).groupById(widget.groupId);
-    if (!mounted || group == null || !group.isPublic) return;
-    final selfId = ref.read(currentUserIdProvider);
-    final members = await ref.read(
-      groupMembersProvider(widget.groupId).future,
-    );
-    if (!mounted ||
-        !members.any((m) => m.profileId == selfId && m.isAdmin)) {
-      return;
-    }
-    final center = await _groupCenter(widget.groupId, group.aoiGeoJson);
-    if (!mounted || center == null) return;
-    await _publishToDirectory(group, center);
-  }
 
   /// Runs a group mutation while showing the top progress bar, so a save that
   /// waits on the network reads as working rather than stuck.
@@ -249,44 +231,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     _reload();
   });
 
-  /// Writes the group's public listing (name, description, centre) to the
-  /// directory. Called when going public and again when the description changes
-  /// while public, so the nearby list stays current.
-  Future<void> _publishToDirectory(Group group, (double, double) center) async {
-    final db = ref.read(databaseProvider);
-    final hotKeys = await db.hotKeysFor(group.id);
-    final members = await ref.read(groupMembersProvider(group.id).future);
-    final memberCount = members.length;
-    final photo = group.photo;
-    await ref
-        .read(publicDirectoryProvider)
-        .publish(
-          PublicGroup(
-            groupId: group.id,
-            name: group.name,
-            description: group.description,
-            centerLat: center.$1,
-            centerLng: center.$2,
-            // Approval-gated groups withhold the key so joining requires an
-            // admin to seal it back to the approved requester.
-            encKey: group.joinApproval ? '' : group.encKey,
-            joinApproval: group.joinApproval,
-            photo: photo == null
-                ? null
-                : squareJpegThumbnail(photo, size: 256, quality: 75),
-            tags: [
-              for (final hotKey in hotKeys)
-                DirectoryTag(
-                  label: hotKey.label,
-                  colorValue: hotKey.colorValue,
-                  iconName: hotKey.iconName,
-                ),
-            ],
-            memberCount: memberCount,
-            aoiGeoJson: group.aoiGeoJson,
-          ),
-        );
-  }
+  /// Writes the group's public listing to the directory. Called when going
+  /// public and again when the description changes while public, so the nearby
+  /// list stays current.
+  Future<void> _publishToDirectory(Group group, (double, double) center) =>
+      publishGroupListing(ref, group, center);
 
   /// The group's map centre: the area's midpoint, else the average of its
   /// points. Null when the group has neither, so it cannot be located.

@@ -25,8 +25,7 @@ class SupabasePublicDirectory implements PublicDirectory {
       'enc_key': group.encKey,
       'photo': group.photo == null ? null : base64Encode(group.photo!),
       'tags': group.tags.map((t) => t.toJson()).toList(),
-      // Column name is legacy; the value it carries is the member count.
-      'mapper_count': group.memberCount,
+      'mapper_count': group.mapperCount,
       'aoi': group.aoiGeoJson,
       'join_approval': group.joinApproval,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -163,7 +162,7 @@ class SupabasePublicDirectory implements PublicDirectory {
               for (final tag in tags)
                 DirectoryTag.fromJson(tag as Map<String, dynamic>),
             ],
-      memberCount: (row['mapper_count'] as num?)?.toInt() ?? 0,
+      mapperCount: (row['mapper_count'] as num?)?.toInt() ?? 0,
       aoiGeoJson: row['aoi'] as String?,
       joinApproval: row['join_approval'] as bool? ?? false,
       distanceM: distanceM,

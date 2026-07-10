@@ -199,7 +199,7 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   Center(
                     child: Text(
-                      _membersLine(group.memberCount),
+                      _mappersLine(group.mapperCount),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -288,7 +288,7 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
     }
   }
 
-  String _membersLine(int count) {
-    return count <= 1 ? '1 member' : '$count members';
+  String _mappersLine(int count) {
+    return count == 1 ? '1 mapper' : '$count mappers';
   }
 }

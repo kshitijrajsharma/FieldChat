@@ -41,7 +41,7 @@ class PublicGroup {
     this.description,
     this.photo,
     this.tags = const [],
-    this.memberCount = 0,
+    this.mapperCount = 0,
     this.aoiGeoJson,
     this.joinApproval = false,
     this.distanceM,
@@ -56,9 +56,9 @@ class PublicGroup {
   final Uint8List? photo;
   final List<DirectoryTag> tags;
 
-  /// People in the group, shown on the public preview. Changes rarely, so it
-  /// stays close to current between the moments the listing is republished.
-  final int memberCount;
+  /// Distinct people who have posted in the group (its mappers), shown on the
+  /// public preview and kept in step with the group as the listing republishes.
+  final int mapperCount;
   final String? aoiGeoJson;
 
   /// When true the key is withheld from the listing; joining needs an admin's
@@ -79,7 +79,7 @@ class PublicGroup {
     description: description,
     photo: photo,
     tags: tags,
-    memberCount: memberCount,
+    mapperCount: mapperCount,
     aoiGeoJson: aoiGeoJson,
     joinApproval: joinApproval,
     distanceM: meters,

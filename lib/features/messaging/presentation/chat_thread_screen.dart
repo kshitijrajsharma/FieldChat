@@ -12,6 +12,7 @@ import 'package:fieldchat/features/auth/application/auth_state.dart';
 import 'package:fieldchat/features/capture/gps_gate.dart';
 import 'package:fieldchat/features/capture/presentation/live_gps_strip.dart';
 import 'package:fieldchat/features/capture/staged_point.dart';
+import 'package:fieldchat/features/discovery/listing_publisher.dart';
 import 'package:fieldchat/features/export/geojson.dart';
 import 'package:fieldchat/features/groups/hot_key_icons.dart';
 import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
@@ -67,16 +68,24 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
   void initState() {
     super.initState();
     _stagedPoint = widget.stagedPoint;
-    // Pull anything published while this thread was closed, on open.
-    unawaited(ref.read(syncServiceProvider).catchUp(widget.groupId));
+    unawaited(_catchUpAndRepublish());
+  }
+
+  /// Pulls anything published while this thread was closed, then, for an admin
+  /// of a public group, republishes the directory listing so its nearby preview
+  /// (mapper count included) stays in step with the group.
+  Future<void> _catchUpAndRepublish() async {
+    await ref.read(syncServiceProvider).catchUp(widget.groupId);
+    if (!mounted) return;
+    await refreshPublicListing(ref, widget.groupId);
   }
 
   /// The header subtitle: a live tally of mapped points and contributors.
   String _statsLabel(int points, int mappers) {
     if (points == 0) return 'No points yet';
     final pointText = points == 1 ? '1 point' : '$points points';
-    final peopleText = mappers == 1 ? '1 person' : '$mappers people';
-    return '$pointText · $peopleText';
+    final mapperText = mappers == 1 ? '1 mapper' : '$mappers mappers';
+    return '$pointText · $mapperText';
   }
 
   /// Fetches the group's full history and reconciles any gap, for the pull to
@@ -773,8 +782,8 @@ class _HotKeyBar extends StatelessWidget {
   }
 }
 
-/// A slim grabber above the tag row when there are many tags. Drag it up or tap
-/// it to open the full tag drawer, which drags back down to close.
+/// A compact chevron pill above the tag row when there are many tags. Drag it
+/// up or tap it to open the full tag drawer, which drags back down to close.
 class _MoreTagsHandle extends StatefulWidget {
   const _MoreTagsHandle({required this.onOpen});
 
@@ -810,14 +819,18 @@ class _MoreTagsHandleState extends State<_MoreTagsHandle> {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 9),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         color: Colors.transparent,
         child: Container(
-          width: 44,
-          height: 5,
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 2),
           decoration: BoxDecoration(
-            color: AppColors.textFaint,
-            borderRadius: BorderRadius.circular(2.5),
+            color: AppColors.mist,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.keyboard_arrow_up,
+            size: 20,
+            color: AppColors.ink,
           ),
         ),
       ),
