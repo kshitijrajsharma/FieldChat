@@ -28,8 +28,7 @@ What you can do:
 - Export points as GeoJSON or GPX.
 
 Hulaki is a personal, non-commercial project, open source under AGPL-3.0. It is
-provided as is, without warranty. Do not rely on it for navigation, emergency,
-or safety of life.
+provided as is, without warranty.
 
 ## Category and rating
 
