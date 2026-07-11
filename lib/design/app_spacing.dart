@@ -1,4 +1,4 @@
-/// Spacing scale used across FieldChat. One ramp, no ad-hoc values.
+/// Spacing scale used across Hulaki. One ramp, no ad-hoc values.
 abstract final class AppSpacing {
   const AppSpacing._();
 

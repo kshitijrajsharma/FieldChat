@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fieldchat/features/export/geojson.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/features/export/geojson.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 /// A small non-interactive map that frames a group's drawn area, shown in the

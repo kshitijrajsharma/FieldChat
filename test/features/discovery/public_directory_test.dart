@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
 
 void main() {
   PublicGroup at(String id, double lat, double lng) => PublicGroup(

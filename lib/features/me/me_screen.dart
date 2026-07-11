@@ -1,19 +1,21 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/auth/application/auth_state.dart';
-import 'package:fieldchat/features/map/offline_areas.dart';
-import 'package:fieldchat/features/map/offline_downloads.dart';
-import 'package:fieldchat/features/settings/background_run_provider.dart';
-import 'package:fieldchat/features/settings/privacy_provider.dart';
-import 'package:fieldchat/features/settings/units.dart';
-import 'package:fieldchat/features/settings/units_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/auth/application/auth_state.dart';
+import 'package:hulaki/features/map/offline_areas.dart';
+import 'package:hulaki/features/map/offline_downloads.dart';
+import 'package:hulaki/features/settings/background_run_provider.dart';
+import 'package:hulaki/features/settings/locale_provider.dart';
+import 'package:hulaki/features/settings/privacy_provider.dart';
+import 'package:hulaki/features/settings/units.dart';
+import 'package:hulaki/features/settings/units_provider.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// The account tab: who you are, the areas saved for offline use, and the
@@ -43,38 +45,43 @@ class _MeScreenState extends ConsumerState<MeScreen> {
     'https://github.com/sponsors/kshitijrajsharma',
   );
 
-  Future<void> _openSupport() async {
+  Future<void> _openSupport(String failureMessage) async {
     final ok = await launchUrl(
       _supportUri,
       mode: LaunchMode.externalApplication,
     );
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the link')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage)));
     }
   }
 
   /// The size-and-expiry line under a saved area, for example "12.4 MB ·
   /// expires in 21 days".
-  String _areaDetail(CachedArea area) {
-    final parts = <String>[_formatBytes(area.sizeBytes)];
+  String _areaDetail(AppLocalizations l10n, CachedArea area) {
+    final parts = <String>[_formatBytes(l10n, area.sizeBytes)];
     final expiresAt = area.expiresAt;
     if (expiresAt != null) {
       final days = expiresAt.difference(DateTime.now()).inDays;
-      parts.add(days <= 0 ? 'expires today' : 'expires in $days days');
+      parts.add(
+        days <= 0 ? l10n.meAreaExpiresToday : l10n.meAreaExpiresInDays(days),
+      );
     }
     return parts.join(' · ');
   }
 
-  String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  String _formatBytes(AppLocalizations l10n, int bytes) {
+    if (bytes < 1024) return l10n.meSizeBytes('$bytes');
+    if (bytes < 1024 * 1024) {
+      return l10n.meSizeKilobytes((bytes / 1024).toStringAsFixed(0));
+    }
+    return l10n.meSizeMegabytes((bytes / (1024 * 1024)).toStringAsFixed(1));
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authControllerProvider);
     final downloads = ref.watch(offlineDownloadsProvider);
     // A finished download leaves the active list, so reload the saved areas to
@@ -84,13 +91,16 @@ class _MeScreenState extends ConsumerState<MeScreen> {
     });
     final username = authState is AuthSignedIn
         ? authState.session.username
-        : 'You';
+        : l10n.commonYou;
     final units = ref.watch(unitsProvider);
     final version = ref.watch(appVersionProvider).asData?.value;
     return Scaffold(
       appBar: AppBar(
         titleSpacing: AppSpacing.lg,
-        title: Text('Me', style: Theme.of(context).textTheme.headlineSmall),
+        title: Text(
+          l10n.navMe,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -100,7 +110,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
             anonymous: ref.watch(appearAnonymousProvider),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('UNITS'),
+          _SectionLabel(l10n.meSectionUnits),
           const SizedBox(height: AppSpacing.sm),
           _Card(
             child: _UnitsToggle(
@@ -110,17 +120,21 @@ class _MeScreenState extends ConsumerState<MeScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('PRIVACY'),
+          _SectionLabel(l10n.meSectionLanguage),
+          const SizedBox(height: AppSpacing.sm),
+          const _Card(child: _LanguageTile()),
+          const SizedBox(height: AppSpacing.xl),
+          _SectionLabel(l10n.meSectionPrivacy),
           const SizedBox(height: AppSpacing.sm),
           _Card(
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Appear anonymous',
-                style: TextStyle(fontSize: 13),
+              title: Text(
+                l10n.meAppearAnonymous,
+                style: const TextStyle(fontSize: 13),
               ),
               subtitle: Text(
-                'Teammates see your points without your name.',
+                l10n.meAppearAnonymousSubtitle,
                 style: Theme.of(context).textTheme.labelSmall,
               ),
               value: ref.watch(appearAnonymousProvider),
@@ -130,18 +144,17 @@ class _MeScreenState extends ConsumerState<MeScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('BACKGROUND'),
+          _SectionLabel(l10n.meSectionBackground),
           const SizedBox(height: AppSpacing.sm),
           _Card(
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Run in background',
-                style: TextStyle(fontSize: 13),
+              title: Text(
+                l10n.meRunInBackground,
+                style: const TextStyle(fontSize: 13),
               ),
               subtitle: Text(
-                'Keep mapping with the screen off. A notification shows the '
-                'live GPS accuracy.',
+                l10n.meRunInBackgroundSubtitle,
                 style: Theme.of(context).textTheme.labelSmall,
               ),
               value: ref.watch(backgroundRunProvider),
@@ -151,7 +164,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('OFFLINE AREAS'),
+          _SectionLabel(l10n.meSectionOfflineAreas),
           const SizedBox(height: AppSpacing.sm),
           _Card(
             child: FutureBuilder<List<CachedArea>>(
@@ -171,12 +184,13 @@ class _MeScreenState extends ConsumerState<MeScreen> {
                   );
                 }
                 if (downloads.isEmpty && (areas == null || areas.isEmpty)) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
                     child: Text(
-                      'No areas saved yet. Open a group, then '
-                      '“Make available offline”.',
-                      style: TextStyle(
+                      l10n.meNoAreasSaved,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,
                       ),
@@ -193,7 +207,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
                     for (final area in areas ?? const <CachedArea>[])
                       _RegionRow(
                         name: area.name,
-                        detail: _areaDetail(area),
+                        detail: _areaDetail(l10n, area),
                         onRemove: () => _remove(area.id),
                       ),
                   ],
@@ -203,11 +217,11 @@ class _MeScreenState extends ConsumerState<MeScreen> {
           ),
           const _ArchivedGroups(),
           const SizedBox(height: AppSpacing.xl),
-          const _SectionLabel('SUPPORT'),
+          _SectionLabel(l10n.meSectionSupport),
           const SizedBox(height: AppSpacing.sm),
           _Card(
             child: InkWell(
-              onTap: _openSupport,
+              onTap: () => unawaited(_openSupport(l10n.meCouldNotOpenLink)),
               child: Row(
                 children: [
                   const Icon(
@@ -220,15 +234,15 @@ class _MeScreenState extends ConsumerState<MeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Support the developer',
-                          style: TextStyle(
+                        Text(
+                          l10n.meSupportTitle,
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
-                          'Star or sponsor the project on GitHub.',
+                          l10n.meSupportSubtitle,
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
                       ],
@@ -279,7 +293,8 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = username.isNotEmpty ? username : 'You';
+    final l10n = AppLocalizations.of(context);
+    final name = username.isNotEmpty ? username : l10n.commonYou;
     final initial = name.characters.first.toUpperCase();
     return _Card(
       child: Row(
@@ -340,7 +355,7 @@ class _ProfileCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                anonymous ? 'Anonymous mode on' : 'Signed in on this device',
+                anonymous ? l10n.meAnonymousModeOn : l10n.meSignedInOnDevice,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -361,19 +376,23 @@ class _UnitsToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
-        const Expanded(
-          child: Text('Distance and elevation', style: TextStyle(fontSize: 13)),
+        Expanded(
+          child: Text(
+            l10n.meDistanceAndElevation,
+            style: const TextStyle(fontSize: 13),
+          ),
         ),
         _Segment(
-          label: 'Metric',
+          label: l10n.meUnitsMetric,
           selected: units == UnitSystem.metric,
           onTap: () => onChanged(UnitSystem.metric),
         ),
         const SizedBox(width: 6),
         _Segment(
-          label: 'Imperial',
+          label: l10n.meUnitsImperial,
           selected: units == UnitSystem.imperial,
           onTap: () => onChanged(UnitSystem.imperial),
         ),
@@ -425,6 +444,7 @@ class _ArchivedGroups extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final groups =
         ref.watch(archivedGroupsProvider).asData?.value ?? const <Group>[];
     if (groups.isEmpty) return const SizedBox.shrink();
@@ -432,7 +452,7 @@ class _ArchivedGroups extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: AppSpacing.xl),
-        const _SectionLabel('ARCHIVED GROUPS'),
+        _SectionLabel(l10n.meSectionArchivedGroups),
         const SizedBox(height: AppSpacing.sm),
         _Card(
           child: Column(
@@ -453,7 +473,7 @@ class _ArchivedGroups extends ConsumerWidget {
                     onPressed: () => unawaited(
                       ref.read(groupServiceProvider).unarchiveGroup(group.id),
                     ),
-                    child: const Text('Restore'),
+                    child: Text(l10n.meRestore),
                   ),
                 ),
             ],
@@ -506,6 +526,7 @@ class _DownloadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final percent = (progress * 100).round();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -533,7 +554,7 @@ class _DownloadRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.md),
           Text(
-            '$percent%',
+            l10n.meDownloadPercent(percent),
             style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
           ),
         ],
@@ -571,5 +592,100 @@ class _Card extends StatelessWidget {
         child: child,
       ),
     );
+  }
+}
+
+/// Language row. The choices come from whichever ARB files ship in lib/l10n, so
+/// a new translation appears here with no code change.
+class _LanguageTile extends ConsumerWidget {
+  const _LanguageTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final selected = ref.watch(localeProvider);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        l10n.meLanguage,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        selected == null ? l10n.meLanguageSystem : l10n.languageName,
+        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.textFaint),
+      onTap: () => unawaited(_pickLanguage(context, ref)),
+    );
+  }
+
+  Future<void> _pickLanguage(BuildContext context, WidgetRef ref) async {
+    final names = await _languageNames();
+    if (!context.mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => _LanguageSheet(names: names),
+    );
+  }
+
+  /// Each language names itself, so the list reads in the reader's own script.
+  static Future<Map<Locale, String>> _languageNames() async {
+    final names = <Locale, String>{};
+    for (final locale in AppLocalizations.supportedLocales) {
+      names[locale] = (await AppLocalizations.delegate.load(
+        locale,
+      )).languageName;
+    }
+    return names;
+  }
+}
+
+class _LanguageSheet extends ConsumerWidget {
+  const _LanguageSheet({required this.names});
+
+  final Map<Locale, String> names;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final selected = ref.watch(localeProvider);
+    return SafeArea(
+      child: RadioGroup<Locale?>(
+        groupValue: selected,
+        onChanged: (value) => _choose(context, ref, value),
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
+              child: Text(
+                l10n.meLanguage,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            RadioListTile<Locale?>(
+              value: null,
+              title: Text(l10n.meLanguageSystem),
+            ),
+            for (final entry in names.entries)
+              RadioListTile<Locale?>(
+                value: entry.key,
+                title: Text(entry.value),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _choose(BuildContext context, WidgetRef ref, Locale? locale) {
+    unawaited(ref.read(localeProvider.notifier).set(locale));
+    Navigator.of(context).pop();
   }
 }

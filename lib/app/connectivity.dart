@@ -1,6 +1,6 @@
-import 'package:fieldchat/design/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/design/app_colors.dart';
 
 /// Whether the app is online. A manual flag today; wired to connectivity_plus
 /// with the device-sensor milestone. Sync reads this to gate sending.

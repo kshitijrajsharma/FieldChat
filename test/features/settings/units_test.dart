@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/settings/units.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/settings/units.dart';
 
 void main() {
   group('formatDistance', () {

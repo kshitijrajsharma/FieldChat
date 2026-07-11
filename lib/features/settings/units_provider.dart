@@ -1,6 +1,6 @@
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/settings/units.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/settings/units.dart';
 
 const _unitsKey = 'settings.units';
 

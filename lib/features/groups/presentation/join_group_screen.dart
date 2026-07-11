@@ -1,14 +1,15 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/groups/invite_link.dart';
-import 'package:fieldchat/features/groups/presentation/scan_qr_screen.dart';
-import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/groups/invite_link.dart';
+import 'package:hulaki/features/groups/presentation/scan_qr_screen.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// Join a group from an invite link. Paste the link a teammate shared; the key
 /// in it decrypts the group, so no account or approval is needed.
@@ -30,22 +31,22 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
     super.dispose();
   }
 
-  Future<void> _scan() async {
+  Future<void> _scan(AppLocalizations l10n) async {
     final code = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(builder: (_) => const ScanQrScreen()),
     );
     if (code == null || !mounted) return;
     _controller.text = code;
-    await _join();
+    await _join(l10n);
   }
 
-  Future<void> _join() async {
+  Future<void> _join(AppLocalizations l10n) async {
     final link = _controller.text.trim();
     if (link.isEmpty || _busy) return;
     try {
       InviteLink.parse(link);
     } on FormatException {
-      setState(() => _error = 'That is not a FieldChat invite link.');
+      setState(() => _error = l10n.groupInvalidInviteLink);
       return;
     }
     setState(() {
@@ -71,8 +72,9 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Join a group')),
+      appBar: AppBar(title: Text(l10n.groupJoinTitle)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
@@ -80,13 +82,16 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Paste an invite link',
+                l10n.groupPasteInviteLink,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: AppSpacing.xs),
-              const Text(
-                'A teammate can share it from a group under Members, Add.',
-                style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+              Text(
+                l10n.groupPasteInviteLinkHelp,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: 18),
               TextField(
@@ -97,7 +102,7 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
                 minLines: 1,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'Paste the invite link here',
+                  hintText: l10n.groupInviteLinkHint,
                   errorText: _error,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadii.field),
@@ -117,9 +122,9 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
               OutlinedButton.icon(
-                onPressed: _busy ? null : () => unawaited(_scan()),
+                onPressed: _busy ? null : () => unawaited(_scan(l10n)),
                 icon: const Icon(Icons.qr_code_scanner, size: 18),
-                label: const Text('Scan a QR code'),
+                label: Text(l10n.groupScanQrCode),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
                   side: const BorderSide(color: AppColors.mist),
@@ -128,9 +133,9 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
               ),
               const Spacer(),
               PrimaryButton(
-                label: _busy ? 'Joining…' : 'Join',
+                label: _busy ? l10n.groupJoining : l10n.groupJoinAction,
                 loading: _busy,
-                onPressed: _busy ? null : _join,
+                onPressed: _busy ? null : () => unawaited(_join(l10n)),
               ),
             ],
           ),

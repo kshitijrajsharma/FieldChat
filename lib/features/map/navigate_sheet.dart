@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Future<void> showNavigateSheet({
@@ -14,7 +14,7 @@ Future<void> showNavigateSheet({
 }) async {
   if (defaultTargetPlatform != TargetPlatform.iOS) {
     final place = Uri.encodeComponent(
-      label == null || label.isEmpty ? 'FieldChat point' : label,
+      label == null || label.isEmpty ? 'Hulaki point' : label,
     );
     await launchUrl(
       Uri.parse('geo:$lat,$lng?q=$lat,$lng($place)'),

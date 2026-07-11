@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fieldchat/features/capture/gps_gate.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
 
 void main() {
   const gate = GpsGate(maxWait: Duration(seconds: 2));

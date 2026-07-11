@@ -1,9 +1,9 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/app_typography.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/app_typography.dart';
 
-/// The single light theme for FieldChat. The design is light by intent:
+/// The single light theme for Hulaki. The design is light by intent:
 /// ink on paper, with amber held back for GPS and signal.
 ThemeData buildAppTheme() {
   final colorScheme = ColorScheme.fromSeed(

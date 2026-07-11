@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/identity/admin_chain.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/identity/admin_chain.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
 
 /// Builds a correctly signed event authored by [author].
 Future<AdminEvent> signedEvent({

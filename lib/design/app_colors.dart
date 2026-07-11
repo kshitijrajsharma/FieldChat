@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// FieldChat brand palette.
+/// Hulaki brand palette.
 ///
 /// Ink leads everything: buttons, the mark, active states. Amber stays
 /// reserved for GPS and signal. Paper is the app background, mist the

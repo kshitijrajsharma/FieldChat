@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/sync/blob_store.dart';
+import 'package:hulaki/features/sync/blob_store.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Production media store. Encrypted blobs live in a Storage bucket by id.

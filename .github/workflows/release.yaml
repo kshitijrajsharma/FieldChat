@@ -51,7 +51,7 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
       - uses: actions/upload-artifact@v4
         with:
-          name: fieldchat-release-aab
+          name: hulaki-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
 
   ios:
@@ -74,7 +74,7 @@ jobs:
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 -d \
-            > ~/Library/MobileDevice/Provisioning\ Profiles/fieldchat.mobileprovision
+            > ~/Library/MobileDevice/Provisioning\ Profiles/hulaki.mobileprovision
       - name: Build IPA
         run: |
           flutter build ipa --release \
@@ -83,5 +83,5 @@ jobs:
             --export-options-plist=ios/ExportOptions.plist
       - uses: actions/upload-artifact@v4
         with:
-          name: fieldchat-release-ipa
+          name: hulaki-release-ipa
           path: build/ios/ipa/*.ipa

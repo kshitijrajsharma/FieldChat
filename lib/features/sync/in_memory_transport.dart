@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:fieldchat/features/sync/message_transport.dart';
+import 'package:hulaki/features/sync/message_transport.dart';
 
 /// A single-process stand-in for the server relay. Holds encrypted envelopes
 /// per group, assigns sequences, and broadcasts to live subscribers. Lets

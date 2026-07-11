@@ -1,52 +1,56 @@
-# FieldChat
+# Hulaki
 
-Collect field data while chatting. FieldChat is a field mapping application that is done by chatting. 
-a Flutter codebase that ships to iOS and Android.
+An offline-first, privacy-focused, chatting-inspired field mapping application.
+Flutter, shipping to Android and iOS.
+
+A *hulaki* stands for a mail runner: the postman who carried message letters on foot across Nepal, over ground in past where there were no roads and signal.
 
 ## Architecture
 
-- **Flutter / Dart**: single codebase, native iOS and Android builds.
-- **Local source of truth**: SQLite on the device. Chat and map both render
-  from local data; the network is a background courier.
-- **Backend**: Supabase (Postgres, Realtime, Storage, phone-OTP Auth). The
-  server only ever stores ciphertext.
-- **End-to-end encryption**: Signal protocol (SenderKey group messaging).
-- **Map**: MapLibre vector tiles with PMTiles cached per group for full
+- **Local source of truth**: a drift (SQLite) database on the device. Chat and
+  map both render from it; the network only syncs into and out of it.
+- **Backend**: Supabase for the relay (Postgres and Realtime), Storage for the
+  media blobs, and anonymous auth. The server only ever holds ciphertext.
+- **Encryption**: one static AES-256-GCM key per group, shared through the
+  invite link and never sent to the server. Every envelope is also signed with
+  the device's Ed25519 key and verified on ingest, so authorship cannot be
+  spoofed. There is no forward secrecy and no key rotation.
+- **Map**: MapLibre with the CARTO Positron basemap. An area can be saved for
   offline use.
-- **Location track**: a local 24-hour breadcrumb drawn as a faint line, then
-  purged.
+- **Track**: a 24 hour local breadcrumb, purged as it ages.
 
-## Design system
+## Languages
 
-Defined in `lib/design`.
-
-- **Palette**: Ink `#15181B`, Paper `#F6F4EE`, Mist `#ECE7DF`, White, and
-  Amber `#E0922A` reserved for GPS and signal. Tag colours add purple, red,
-  and blue.
-- **Type**: Hanken Grotesk for the wordmark and interface, Caveat as a
-  handwritten accent. Both bundled for offline use.
-- **Mark**: a navigation arrow over three typing dots, drawn as a vector and
-  used for the app icon.
+English, Spanish, French and Portuguese. A language is a file in `lib/l10n`, see [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 ## Requirements
 
-- Flutter SDK 3.44.4 (stable) on `PATH`:
-  `export PATH="$HOME/flutter/bin:$PATH"`
-- Android builds: Android SDK and a JDK.
-- iOS builds and App Store signing: macOS with Xcode (a cloud Mac CI runner
-  works for release builds).
+- Flutter SDK 3.44.4 (stable) on `PATH`.
+- Android builds: the Android SDK and a JDK.
+- iOS builds and signing: macOS with Xcode.
 
-## Common tasks
+## Tasks
 
-The `justfile` is the single entrypoint:
+The `justfile` is the entrypoint:
 
 ```
 just setup          # install dependencies
-just lint           # format check + static analysis (zero issues required)
-just test           # run the test suite
+just lint           # format check and static analysis
+just test           # the test suite
+just translations   # check every language against the template
+just load           # load tests (slow, allocates hundreds of MB)
 just icons          # regenerate launcher icons
-just run            # run on a connected device or emulator
+just run            # run on a device or emulator
 just build-android  # release APK
 just build-ios      # release IPA (macOS only)
-just doctor         # toolchain status
 ```
+
+## Configuration
+
+The app reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from `--dart-define`. With
+both absent it falls back to an in-memory relay, so tests and keyless local runs
+need no backend.
+
+## Licence
+
+AGPL-3.0.

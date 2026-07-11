@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/features/background/background_location_service.dart';
-import 'package:fieldchat/features/capture/live_location.dart';
-import 'package:fieldchat/features/settings/background_run_provider.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/features/background/background_location_service.dart';
+import 'package:hulaki/features/capture/live_location.dart';
+import 'package:hulaki/features/settings/background_run_provider.dart';
 
 final backgroundLocationServiceProvider = Provider<BackgroundLocationService>(
   (ref) => BackgroundLocationService(),

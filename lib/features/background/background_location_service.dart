@@ -22,8 +22,8 @@ class _KeepAliveTaskHandler extends TaskHandler {
 /// continues with the screen off. The persistent notification reports the live
 /// GPS accuracy, updated from the main isolate as fixes arrive.
 class BackgroundLocationService {
-  static const _title = 'FieldChat is mapping';
-  static const _channelId = 'fieldchat_mapping';
+  static const _title = 'Hulaki is mapping';
+  static const _channelId = 'hulaki_mapping';
 
   void configure() {
     FlutterForegroundTask.init(
@@ -31,7 +31,7 @@ class BackgroundLocationService {
         channelId: _channelId,
         channelName: 'Background mapping',
         channelDescription:
-            'Shown while FieldChat keeps mapping in the background.',
+            'Shown while Hulaki keeps mapping in the background.',
         onlyAlertOnce: true,
       ),
       iosNotificationOptions: const IOSNotificationOptions(),

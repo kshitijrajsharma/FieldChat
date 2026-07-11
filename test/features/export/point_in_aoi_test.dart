@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fieldchat/features/export/geojson.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/export/geojson.dart';
 
 void main() {
   // A square around Kathmandu, roughly 85.30..85.34 E by 27.70..27.73 N.

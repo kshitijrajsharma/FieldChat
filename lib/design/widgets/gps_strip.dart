@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// The quality tier a live accuracy reading falls into. Thresholds in metres:
 /// excellent <= 5, good <= 10, weak <= 15, poor above that. Shared so the live
@@ -29,12 +30,12 @@ extension GpsTierStyle on GpsTier {
     GpsTier.poor => AppColors.danger,
   };
 
-  String get label => switch (this) {
-    GpsTier.acquiring => 'Locating GPS…',
-    GpsTier.excellent => 'Excellent',
-    GpsTier.good => 'Good',
-    GpsTier.weak => 'Weak',
-    GpsTier.poor => 'Poor',
+  String label(AppLocalizations l10n) => switch (this) {
+    GpsTier.acquiring => l10n.gpsLocating,
+    GpsTier.excellent => l10n.gpsExcellent,
+    GpsTier.good => l10n.gpsGood,
+    GpsTier.weak => l10n.gpsWeak,
+    GpsTier.poor => l10n.gpsPoor,
   };
 
   int get bars => switch (this) {
@@ -127,8 +128,9 @@ class _GpsStripState extends State<GpsStrip>
   @override
   Widget build(BuildContext context) {
     final tier = _tier;
+    final l10n = AppLocalizations.of(context);
     final tone = tier.color;
-    final label = tier.label;
+    final label = tier.label(l10n);
     final level = tier.bars;
     final acquiring = tier == GpsTier.acquiring;
 
@@ -172,7 +174,7 @@ class _GpsStripState extends State<GpsStrip>
             const Spacer(),
             if (!acquiring)
               Text(
-                '±${widget.accuracyMeters!.round()} m',
+                l10n.gpsAccuracy('${widget.accuracyMeters!.round()}'),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

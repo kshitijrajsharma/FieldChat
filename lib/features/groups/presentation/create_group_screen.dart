@@ -1,19 +1,20 @@
 import 'dart:typed_data';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/core/image_thumbnail.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/hot_key_chip.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/groups/hot_key_icons.dart';
-import 'package:fieldchat/features/groups/presentation/area_draw_screen.dart';
-import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
-import 'package:fieldchat/features/groups/presentation/hot_key_editor_screen.dart';
-import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/core/image_thumbnail.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/hot_key_chip.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/groups/hot_key_icons.dart';
+import 'package:hulaki/features/groups/presentation/area_draw_screen.dart';
+import 'package:hulaki/features/groups/presentation/group_avatar.dart';
+import 'package:hulaki/features/groups/presentation/hot_key_editor_screen.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Start a group and set the hot-keys everyone will tap while mapping.
@@ -31,20 +32,39 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   bool _busy = false;
   String? _aoiGeoJson;
   Uint8List? _photo;
-  final List<EditableHotKey> _hotKeys = [
-    EditableHotKey(label: 'Trash', colorValue: 0xFF15181B, iconName: 'delete'),
-    EditableHotKey(
-      label: 'Crossings',
-      colorValue: 0xFFE0922A,
-      iconName: 'crossing',
-    ),
-    EditableHotKey(
-      label: 'Streetlight',
-      colorValue: 0xFF7B6FC4,
-      iconName: 'streetlight',
-    ),
-    EditableHotKey(label: 'Pole', colorValue: 0xFFC4615E, iconName: 'bolt'),
-  ];
+  List<EditableHotKey>? _hotKeysOrNull;
+
+  /// The starting tags are data the group keeps, so they are seeded once in the
+  /// reader's language rather than rebuilt whenever the locale changes.
+  List<EditableHotKey> get _hotKeys => _hotKeysOrNull!;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context);
+    _hotKeysOrNull ??= [
+      EditableHotKey(
+        label: l10n.groupDefaultTagTrash,
+        colorValue: 0xFF15181B,
+        iconName: 'delete',
+      ),
+      EditableHotKey(
+        label: l10n.groupDefaultTagCrossings,
+        colorValue: 0xFFE0922A,
+        iconName: 'crossing',
+      ),
+      EditableHotKey(
+        label: l10n.groupDefaultTagStreetlight,
+        colorValue: 0xFF7B6FC4,
+        iconName: 'streetlight',
+      ),
+      EditableHotKey(
+        label: l10n.groupDefaultTagPole,
+        colorValue: 0xFFC4615E,
+        iconName: 'bolt',
+      ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -125,8 +145,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('New mapping group')),
+      appBar: AppBar(title: Text(l10n.groupCreateTitle)),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +187,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              'Set a cover photo',
+                              l10n.groupCoverPhotoPrompt,
                               style: Theme.of(context).textTheme.bodySmall!
                                   .copyWith(color: AppColors.textMuted),
                             ),
@@ -175,9 +196,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    const Text(
-                      'Group name',
-                      style: TextStyle(
+                    Text(
+                      l10n.groupNameLabel,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted,
@@ -189,7 +210,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       controller: _controller,
                       autofocus: true,
                       decoration: InputDecoration(
-                        hintText: 'Ward 7 · Litter survey',
+                        hintText: l10n.groupNameHint,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadii.field),
                           borderSide: const BorderSide(color: AppColors.mist),
@@ -206,9 +227,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       onSubmitted: (_) => _create(),
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    const Text(
-                      'Description (optional)',
-                      style: TextStyle(
+                    Text(
+                      l10n.groupDescriptionLabel,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted,
@@ -221,7 +242,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       minLines: 2,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: 'What are you mapping, and how?',
+                        hintText: l10n.groupDescriptionHint,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadii.field),
                           borderSide: const BorderSide(color: AppColors.mist),
@@ -239,9 +260,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'QUICK TAGS',
-                          style: TextStyle(
+                        Text(
+                          l10n.groupQuickTagsHeading,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textMuted,
@@ -250,14 +271,13 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                         ),
                         TextButton(
                           onPressed: _editHotKeys,
-                          child: const Text('Edit'),
+                          child: Text(l10n.groupEdit),
                         ),
                       ],
                     ),
-                    const Text(
-                      'Quick tags everyone taps while sending. They label the '
-                      'message and colour its pin on the map.',
-                      style: TextStyle(
+                    Text(
+                      l10n.groupQuickTagsExplainer,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,
                       ),
@@ -284,8 +304,8 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                       ),
                       label: Text(
                         _aoiGeoJson == null
-                            ? 'Set mapping area (optional)'
-                            : 'Mapping area set',
+                            ? l10n.groupSetMappingAreaOptional
+                            : l10n.groupMappingAreaSet,
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.ink,
@@ -305,7 +325,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                 AppSpacing.lg,
               ),
               child: PrimaryButton(
-                label: _busy ? 'Creating…' : 'Create group',
+                label: _busy ? l10n.groupCreating : l10n.groupCreateAction,
                 loading: _busy,
                 onPressed: (_busy || _controller.text.trim().isEmpty)
                     ? null

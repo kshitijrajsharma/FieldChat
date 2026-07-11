@@ -1,8 +1,8 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
 
 /// A one-time hint shown the first time a user reaches a screen. Once dismissed
 /// it stays hidden, tracked per [tipKey] on the device.

@@ -1,17 +1,18 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/features/capture/live_location.dart';
-import 'package:fieldchat/features/discovery/group_preview_screen.dart';
-import 'package:fieldchat/features/discovery/place_line.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
-import 'package:fieldchat/features/settings/units.dart';
-import 'package:fieldchat/features/settings/units_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/features/capture/live_location.dart';
+import 'package:hulaki/features/discovery/group_preview_screen.dart';
+import 'package:hulaki/features/discovery/place_line.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/groups/presentation/group_avatar.dart';
+import 'package:hulaki/features/settings/units.dart';
+import 'package:hulaki/features/settings/units_provider.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// Public groups mapping near the user, from the shared directory. A top-level
 /// tab: tap a group to preview it, then join and start contributing.
@@ -60,6 +61,7 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final live = ref.watch(liveLocationProvider).asData?.value;
     final units = ref.watch(unitsProvider);
     if (live != null && _future == null) {
@@ -70,7 +72,7 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
       appBar: AppBar(
         titleSpacing: AppSpacing.lg,
         title: Text(
-          'Communities',
+          l10n.discoverTitle,
           style: Theme.of(context).textTheme.headlineSmall,
         ),
       ),
@@ -90,17 +92,21 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
           ),
           Expanded(
             child: _query.isEmpty
-                ? _nearbySection(live, units)
-                : _searchSection(units),
+                ? _nearbySection(l10n, live, units)
+                : _searchSection(l10n, units),
           ),
         ],
       ),
     );
   }
 
-  Widget _nearbySection(LiveLocation? live, UnitSystem units) {
+  Widget _nearbySection(
+    AppLocalizations l10n,
+    LiveLocation? live,
+    UnitSystem units,
+  ) {
     if (live == null) {
-      return const _Centered('Finding your location…', spinner: true);
+      return _Centered(l10n.discoverFindingLocation, spinner: true);
     }
     return RefreshIndicator(
       onRefresh: () async {
@@ -111,14 +117,11 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const _Centered('Looking nearby…', spinner: true);
+            return _Centered(l10n.discoverLookingNearby, spinner: true);
           }
           final groups = snapshot.data ?? const <PublicGroup>[];
           if (groups.isEmpty) {
-            return const _Centered(
-              'No public groups nearby yet. Start one and make it '
-              'public to put it on the map.',
-            );
+            return _Centered(l10n.discoverNoNearbyGroups);
           }
           return _GroupList(groups: groups, units: units);
         },
@@ -126,16 +129,16 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
     );
   }
 
-  Widget _searchSection(UnitSystem units) {
+  Widget _searchSection(AppLocalizations l10n, UnitSystem units) {
     return FutureBuilder<List<PublicGroup>>(
       future: _searchFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _Centered('Searching…', spinner: true);
+          return _Centered(l10n.discoverSearching, spinner: true);
         }
         final groups = snapshot.data ?? const <PublicGroup>[];
         if (groups.isEmpty) {
-          return _Centered('No public groups match "$_query".');
+          return _Centered(l10n.discoverNoSearchResults(_query));
         }
         return _GroupList(groups: groups, units: units);
       },
@@ -157,7 +160,7 @@ class _SearchField extends StatelessWidget {
       textInputAction: TextInputAction.search,
       onChanged: onChanged,
       decoration: InputDecoration(
-        hintText: 'Search communities',
+        hintText: AppLocalizations.of(context).discoverSearchHint,
         prefixIcon: const Icon(Icons.search, size: 20),
         isDense: true,
         enabledBorder: OutlineInputBorder(

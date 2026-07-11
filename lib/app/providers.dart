@@ -1,24 +1,24 @@
 import 'dart:async';
 
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/auth/application/auth_state.dart';
-import 'package:fieldchat/features/capture/compass_source.dart';
-import 'package:fieldchat/features/capture/geolocator_gps_source.dart';
-import 'package:fieldchat/features/capture/gps_source.dart';
-import 'package:fieldchat/features/capture/live_location.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/groups/group_member_view.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/identity/device_identity_store.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/sync/blob_store.dart';
-import 'package:fieldchat/features/sync/in_memory_transport.dart';
-import 'package:fieldchat/features/sync/message_transport.dart';
-import 'package:fieldchat/features/sync/sync_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/auth/application/auth_state.dart';
+import 'package:hulaki/features/capture/compass_source.dart';
+import 'package:hulaki/features/capture/geolocator_gps_source.dart';
+import 'package:hulaki/features/capture/gps_source.dart';
+import 'package:hulaki/features/capture/live_location.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/groups/group_member_view.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/identity/device_identity_store.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/sync/blob_store.dart';
+import 'package:hulaki/features/sync/in_memory_transport.dart';
+import 'package:hulaki/features/sync/message_transport.dart';
+import 'package:hulaki/features/sync/sync_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// The message relay. In-memory today; swapped for the Supabase-backed

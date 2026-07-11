@@ -2,13 +2,13 @@ import 'dart:typed_data';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/sync/blob_store.dart';
-import 'package:fieldchat/features/sync/in_memory_transport.dart';
-import 'package:fieldchat/features/sync/sync_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/sync/blob_store.dart';
+import 'package:hulaki/features/sync/in_memory_transport.dart';
+import 'package:hulaki/features/sync/sync_service.dart';
 
 /// One simulated device: its own store and sync engine on a shared relay.
 class _Device {

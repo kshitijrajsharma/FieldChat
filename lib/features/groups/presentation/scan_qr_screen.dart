@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 /// Points the camera at an invite QR and returns the decoded text. The caller
@@ -23,8 +24,9 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan invite QR')),
+      appBar: AppBar(title: Text(l10n.groupScanInviteQrTitle)),
       body: MobileScanner(onDetect: _onDetect),
     );
   }

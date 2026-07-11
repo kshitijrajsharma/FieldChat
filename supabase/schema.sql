@@ -1,4 +1,4 @@
--- FieldChat backend schema. Run once in the Supabase SQL editor.
+-- Hulaki backend schema. Run once in the Supabase SQL editor.
 -- The relay only ever stores ciphertext; content is unreadable without the
 -- group key, which is shared out of band through the invite link.
 

@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Fieldchat</string>
+	<string>Hulaki</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,17 +15,17 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>fieldchat</string>
+	<string>hulaki</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>app.fieldchat</string>
+			<string>app.hulaki</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fieldchat</string>
+				<string>hulaki</string>
 			</array>
 		</dict>
 	</array>
@@ -78,13 +78,13 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>FieldChat stamps each observation with where it was taken.</string>
+	<string>Hulaki stamps each observation with where it was taken.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>FieldChat uses the camera to capture field observations.</string>
+	<string>Hulaki uses the camera to capture field observations.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>FieldChat attaches photos from your library to observations.</string>
+	<string>Hulaki attaches photos from your library to observations.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>FieldChat keeps mapping in the background when you turn on Run in background.</string>
+	<string>Hulaki keeps mapping in the background when you turn on Run in background.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

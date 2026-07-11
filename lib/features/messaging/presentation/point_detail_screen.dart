@@ -1,23 +1,24 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/core/time_format.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/gps_strip.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/groups/group_member_view.dart';
-import 'package:fieldchat/features/groups/hot_key_icons.dart';
-import 'package:fieldchat/features/map/map_screen.dart';
-import 'package:fieldchat/features/map/navigate_sheet.dart';
-import 'package:fieldchat/features/settings/units.dart';
-import 'package:fieldchat/features/settings/units_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/core/time_format.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/gps_strip.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/groups/group_member_view.dart';
+import 'package:hulaki/features/groups/hot_key_icons.dart';
+import 'package:hulaki/features/map/map_screen.dart';
+import 'package:hulaki/features/map/navigate_sheet.dart';
+import 'package:hulaki/features/settings/units.dart';
+import 'package:hulaki/features/settings/units_provider.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide buildFeatureCollection;
 
 typedef MediaResolver = Future<Uint8List?> Function(String mediaId);
@@ -115,16 +116,16 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
     );
   }
 
-  Future<void> _openFullMap() async {
+  Future<void> _openFullMap(AppLocalizations l10n) async {
     final group = await ref.read(databaseProvider).groupById(widget.groupId);
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => MapScreen(
           groupId: widget.groupId,
-          groupName: group?.name ?? 'Map',
+          groupName: group?.name ?? l10n.pointMapFallbackName,
           focusMessageId: widget.message.id,
-          backLabel: 'Back',
+          backLabel: l10n.pointBack,
         ),
       ),
     );
@@ -140,32 +141,32 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
     );
   }
 
-  Future<void> _copyCoords() async {
+  Future<void> _copyCoords(AppLocalizations l10n) async {
     final message = widget.message;
     await Clipboard.setData(
       ClipboardData(text: '${message.lat}, ${message.lng}'),
     );
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coordinates copied')),
+        SnackBar(content: Text(l10n.pointCoordinatesCopied)),
       );
     }
   }
 
-  Future<void> _confirmDelete() async {
+  Future<void> _confirmDelete(AppLocalizations l10n) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete this point?'),
-        content: const Text('It is removed for everyone in the group.'),
+        title: Text(l10n.pointDeleteTitle),
+        content: Text(l10n.pointDeleteBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.pointCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(l10n.pointDelete),
           ),
         ],
       ),
@@ -207,6 +208,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // Resolve the point and its tag from the live streams so an edit made here
     // (text or tag) redraws this screen at once. Selecting just this message
     // keeps the mini-map from rebuilding when unrelated points sync in.
@@ -263,12 +265,12 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text('Point detail'),
+        title: Text(l10n.pointDetailTitle),
         actions: [
           if (canEdit)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              onPressed: () => unawaited(_confirmDelete()),
+              onPressed: () => unawaited(_confirmDelete(l10n)),
             ),
         ],
       ),
@@ -331,7 +333,9 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                 ],
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'by ${names[message.senderId] ?? 'Member'}',
+                  l10n.pointByAuthor(
+                    names[message.senderId] ?? l10n.pointMemberFallback,
+                  ),
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -341,7 +345,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                     child: GestureDetector(
-                      onTap: _openFullMap,
+                      onTap: () => unawaited(_openFullMap(l10n)),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
                         child: SizedBox(
@@ -376,16 +380,21 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                     ),
                   ),
                 InkWell(
-                  onTap: located ? _copyCoords : null,
+                  onTap: located ? () => unawaited(_copyCoords(l10n)) : null,
                   child: _MetaRow(
                     icon: Icons.location_on_outlined,
                     label: message.locationPending
-                        ? 'Location pending'
-                        : '${message.lat?.toStringAsFixed(5)}, '
-                              '${message.lng?.toStringAsFixed(5)}',
+                        ? l10n.pointLocationPending
+                        : l10n.pointCoordinates(
+                            message.lat?.toStringAsFixed(5) ?? '',
+                            message.lng?.toStringAsFixed(5) ?? '',
+                          ),
                     trailing: accuracy != null
-                        ? '${accuracyTier!.label} · ±${accuracy.round()} m'
-                        : (located ? 'Placed on map' : null),
+                        ? l10n.pointAccuracy(
+                            accuracyTier!.label(l10n),
+                            accuracy.round(),
+                          )
+                        : (located ? l10n.pointPlacedOnMap : null),
                     trailingColor: accuracyTier?.color,
                     action: located ? Icons.copy : null,
                   ),
@@ -393,14 +402,16 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                 if (distanceM != null)
                   _MetaRow(
                     icon: Icons.straighten,
-                    label: '${formatDistance(distanceM, units)} from you',
+                    label: l10n.pointDistanceFromYou(
+                      formatDistance(distanceM, units),
+                    ),
                   ),
                 if (message.altitudeM != null)
                   _MetaRow(
                     icon: Icons.terrain,
-                    label:
-                        'Elevation '
-                        '${formatElevation(message.altitudeM!, units)}',
+                    label: l10n.pointElevation(
+                      formatElevation(message.altitudeM!, units),
+                    ),
                   ),
                 if (message.headingDeg != null)
                   _HeadingRow(headingDeg: message.headingDeg!),
@@ -413,7 +424,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => Navigator.of(context).maybePop(),
                         icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                        label: const Text('Open in chat'),
+                        label: Text(l10n.pointOpenInChat),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -421,7 +432,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                       child: FilledButton.icon(
                         onPressed: located ? _navigate : null,
                         icon: const Icon(Icons.navigation_outlined, size: 16),
-                        label: const Text('Navigate'),
+                        label: Text(l10n.pointNavigate),
                       ),
                     ),
                   ],
@@ -452,14 +463,14 @@ class _OpenMapHint extends StatelessWidget {
           BoxShadow(color: Color(0x22000000), blurRadius: 4),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.open_in_full, size: 13, color: AppColors.ink),
-          SizedBox(width: 5),
+          const Icon(Icons.open_in_full, size: 13, color: AppColors.ink),
+          const SizedBox(width: 5),
           Text(
-            'Open full map',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            AppLocalizations.of(context).pointOpenFullMap,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -536,7 +547,9 @@ class _HeadingRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            'Facing ${cardinalFor(headingDeg)} · ${headingDeg.round()}°',
+            AppLocalizations.of(
+              context,
+            ).pointFacing(cardinalFor(headingDeg), headingDeg.round()),
             style: const TextStyle(fontSize: 13),
           ),
         ],
@@ -563,7 +576,10 @@ class _SentRowState extends State<_SentRow> {
     final label = _exact ? exactTime(widget.when) : relativePhrase(widget.when);
     return InkWell(
       onTap: () => setState(() => _exact = !_exact),
-      child: _MetaRow(icon: Icons.schedule, label: 'Sent $label'),
+      child: _MetaRow(
+        icon: Icons.schedule,
+        label: AppLocalizations.of(context).pointSentAt(label),
+      ),
     );
   }
 }
@@ -618,6 +634,7 @@ class _NoteEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -628,19 +645,19 @@ class _NoteEditor extends StatelessWidget {
           autofocus: true,
           maxLines: null,
           style: Theme.of(context).textTheme.titleLarge,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             isDense: true,
-            hintText: 'Describe this point',
-            border: OutlineInputBorder(),
+            hintText: l10n.pointNoteHint,
+            border: const OutlineInputBorder(),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            TextButton(onPressed: onCancel, child: const Text('Cancel')),
+            TextButton(onPressed: onCancel, child: Text(l10n.pointCancel)),
             const SizedBox(width: AppSpacing.sm),
-            FilledButton(onPressed: onSave, child: const Text('Save')),
+            FilledButton(onPressed: onSave, child: Text(l10n.pointSave)),
           ],
         ),
       ],
@@ -659,14 +676,14 @@ class _AddNote extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.add, size: 15, color: AppColors.textMuted),
-          SizedBox(width: 4),
+          const Icon(Icons.add, size: 15, color: AppColors.textMuted),
+          const SizedBox(width: 4),
           Text(
-            'Add note',
-            style: TextStyle(
+            AppLocalizations.of(context).pointAddNote,
+            style: const TextStyle(
               color: AppColors.textMuted,
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -742,14 +759,14 @@ class _AddTagChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(13),
           border: Border.all(color: AppColors.mist),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add, size: 14, color: AppColors.textMuted),
-            SizedBox(width: 4),
+            const Icon(Icons.add, size: 14, color: AppColors.textMuted),
+            const SizedBox(width: 4),
             Text(
-              'Add tag',
-              style: TextStyle(
+              AppLocalizations.of(context).pointAddTag,
+              style: const TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -778,6 +795,7 @@ class _RetagSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.white,
@@ -797,13 +815,16 @@ class _RetagSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Change tag',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  l10n.pointChangeTag,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -830,7 +851,7 @@ class _RetagSheet extends StatelessWidget {
                 backgroundColor: AppColors.mist,
                 child: Icon(Icons.block, size: 14, color: AppColors.textMuted),
               ),
-              title: const Text('No tag'),
+              title: Text(l10n.pointNoTag),
               trailing: selectedId == null
                   ? const Icon(Icons.check, color: AppColors.ink)
                   : null,

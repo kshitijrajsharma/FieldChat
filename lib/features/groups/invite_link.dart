@@ -5,12 +5,12 @@ class InviteLink {
   const InviteLink({required this.groupId, required this.key});
 
   /// Parses an invite from any of its forms: the shareable https landing link
-  /// (group id in the `g` query, key in the fragment), the `fieldchat://`
+  /// (group id in the `g` query, key in the fragment), the `hulaki://`
   /// app-scheme link the landing page redirects to, or the legacy path form.
   factory InviteLink.parse(String link) {
     final invite = tryParse(link);
     if (invite == null) {
-      throw const FormatException('Not a FieldChat invite link');
+      throw const FormatException('Not a Hulaki invite link');
     }
     return invite;
   }
@@ -30,7 +30,7 @@ class InviteLink {
   }
 
   static const _landingBase =
-      'https://kshitijrajsharma.github.io/FieldChat/join.html';
+      'https://kshitijrajsharma.github.io/Hulaki/join.html';
 
   final String groupId;
   final String key;
@@ -40,5 +40,5 @@ class InviteLink {
   String get url => '$_landingBase?g=$groupId#$key';
 
   /// The direct app-scheme form the landing page redirects into.
-  String get appLink => 'fieldchat://join?g=$groupId#$key';
+  String get appLink => 'hulaki://join?g=$groupId#$key';
 }

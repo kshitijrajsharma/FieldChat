@@ -1,8 +1,8 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/discovery/reverse_geocode.dart';
-import 'package:fieldchat/features/settings/units.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/discovery/reverse_geocode.dart';
+import 'package:hulaki/features/settings/units.dart';
 
 /// The place name (reverse geocoded) and distance for a nearby group, e.g.
 /// "Kathmandu · 1 m away". Shows distance alone until the name resolves, and

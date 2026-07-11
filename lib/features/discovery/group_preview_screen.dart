@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/hot_key_chip.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/discovery/area_minimap.dart';
-import 'package:fieldchat/features/discovery/place_line.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/groups/hot_key_icons.dart';
-import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
-import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
-import 'package:fieldchat/features/settings/units_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/hot_key_chip.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/discovery/area_minimap.dart';
+import 'package:hulaki/features/discovery/place_line.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/groups/hot_key_icons.dart';
+import 'package:hulaki/features/groups/presentation/group_avatar.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:hulaki/features/settings/units_provider.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
 /// A public group as seen before joining: name, where it is, how far, and what
@@ -161,13 +162,14 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final group = widget.group;
     final units = ref.watch(unitsProvider);
     final description = group.description;
     final aoi = group.aoiGeoJson;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Group')),
+      appBar: AppBar(title: Text(l10n.discoverGroupTitle)),
       body: SafeArea(
         child: Column(
           children: [
@@ -237,8 +239,10 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
             Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: _alreadyMember
-                  ? _memberButton()
-                  : (group.joinApproval ? _approvalButton() : _openButton()),
+                  ? _memberButton(l10n)
+                  : (group.joinApproval
+                        ? _approvalButton(l10n)
+                        : _openButton(l10n)),
             ),
           ],
         ),
@@ -246,35 +250,35 @@ class _GroupPreviewScreenState extends ConsumerState<GroupPreviewScreen> {
     );
   }
 
-  Widget _openButton() => PrimaryButton(
-    label: _joining ? 'Joining…' : 'Join group',
+  Widget _openButton(AppLocalizations l10n) => PrimaryButton(
+    label: _joining ? l10n.discoverJoining : l10n.discoverJoinGroup,
     loading: _joining,
     onPressed: _joining ? null : () => unawaited(_join()),
   );
 
   /// Shown for a group this device already belongs to, including your own.
-  Widget _memberButton() => PrimaryButton(
-    label: 'Open',
+  Widget _memberButton(AppLocalizations l10n) => PrimaryButton(
+    label: l10n.discoverOpen,
     onPressed: () =>
         unawaited(_openThread(widget.group.groupId, widget.group.name)),
   );
 
-  Widget _approvalButton() {
+  Widget _approvalButton(AppLocalizations l10n) {
     switch (_request) {
       case _RequestState.none:
         return PrimaryButton(
-          label: 'Request to join',
+          label: l10n.discoverRequestToJoin,
           onPressed: () => unawaited(_requestToJoin()),
         );
       case _RequestState.requesting:
-        return const PrimaryButton(label: 'Requesting…', loading: true);
+        return PrimaryButton(label: l10n.discoverRequesting, loading: true);
       case _RequestState.pending:
-        return const PrimaryButton(
-          label: 'Waiting for approval…',
+        return PrimaryButton(
+          label: l10n.discoverWaitingApproval,
           loading: true,
         );
       case _RequestState.joining:
-        return const PrimaryButton(label: 'Joining…', loading: true);
+        return PrimaryButton(label: l10n.discoverJoining, loading: true);
     }
   }
 }

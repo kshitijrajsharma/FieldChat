@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fieldchat/features/sync/message_transport.dart';
+import 'package:hulaki/features/sync/message_transport.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// The production relay. Envelopes are rows in the `envelopes` table; the

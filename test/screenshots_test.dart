@@ -5,14 +5,14 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
-import 'package:fieldchat/app/app.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/app/app.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,8 +21,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   PackageInfo.setMockInitialValues(
-    appName: 'FieldChat',
-    packageName: 'app.fieldchat.fieldchat',
+    appName: 'Hulaki',
+    packageName: 'app.hulaki.hulaki',
     version: '0.0.1',
     buildNumber: '1',
     buildSignature: '',
@@ -116,7 +116,7 @@ Future<void> _pumpApp(
         sharedPreferencesProvider.overrideWithValue(preferences),
         databaseProvider.overrideWithValue(database),
       ],
-      child: const FieldChatApp(),
+      child: const HulakiApp(),
     ),
   );
   await _settle(tester);

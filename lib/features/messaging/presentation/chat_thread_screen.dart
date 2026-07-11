@@ -1,31 +1,32 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/connectivity.dart';
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/hot_key_chip.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/auth/application/auth_state.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/capture/presentation/live_gps_strip.dart';
-import 'package:fieldchat/features/capture/staged_point.dart';
-import 'package:fieldchat/features/discovery/listing_publisher.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/groups/hot_key_icons.dart';
-import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
-import 'package:fieldchat/features/groups/presentation/group_info_screen.dart';
-import 'package:fieldchat/features/map/map_screen.dart';
-import 'package:fieldchat/features/messaging/presentation/message_bubble.dart';
-import 'package:fieldchat/features/messaging/presentation/point_detail_screen.dart';
-import 'package:fieldchat/features/onboarding/coach_tip.dart';
-import 'package:fieldchat/features/settings/privacy_provider.dart';
-import 'package:fieldchat/features/sync/presentation/pending_upload_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/connectivity.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/hot_key_chip.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/auth/application/auth_state.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/capture/presentation/live_gps_strip.dart';
+import 'package:hulaki/features/capture/staged_point.dart';
+import 'package:hulaki/features/discovery/listing_publisher.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/groups/hot_key_icons.dart';
+import 'package:hulaki/features/groups/presentation/group_avatar.dart';
+import 'package:hulaki/features/groups/presentation/group_info_screen.dart';
+import 'package:hulaki/features/map/map_screen.dart';
+import 'package:hulaki/features/messaging/presentation/message_bubble.dart';
+import 'package:hulaki/features/messaging/presentation/point_detail_screen.dart';
+import 'package:hulaki/features/onboarding/coach_tip.dart';
+import 'package:hulaki/features/settings/privacy_provider.dart';
+import 'package:hulaki/features/sync/presentation/pending_upload_banner.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// The capture loop: talk, tap a hot-key, send. Every message is a geotagged
@@ -81,30 +82,31 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
   }
 
   /// The header subtitle: a live tally of mapped points and contributors.
-  String _statsLabel(int points, int mappers) {
-    if (points == 0) return 'No points yet';
-    final pointText = points == 1 ? '1 point' : '$points points';
-    final mapperText = mappers == 1 ? '1 mapper' : '$mappers mappers';
-    return '$pointText · $mapperText';
+  String _statsLabel(AppLocalizations l10n, int points, int mappers) {
+    if (points == 0) return l10n.threadNoPointsYet;
+    return l10n.threadStats(
+      l10n.threadPointCount(points),
+      l10n.threadMapperCount(mappers),
+    );
   }
 
   /// Fetches the group's full history and reconciles any gap, for the pull to
   /// refresh and the header sync button.
-  Future<void> _resync() async {
+  Future<void> _resync(AppLocalizations l10n) async {
     if (_resyncing) return;
     setState(() => _resyncing = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(syncServiceProvider).resync(widget.groupId);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Up to date')),
+        SnackBar(content: Text(l10n.threadUpToDate)),
       );
     } finally {
       if (mounted) setState(() => _resyncing = false);
     }
   }
 
-  Future<void> _attachPhoto() async {
+  Future<void> _attachPhoto(AppLocalizations l10n) async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (context) => SafeArea(
@@ -112,12 +114,12 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
+              title: Text(l10n.threadTakePhoto),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: Text(l10n.threadChooseFromGallery),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
           ],
@@ -137,7 +139,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     if (mounted) setState(() => _pendingPhoto = bytes);
   }
 
-  Future<void> _messageActions(Message message) async {
+  Future<void> _messageActions(AppLocalizations l10n, Message message) async {
     final isMine = message.senderId == ref.read(currentUserIdProvider);
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -147,13 +149,13 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             if (message.body != null)
               ListTile(
                 leading: const Icon(Icons.copy_outlined),
-                title: const Text('Copy text'),
+                title: Text(l10n.threadCopyText),
                 onTap: () => Navigator.of(context).pop('copy'),
               ),
             if (isMine && message.mediaId == null)
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
-                title: const Text('Edit'),
+                title: Text(l10n.threadEdit),
                 onTap: () => Navigator.of(context).pop('edit'),
               ),
             if (isMine)
@@ -162,9 +164,9 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                   Icons.delete_outline,
                   color: AppColors.danger,
                 ),
-                title: const Text(
-                  'Delete',
-                  style: TextStyle(color: AppColors.danger),
+                title: Text(
+                  l10n.threadDelete,
+                  style: const TextStyle(color: AppColors.danger),
                 ),
                 onTap: () => Navigator.of(context).pop('delete'),
               ),
@@ -221,26 +223,24 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
   /// where placement is disallowed, a fix weaker than the accuracy cap, or a
   /// point outside the mapping area when that is off are blocked; an allowed
   /// out-of-area point asks for confirmation first.
-  Future<bool> _passesModeration(GeoResult geo, {required bool placed}) async {
+  Future<bool> _passesModeration(
+    AppLocalizations l10n,
+    GeoResult geo, {
+    required bool placed,
+  }) async {
     final group = await ref.read(databaseProvider).groupById(widget.groupId);
     if (group == null) return true;
     final iAmAdmin = ref.read(isGroupAdminProvider(widget.groupId));
 
     if (placed && !iAmAdmin && !group.allowMemberPlace) {
-      _blockedSnack(
-        'Only admins can place points on the map here. Send your live '
-        'GPS point instead.',
-      );
+      _blockedSnack(l10n.threadPlacementAdminsOnly);
       return false;
     }
 
     final limit = group.gpsLimitM;
     final accuracy = geo.accuracyM;
     if (limit != null && accuracy != null && accuracy > limit) {
-      _blockedSnack(
-        'GPS is only accurate to ±${accuracy.round()} m right now. Move to '
-        'open sky and try again.',
-      );
+      _blockedSnack(l10n.threadGpsTooWeak(accuracy.round()));
       return false;
     }
 
@@ -252,10 +252,10 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         lng != null &&
         !pointInAoi(aoi, lat, lng)) {
       if (!group.allowOutsideArea) {
-        _blockedSnack('This point is outside the mapping area.');
+        _blockedSnack(l10n.threadOutsideAreaBlocked);
         return false;
       }
-      return _confirmOutsideArea();
+      return _confirmOutsideArea(l10n);
     }
     return true;
   }
@@ -267,22 +267,20 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<bool> _confirmOutsideArea() async {
+  Future<bool> _confirmOutsideArea(AppLocalizations l10n) async {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Outside the mapping area'),
-        content: const Text(
-          'This point is outside the group mapping area. Send it anyway?',
-        ),
+        title: Text(l10n.threadOutsideAreaTitle),
+        content: Text(l10n.threadOutsideAreaBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.threadCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Send anyway'),
+            child: Text(l10n.threadSendAnyway),
           ),
         ],
       ),
@@ -290,7 +288,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     return proceed ?? false;
   }
 
-  Future<void> _send() async {
+  Future<void> _send(AppLocalizations l10n) async {
     final text = _controller.text.trim();
     final photo = _pendingPhoto;
     if ((text.isEmpty && photo == null && _selectedTagId == null) || _sending) {
@@ -332,7 +330,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
               );
       }
 
-      if (!await _passesModeration(geo, placed: staged != null)) {
+      if (!await _passesModeration(l10n, geo, placed: staged != null)) {
         return;
       }
       _controller.clear();
@@ -391,6 +389,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       final heading = next.asData?.value;
       if (heading != null) _lastHeading = heading;
     });
+    final l10n = AppLocalizations.of(context);
     final messages = ref.watch(messagesProvider(widget.groupId));
     final hotKeys = ref.watch(hotKeysProvider(widget.groupId)).value ?? [];
     final hotKeysById = {for (final h in hotKeys) h.id: h};
@@ -444,7 +443,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                       ),
                     ),
                     Text(
-                      _statsLabel(pointCount, mapperCount),
+                      _statsLabel(l10n, pointCount, mapperCount),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textMuted,
@@ -458,7 +457,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh this group',
+            tooltip: l10n.threadRefreshTooltip,
             icon: _resyncing
                 ? const SizedBox(
                     width: 18,
@@ -466,7 +465,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.sync),
-            onPressed: _resyncing ? null : _resync,
+            onPressed: _resyncing ? null : () => unawaited(_resync(l10n)),
           ),
           IconButton(
             icon: const Icon(Icons.map_outlined),
@@ -487,13 +486,13 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             child: LiveGpsStrip(),
           ),
           PendingUploadBanner(groupId: widget.groupId),
-          const CoachTip(
+          CoachTip(
             tipKey: 'thread',
-            message: 'Tap a tag, then Send to drop a mapped point here.',
+            message: l10n.threadCoachTapTag,
           ),
-          const CoachTip(
+          CoachTip(
             tipKey: 'thread-sync',
-            message: 'Not seeing older points? Pull down to refresh.',
+            message: l10n.threadCoachPullToRefresh,
           ),
           Expanded(
             child: Stack(
@@ -513,21 +512,20 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                 messages.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => const Center(
+                  error: (error, _) => Center(
                     child: Padding(
-                      padding: EdgeInsets.all(AppSpacing.xl),
+                      padding: const EdgeInsets.all(AppSpacing.xl),
                       child: Text(
-                        'Could not load this group. Check your connection '
-                        'and pull down to try again.',
+                        l10n.threadLoadError,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textMuted),
+                        style: const TextStyle(color: AppColors.textMuted),
                       ),
                     ),
                   ),
                   data: (items) => items.isEmpty && isSyncing
                       ? const Center(child: _SyncingHint())
                       : RefreshIndicator(
-                          onRefresh: _resync,
+                          onRefresh: () => _resync(l10n),
                           child: ListView.builder(
                             controller: _scrollController,
                             padding: const EdgeInsets.all(AppSpacing.md),
@@ -542,7 +540,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                                   ? null
                                   : Color(tag.colorValue);
                               return GestureDetector(
-                                onLongPress: () => _messageActions(message),
+                                onLongPress: () =>
+                                    _messageActions(l10n, message),
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute<void>(
                                     builder: (_) => PointDetailScreen(
@@ -562,7 +561,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                                   isMine: message.senderId == me,
                                   anonymous: message.anonymous,
                                   senderName:
-                                      names[message.senderId] ?? 'Member',
+                                      names[message.senderId] ??
+                                      l10n.threadMemberFallback,
                                   tagLabel: tag?.label,
                                   tagColor: tagColor,
                                   tagIcon: hotKeyIcon(tag?.iconName),
@@ -594,8 +594,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             controller: _controller,
             sending: _sending,
             attachment: _pendingPhoto,
-            onSend: _send,
-            onAttach: _attachPhoto,
+            onSend: () => _send(l10n),
+            onAttach: () => _attachPhoto(l10n),
             onRemoveAttachment: () => setState(() => _pendingPhoto = null),
           ),
         ],
@@ -626,17 +626,18 @@ class _EditMessageDialogState extends State<_EditMessageDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Edit message'),
+      title: Text(l10n.threadEditMessageTitle),
       content: TextField(controller: _controller, autofocus: true),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.threadCancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: const Text('Save'),
+          child: Text(l10n.threadSave),
         ),
       ],
     );
@@ -657,18 +658,21 @@ class _AnonymousBar extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: 6,
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.person_off_outlined,
             size: 14,
             color: AppColors.textMuted,
           ),
-          SizedBox(width: 6),
+          const SizedBox(width: 6),
           Text(
-            "You're anonymous. Teammates won't see your name.",
-            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            AppLocalizations.of(context).threadAnonymousNotice,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textMuted,
+            ),
           ),
         ],
       ),
@@ -697,10 +701,10 @@ class _StagedPointBanner extends StatelessWidget {
             color: AppColors.white,
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Your next message drops a point at this map spot',
-              style: TextStyle(
+              AppLocalizations.of(context).threadStagedPointBanner,
+              style: const TextStyle(
                 color: AppColors.white,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
@@ -845,13 +849,16 @@ class _TagPickerSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Tag the next point',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  AppLocalizations.of(context).threadTagTheNextPoint,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -890,18 +897,18 @@ class _SyncingHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
+        const SizedBox(
           width: 22,
           height: 22,
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
-        SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.md),
         Text(
-          'Loading messages…',
-          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+          AppLocalizations.of(context).threadLoadingMessages,
+          style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
         ),
       ],
     );
@@ -927,6 +934,7 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final photo = attachment;
     return Container(
       color: AppColors.white,
@@ -951,10 +959,10 @@ class _Composer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Photo ready. Add a note and tap a tag, then send.',
-                        style: TextStyle(
+                        l10n.threadPhotoReady,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted,
                         ),
@@ -980,7 +988,7 @@ class _Composer extends StatelessWidget {
                     minLines: 1,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: 'Message',
+                      hintText: l10n.threadComposerHint,
                       filled: true,
                       fillColor: AppColors.field,
                       contentPadding: const EdgeInsets.symmetric(

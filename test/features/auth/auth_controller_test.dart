@@ -1,12 +1,12 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/auth/application/auth_state.dart';
-import 'package:fieldchat/features/auth/data/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/auth/application/auth_state.dart';
+import 'package:hulaki/features/auth/data/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<ProviderContainer> _container(

@@ -1,14 +1,15 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/gps_strip.dart';
-import 'package:fieldchat/features/capture/utm.dart';
-import 'package:fieldchat/features/settings/units.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/gps_strip.dart';
+import 'package:hulaki/features/capture/utm.dart';
+import 'package:hulaki/features/settings/units.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 Future<void> showGpsDetailSheet(BuildContext context) {
   return showModalBottomSheet<void>(
@@ -67,6 +68,7 @@ class _GpsDetailSheetState extends ConsumerState<_GpsDetailSheet>
         unawaited(_pulse.forward(from: 0));
       }
     });
+    final l10n = AppLocalizations.of(context);
     final location = ref.watch(liveLocationProvider).asData?.value;
     final heading = ref.watch(compassHeadingProvider).asData?.value;
     return SafeArea(
@@ -93,22 +95,22 @@ class _GpsDetailSheetState extends ConsumerState<_GpsDetailSheet>
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Your location',
+              l10n.gpsYourLocation,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.md),
             if (location == null)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 child: Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    SizedBox(width: AppSpacing.sm),
-                    Text('Locating GPS…'),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(l10n.gpsLocating),
                   ],
                 ),
               )
@@ -123,12 +125,12 @@ class _GpsDetailSheetState extends ConsumerState<_GpsDetailSheet>
               ),
               const SizedBox(height: AppSpacing.md),
               _MetricRow(
-                label: 'Altitude',
-                value: _metersOrDash(location.altitudeM),
+                label: l10n.gpsAltitude,
+                value: _metersOrDash(l10n, location.altitudeM),
               ),
               _MetricRow(
-                label: 'Heading',
-                value: _heading(heading),
+                label: l10n.gpsHeading,
+                value: _headingValue(l10n, heading),
               ),
             ],
           ],
@@ -137,15 +139,28 @@ class _GpsDetailSheetState extends ConsumerState<_GpsDetailSheet>
     );
   }
 
-  String _metersOrDash(double? meters) =>
-      meters == null ? '-' : '${meters.toStringAsFixed(0)} m';
+  String _metersOrDash(AppLocalizations l10n, double? meters) =>
+      meters == null ? '-' : l10n.gpsMeters(meters.toStringAsFixed(0));
 
-  String _heading(double? degrees) {
+  String _headingValue(AppLocalizations l10n, double? degrees) {
     if (degrees == null) return '-';
     final normalized = (degrees % 360 + 360) % 360;
-    return '${normalized.round()}° ${cardinalFor(normalized)}';
+    return l10n.gpsHeadingValue(
+      normalized.round().toString(),
+      cardinalFor(normalized),
+    );
   }
 }
+
+/// The tier name in the app language: the shared tier style carries only its
+/// colour and an English label.
+String _tierLabel(AppLocalizations l10n, GpsTier tier) => switch (tier) {
+  GpsTier.acquiring => l10n.gpsLocating,
+  GpsTier.excellent => l10n.gpsExcellent,
+  GpsTier.good => l10n.gpsGood,
+  GpsTier.weak => l10n.gpsWeak,
+  GpsTier.poor => l10n.gpsPoor,
+};
 
 class _QualityBanner extends StatelessWidget {
   const _QualityBanner({required this.accuracyM, required this.pulse});
@@ -155,6 +170,7 @@ class _QualityBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final tier = gpsTierFor(accuracyM);
     final tone = tier.color;
     final fixed = tier == GpsTier.excellent || tier == GpsTier.good;
@@ -179,12 +195,12 @@ class _QualityBanner extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            tier.label,
+            _tierLabel(l10n, tier),
             style: TextStyle(fontWeight: FontWeight.w700, color: tone),
           ),
           const Spacer(),
           Text(
-            '±${accuracyM.round()} m',
+            l10n.gpsAccuracy(accuracyM.round().toString()),
             style: TextStyle(fontWeight: FontWeight.w700, color: tone),
           ),
         ],
@@ -212,6 +228,7 @@ class _CoordinateBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -219,7 +236,7 @@ class _CoordinateBlock extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'COORDINATES',
+              l10n.gpsCoordinatesLabel,
               style: Theme.of(context).textTheme.labelMedium,
             ),
             _FormatToggle(showUtm: showUtm, onToggle: onToggle),
@@ -242,7 +259,7 @@ class _CoordinateBlock extends StatelessWidget {
               onPressed: () {
                 unawaited(Clipboard.setData(ClipboardData(text: _value)));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Coordinates copied')),
+                  SnackBar(content: Text(l10n.gpsCoordsCopied)),
                 );
               },
             ),
@@ -250,8 +267,10 @@ class _CoordinateBlock extends StatelessWidget {
         ),
         if (showUtm)
           Text(
-            'UTM zone ${latLonToUtm(lat, lng).zone}'
-            '${latLonToUtm(lat, lng).hemisphere}',
+            l10n.gpsUtmZone(
+              '${latLonToUtm(lat, lng).zone}'
+              '${latLonToUtm(lat, lng).hemisphere}',
+            ),
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
       ],
@@ -267,6 +286,7 @@ class _FormatToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: AppColors.mist,
@@ -276,12 +296,12 @@ class _FormatToggle extends StatelessWidget {
       child: Row(
         children: [
           _Segment(
-            label: 'Lat/Lon',
+            label: l10n.gpsFormatLatLon,
             selected: !showUtm,
             onTap: () => onToggle(false),
           ),
           _Segment(
-            label: 'UTM',
+            label: l10n.gpsFormatUtm,
             selected: showUtm,
             onTap: () => onToggle(true),
           ),

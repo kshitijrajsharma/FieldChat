@@ -17,7 +17,7 @@ if (hasKeystore) {
 }
 
 android {
-    namespace = "app.fieldchat"
+    namespace = "app.hulaki"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "app.fieldchat"
+        applicationId = "app.hulaki"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

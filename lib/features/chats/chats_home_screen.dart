@@ -1,18 +1,19 @@
 import 'dart:async';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/brand/field_chat_logo.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/groups/presentation/create_group_screen.dart';
-import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
-import 'package:fieldchat/features/groups/presentation/join_group_screen.dart';
-import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
-import 'package:fieldchat/features/sync/presentation/pending_upload_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/brand/hulaki_logo.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/groups/presentation/create_group_screen.dart';
+import 'package:hulaki/features/groups/presentation/group_avatar.dart';
+import 'package:hulaki/features/groups/presentation/join_group_screen.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:hulaki/features/sync/presentation/pending_upload_banner.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// The home list of mapping groups, live from the local store. Tap a group to
 /// open its thread; the + button starts a new one.
@@ -21,12 +22,13 @@ class ChatsHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final groups = ref.watch(activeGroupsProvider);
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: AppSpacing.lg,
-        title: const FieldChatWordmark(),
+        title: const HulakiWordmark(),
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: AppColors.ink),
@@ -44,14 +46,13 @@ class ChatsHomeScreen extends ConsumerWidget {
           Expanded(
             child: groups.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => const Center(
+              error: (error, _) => Center(
                 child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.xl),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Text(
-                    'Could not load your groups. Check your connection and '
-                    'try again.',
+                    l10n.chatsLoadFailed,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textMuted),
+                    style: const TextStyle(color: AppColors.textMuted),
                   ),
                 ),
               ),
@@ -69,14 +70,14 @@ class ChatsHomeScreen extends ConsumerWidget {
       floatingActionButton: (groups.asData?.value.isEmpty ?? true)
           ? null
           : FloatingActionButton(
-              onPressed: () => _showStartOptions(context),
+              onPressed: () => _showStartOptions(context, l10n),
               child: const Icon(Icons.add),
             ),
     );
   }
 }
 
-void _showStartOptions(BuildContext context) {
+void _showStartOptions(BuildContext context, AppLocalizations l10n) {
   unawaited(
     showModalBottomSheet<void>(
       context: context,
@@ -86,7 +87,7 @@ void _showStartOptions(BuildContext context) {
           children: [
             ListTile(
               leading: const Icon(Icons.add_location_alt_outlined),
-              title: const Text('Start a new group'),
+              title: Text(l10n.chatsStartNewGroup),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 unawaited(
@@ -100,7 +101,7 @@ void _showStartOptions(BuildContext context) {
             ),
             ListTile(
               leading: const Icon(Icons.link),
-              title: const Text('Join with a link'),
+              title: Text(l10n.chatsJoinWithLink),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 unawaited(
@@ -151,7 +152,7 @@ class _GroupSearchDelegate extends SearchDelegate<Group?> {
         .where((g) => g.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
     if (matches.isEmpty) {
-      return const Center(child: Text('No groups match'));
+      return Center(child: Text(AppLocalizations.of(context).chatsNoMatches));
     }
     return ListView(
       children: [
@@ -183,28 +184,32 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const FieldChatMark(height: 40, color: AppColors.textFaint),
+            const HulakiMark(height: 40, color: AppColors.textFaint),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'No groups yet',
+              l10n.chatsNoGroupsYet,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Start a mapping group, or join one a teammate shared.',
+            Text(
+              l10n.chatsEmptyStateBody,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
             ),
             const SizedBox(height: AppSpacing.xl),
             PrimaryButton(
-              label: 'Start a new group',
+              label: l10n.chatsStartNewGroup,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const CreateGroupScreen(),
@@ -221,7 +226,7 @@ class _EmptyState extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.link, size: 18),
-                label: const Text('Join with a link'),
+                label: Text(l10n.chatsJoinWithLink),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
                   side: const BorderSide(color: AppColors.mist),
@@ -236,15 +241,15 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-String _previewFor(Message? message) {
-  if (message == null) return 'No messages yet';
+String _previewFor(AppLocalizations l10n, Message? message) {
+  if (message == null) return l10n.chatsNoMessagesYet;
   final body = message.body;
   if (body != null && body.isNotEmpty) return body;
   return switch (message.kind) {
-    'photo' => 'Photo',
-    'video' => 'Video',
-    'voice' => 'Voice note',
-    _ => 'Dropped a point',
+    'photo' => l10n.chatsPreviewPhoto,
+    'video' => l10n.chatsPreviewVideo,
+    'voice' => l10n.chatsPreviewVoiceNote,
+    _ => l10n.chatsPreviewPoint,
   };
 }
 
@@ -255,6 +260,7 @@ class _GroupTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -270,7 +276,10 @@ class _GroupTile extends ConsumerWidget {
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 3),
         child: Text(
-          _previewFor(ref.watch(latestMessageProvider(group.id)).asData?.value),
+          _previewFor(
+            l10n,
+            ref.watch(latestMessageProvider(group.id)).asData?.value,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 13, color: AppColors.textMuted),

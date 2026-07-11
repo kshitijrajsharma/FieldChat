@@ -1,28 +1,29 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/core/image_thumbnail.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/discovery/listing_publisher.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/groups/group_member_view.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/groups/presentation/area_draw_screen.dart';
-import 'package:fieldchat/features/groups/presentation/export_sheet.dart';
-import 'package:fieldchat/features/groups/presentation/group_avatar.dart';
-import 'package:fieldchat/features/groups/presentation/hot_key_editor_screen.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/map/offline_areas.dart';
-import 'package:fieldchat/features/map/offline_downloads.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/core/image_thumbnail.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/discovery/listing_publisher.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/groups/group_member_view.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/groups/presentation/area_draw_screen.dart';
+import 'package:hulaki/features/groups/presentation/export_sheet.dart';
+import 'package:hulaki/features/groups/presentation/group_avatar.dart';
+import 'package:hulaki/features/groups/presentation/hot_key_editor_screen.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/map/offline_areas.dart';
+import 'package:hulaki/features/map/offline_downloads.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -86,7 +87,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     });
   }
 
-  Future<void> _makeOffline(Group group) async {
+  Future<void> _makeOffline(Group group, AppLocalizations l10n) async {
     if (_caching) return;
     setState(() => _caching = true);
     try {
@@ -97,8 +98,8 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       if (bounds == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Draw an area or add points first'),
+            SnackBar(
+              content: Text(l10n.groupNeedAreaOrPoints),
             ),
           );
         }
@@ -109,13 +110,13 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
           .start(groupId: group.id, groupName: group.name, bounds: bounds);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Area saved for offline use')),
+          SnackBar(content: Text(l10n.groupOfflineAreaSaved)),
         );
       }
     } on PlatformException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Offline download failed')),
+          SnackBar(content: Text(l10n.groupOfflineDownloadFailed)),
         );
       }
     } finally {
@@ -169,16 +170,24 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
 
   /// Picks the accuracy cap for sent points. Off clears it; the presets bound
   /// the metres a fix may carry before a send is refused.
-  Future<void> _editGpsLimit(String groupId, int? current) async {
+  Future<void> _editGpsLimit(
+    String groupId,
+    int? current,
+    AppLocalizations l10n,
+  ) async {
     const presets = <int?>[null, 5, 10, 15, 20];
     final chosen = await showDialog<int>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
-        title: const Text('Require good GPS'),
+        title: Text(l10n.groupRequireGoodGps),
         children: [
           for (final preset in presets)
             ListTile(
-              title: Text(preset == null ? 'Off' : 'Within ±$preset m'),
+              title: Text(
+                preset == null
+                    ? l10n.groupGpsLimitOff
+                    : l10n.groupGpsLimitWithin(preset),
+              ),
               trailing: (current ?? 0) == (preset ?? 0)
                   ? const Icon(Icons.check, color: AppColors.ink)
                   : null,
@@ -196,16 +205,20 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     });
   }
 
-  Future<void> _acceptAdmin(String groupId) async {
+  Future<void> _acceptAdmin(String groupId, AppLocalizations l10n) async {
     final messenger = ScaffoldMessenger.of(context);
     final identity = await ref.read(deviceIdentityProvider.future);
     await ref.read(groupServiceProvider).acceptAdmin(groupId, identity);
     messenger.showSnackBar(
-      const SnackBar(content: Text('You are now an admin of this group')),
+      SnackBar(content: Text(l10n.groupNowAdmin)),
     );
   }
 
-  Future<void> _setPublic(String groupId, bool value) => _guard(() async {
+  Future<void> _setPublic(
+    String groupId,
+    bool value,
+    AppLocalizations l10n,
+  ) => _guard(() async {
     final directory = ref.read(publicDirectoryProvider);
     if (!value) {
       await ref.read(groupServiceProvider).setPublic(groupId, isPublic: false);
@@ -219,8 +232,8 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     if (center == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Draw an area or add points before going public'),
+          SnackBar(
+            content: Text(l10n.groupNeedAreaBeforePublic),
           ),
         );
       }
@@ -309,22 +322,20 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  Future<void> _leave(String groupId) async {
+  Future<void> _leave(String groupId, AppLocalizations l10n) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave this group?'),
-        content: const Text(
-          'It is removed from this device. Other members keep it.',
-        ),
+        title: Text(l10n.groupLeaveConfirmTitle),
+        content: Text(l10n.groupLeaveConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.groupCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Leave'),
+            child: Text(l10n.groupLeaveAction),
           ),
         ],
       ),
@@ -334,7 +345,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  Future<void> _delete(String groupId, String groupName) async {
+  Future<void> _delete(
+    String groupId,
+    String groupName,
+    AppLocalizations l10n,
+  ) async {
     final controller = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -342,19 +357,16 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
         builder: (context, setState) {
           final matches = controller.text.trim() == groupName.trim();
           return AlertDialog(
-            title: const Text('Delete this group?'),
+            title: Text(l10n.groupDeleteConfirmTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'This erases the group and its points for everyone, on '
-                  'the server and on this device. It cannot be undone.',
-                ),
+                Text(l10n.groupDeleteConfirmBody),
                 const SizedBox(height: AppSpacing.md),
-                const Text(
-                  'Type the group name to confirm.',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Text(
+                  l10n.groupDeleteTypeName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
@@ -371,13 +383,13 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('Cancel'),
+                child: Text(l10n.groupCancel),
               ),
               FilledButton(
                 onPressed: matches
                     ? () => Navigator.of(dialogContext).pop(true)
                     : null,
-                child: const Text('Delete'),
+                child: Text(l10n.groupDeleteAction),
               ),
             ],
           );
@@ -393,10 +405,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.paper,
       appBar: AppBar(
-        title: const Text('Group info'),
+        title: Text(l10n.groupInfoTitle),
         bottom: _saving
             ? const PreferredSize(
                 preferredSize: Size.fromHeight(2),
@@ -434,7 +447,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                 _AdminInviteWatcher(
                   groupId: group.id,
                   selfId: selfId,
-                  onAccept: () => unawaited(_acceptAdmin(group.id)),
+                  onAccept: () => unawaited(_acceptAdmin(group.id, l10n)),
                 ),
               const SizedBox(height: AppSpacing.lg),
               _InviteLink(
@@ -457,9 +470,10 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   context,
                   ref,
                   group.id,
+                  l10n,
                   editable: iAmAdmin || group.allowMemberTags,
                 ),
-                onMakeOffline: () => _makeOffline(group),
+                onMakeOffline: () => _makeOffline(group, l10n),
                 onExport: () => showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
@@ -492,15 +506,16 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                       unawaited(_setAllowOutsideArea(group.id, value)),
                   onToggleMemberTags: (value) =>
                       unawaited(_setAllowMemberTags(group.id, value)),
-                  onEditGpsLimit: () =>
-                      unawaited(_editGpsLimit(group.id, group.gpsLimitM)),
+                  onEditGpsLimit: () => unawaited(
+                    _editGpsLimit(group.id, group.gpsLimitM, l10n),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 _AdminCard(
                   isPublic: group.isPublic,
-                  onTogglePublic: (value) => _setPublic(group.id, value),
+                  onTogglePublic: (value) => _setPublic(group.id, value, l10n),
                   onArchive: () => _archive(group.id),
-                  onDelete: () => _delete(group.id, group.name),
+                  onDelete: () => _delete(group.id, group.name, l10n),
                 ),
               ] else ...[
                 const SizedBox(height: AppSpacing.lg),
@@ -517,11 +532,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                         Icons.logout,
                         color: AppColors.danger,
                       ),
-                      title: const Text(
-                        'Leave group',
-                        style: TextStyle(color: AppColors.danger),
+                      title: Text(
+                        l10n.groupLeaveGroup,
+                        style: const TextStyle(color: AppColors.danger),
                       ),
-                      onTap: () => _leave(group.id),
+                      onTap: () => _leave(group.id, l10n),
                     ),
                   ),
                 ),
@@ -537,7 +552,8 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
 Future<void> _editHotKeys(
   BuildContext context,
   WidgetRef ref,
-  String groupId, {
+  String groupId,
+  AppLocalizations l10n, {
   required bool editable,
 }) async {
   final rows = await ref.read(databaseProvider).hotKeysFor(groupId);
@@ -560,7 +576,7 @@ Future<void> _editHotKeys(
   await ref.read(groupServiceProvider).updateHotKeys(groupId, result);
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Quick tags updated')),
+      SnackBar(content: Text(l10n.groupQuickTagsUpdated)),
     );
   }
 }
@@ -623,6 +639,7 @@ class _EditableIdentityState extends State<_EditableIdentity> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final description = widget.description;
     return Column(
       children: [
@@ -659,9 +676,9 @@ class _EditableIdentityState extends State<_EditableIdentity> {
                   textAlign: TextAlign.center,
                   textCapitalization: TextCapitalization.sentences,
                   style: Theme.of(context).textTheme.titleLarge,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'Group name',
+                    hintText: l10n.groupNameLabel,
                     border: InputBorder.none,
                   ),
                 ),
@@ -672,9 +689,9 @@ class _EditableIdentityState extends State<_EditableIdentity> {
                   maxLines: 4,
                   textCapitalization: TextCapitalization.sentences,
                   style: const TextStyle(fontSize: 13, color: AppColors.ink),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'What are you mapping, and how?',
+                    hintText: l10n.groupDescriptionHint,
                     border: InputBorder.none,
                   ),
                 ),
@@ -705,7 +722,7 @@ class _EditableIdentityState extends State<_EditableIdentity> {
             ],
           ),
           Text(
-            'Mapping group',
+            l10n.groupMappingGroupSubtitle,
             style: Theme.of(context).textTheme.bodySmall!.copyWith(
               color: AppColors.textMuted,
             ),
@@ -762,6 +779,8 @@ class _ModerationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final gpsLimit = gpsLimitM;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -772,8 +791,8 @@ class _ModerationCard extends StatelessWidget {
         color: AppColors.white,
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.md,
                 AppSpacing.md,
@@ -782,8 +801,8 @@ class _ModerationCard extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'MODERATION',
-                  style: TextStyle(
+                  l10n.groupModerationHeading,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -798,10 +817,8 @@ class _ModerationCard extends StatelessWidget {
                   Icons.verified_user_outlined,
                   color: AppColors.ink,
                 ),
-                title: const Text('Require approval to join'),
-                subtitle: const Text(
-                  'People request access; an admin approves',
-                ),
+                title: Text(l10n.groupRequireApproval),
+                subtitle: Text(l10n.groupRequireApprovalDetail),
                 value: joinApproval,
                 onChanged: onToggleApproval,
               ),
@@ -812,11 +829,8 @@ class _ModerationCard extends StatelessWidget {
                 Icons.download_outlined,
                 color: AppColors.ink,
               ),
-              title: const Text('Allow everyone to export'),
-              subtitle: const Text(
-                'Members can download the data, not just '
-                'admins',
-              ),
+              title: Text(l10n.groupAllowMemberExport),
+              subtitle: Text(l10n.groupAllowMemberExportDetail),
               value: allowMemberExport,
               onChanged: onToggleMemberExport,
             ),
@@ -826,11 +840,8 @@ class _ModerationCard extends StatelessWidget {
                 Icons.add_location_alt_outlined,
                 color: AppColors.ink,
               ),
-              title: const Text('Allow members to place points'),
-              subtitle: const Text(
-                'Off means members can only send their '
-                'live GPS point',
-              ),
+              title: Text(l10n.groupAllowMemberPlace),
+              subtitle: Text(l10n.groupAllowMemberPlaceDetail),
               value: allowMemberPlace,
               onChanged: onToggleMemberPlace,
             ),
@@ -840,11 +851,8 @@ class _ModerationCard extends StatelessWidget {
                 Icons.label_outline,
                 color: AppColors.ink,
               ),
-              title: const Text('Allow everyone to add or delete tags'),
-              subtitle: const Text(
-                'Off means only admins change the quick '
-                'tags',
-              ),
+              title: Text(l10n.groupAllowMemberTags),
+              subtitle: Text(l10n.groupAllowMemberTagsDetail),
               value: allowMemberTags,
               onChanged: onToggleMemberTags,
             ),
@@ -855,11 +863,8 @@ class _ModerationCard extends StatelessWidget {
                   Icons.fmd_bad_outlined,
                   color: AppColors.ink,
                 ),
-                title: const Text('Allow points outside the area'),
-                subtitle: const Text(
-                  'Off blocks sending beyond the mapping '
-                  'area',
-                ),
+                title: Text(l10n.groupAllowOutsideArea),
+                subtitle: Text(l10n.groupAllowOutsideAreaDetail),
                 value: allowOutsideArea,
                 onChanged: onToggleOutsideArea,
               ),
@@ -870,11 +875,11 @@ class _ModerationCard extends StatelessWidget {
                 Icons.gps_fixed,
                 color: AppColors.ink,
               ),
-              title: const Text('Require good GPS'),
+              title: Text(l10n.groupRequireGoodGps),
               subtitle: Text(
-                gpsLimitM == null
-                    ? 'Off. Send at any GPS accuracy'
-                    : 'Block points less accurate than ±$gpsLimitM m',
+                gpsLimit == null
+                    ? l10n.groupGpsLimitOffDetail
+                    : l10n.groupGpsLimitDetail(gpsLimit),
               ),
               trailing: const Icon(
                 Icons.chevron_right,
@@ -904,6 +909,7 @@ class _AdminCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -916,15 +922,15 @@ class _AdminCard extends StatelessWidget {
           children: [
             SwitchListTile(
               secondary: const Icon(Icons.public, color: AppColors.ink),
-              title: const Text('Public group'),
-              subtitle: const Text('Discoverable by people nearby'),
+              title: Text(l10n.groupPublicGroup),
+              subtitle: Text(l10n.groupPublicGroupDetail),
               value: isPublic,
               onChanged: onTogglePublic,
             ),
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.archive_outlined, color: AppColors.ink),
-              title: const Text('Archive group'),
+              title: Text(l10n.groupArchiveGroup),
               onTap: onArchive,
             ),
             const Divider(height: 1),
@@ -933,9 +939,9 @@ class _AdminCard extends StatelessWidget {
                 Icons.delete_outline,
                 color: AppColors.danger,
               ),
-              title: const Text(
-                'Delete group',
-                style: TextStyle(color: AppColors.danger),
+              title: Text(
+                l10n.groupDeleteGroup,
+                style: const TextStyle(color: AppColors.danger),
               ),
               onTap: onDelete,
             ),
@@ -953,6 +959,7 @@ class _InviteLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -969,7 +976,7 @@ class _InviteLink extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'INVITE LINK',
+                  l10n.groupInviteLinkHeading,
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
                 Text(
@@ -983,14 +990,14 @@ class _InviteLink extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.qr_code_2, size: 18),
-            onPressed: () => unawaited(_showQr(context, link)),
+            onPressed: () => unawaited(_showQr(context, link, l10n)),
           ),
           IconButton(
             icon: const Icon(Icons.copy_outlined, size: 18),
             onPressed: () {
               unawaited(Clipboard.setData(ClipboardData(text: link)));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Invite link copied')),
+                SnackBar(content: Text(l10n.groupInviteLinkCopied)),
               );
             },
           ),
@@ -998,7 +1005,7 @@ class _InviteLink extends StatelessWidget {
             icon: const Icon(Icons.share_outlined, size: 18),
             onPressed: () => unawaited(
               SharePlus.instance.share(
-                ShareParams(text: 'Join my FieldChat mapping group: $link'),
+                ShareParams(text: l10n.groupShareInvite(link)),
               ),
             ),
           ),
@@ -1007,7 +1014,11 @@ class _InviteLink extends StatelessWidget {
     );
   }
 
-  Future<void> _showQr(BuildContext context, String link) {
+  Future<void> _showQr(
+    BuildContext context,
+    String link,
+    AppLocalizations l10n,
+  ) {
     return showDialog<void>(
       context: context,
       builder: (_) => Dialog(
@@ -1017,9 +1028,12 @@ class _InviteLink extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Scan to join',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              Text(
+                l10n.groupScanToJoin,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               QrImageView(
@@ -1045,23 +1059,21 @@ class _MembersCard extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     GroupMemberView member,
+    AppLocalizations l10n,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Remove ${member.name}?'),
-        content: const Text(
-          'They stay off this group’s roster on this device. '
-          'Sharing the invite link lets them rejoin.',
-        ),
+        title: Text(l10n.groupRemoveMemberTitle(member.name)),
+        content: Text(l10n.groupRemoveMemberBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.groupCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Remove'),
+            child: Text(l10n.groupRemoveAction),
           ),
         ],
       ),
@@ -1079,6 +1091,7 @@ class _MembersCard extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     GroupMemberView member,
+    AppLocalizations l10n,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     final identity = await ref.read(deviceIdentityProvider.future);
@@ -1089,8 +1102,8 @@ class _MembersCard extends ConsumerWidget {
       SnackBar(
         content: Text(
           invited
-              ? 'Invited ${member.name} to be an admin'
-              : '${member.name} has not shared an identity yet',
+              ? l10n.groupAdminInviteSent(member.name)
+              : l10n.groupMemberHasNoIdentity(member.name),
         ),
       ),
     );
@@ -1098,6 +1111,7 @@ class _MembersCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final allMembers =
         ref.watch(groupMembersProvider(groupId)).asData?.value ??
         const <GroupMemberView>[];
@@ -1123,17 +1137,15 @@ class _MembersCard extends ConsumerWidget {
               leading: const Icon(Icons.group_outlined, color: AppColors.ink),
               // The count is always the true group total; a non-admin still
               // only sees the admins plus themselves listed below.
-              title: Text('Members · ${allMembers.length}'),
+              title: Text(l10n.groupMemberCount(allMembers.length)),
               trailing: TextButton.icon(
                 onPressed: () => unawaited(
                   SharePlus.instance.share(
-                    ShareParams(
-                      text: 'Join my FieldChat mapping group: $inviteLink',
-                    ),
+                    ShareParams(text: l10n.groupShareInvite(inviteLink)),
                   ),
                 ),
                 icon: const Icon(Icons.person_add_alt, size: 18),
-                label: const Text('Add'),
+                label: Text(l10n.groupAddMember),
               ),
             ),
             for (final member in members) ...[
@@ -1143,9 +1155,10 @@ class _MembersCard extends ConsumerWidget {
                 isSelf: member.profileId == selfId,
                 canRemove: iAmAdmin && member.profileId != selfId,
                 onMakeAdmin: iAmAdmin && !member.isAdmin
-                    ? () => unawaited(_promote(context, ref, member))
+                    ? () => unawaited(_promote(context, ref, member, l10n))
                     : null,
-                onRemove: () => unawaited(_confirmRemove(context, ref, member)),
+                onRemove: () =>
+                    unawaited(_confirmRemove(context, ref, member, l10n)),
               ),
             ],
           ],
@@ -1213,6 +1226,7 @@ class _JoinRequestsCardState extends ConsumerState<_JoinRequestsCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_requests.isEmpty) return const SizedBox.shrink();
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -1229,26 +1243,26 @@ class _JoinRequestsCardState extends ConsumerState<_JoinRequestsCard> {
                 Icons.how_to_reg_outlined,
                 color: AppColors.ink,
               ),
-              title: Text('Join requests · ${_requests.length}'),
+              title: Text(l10n.groupJoinRequestCount(_requests.length)),
             ),
             for (final request in _requests) ...[
               const Divider(height: 1),
               ListTile(
-                title: Text(request.requesterName ?? 'Someone'),
-                subtitle: const Text('wants to join'),
+                title: Text(request.requesterName ?? l10n.groupSomeone),
+                subtitle: Text(l10n.groupWantsToJoin),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextButton(
                       onPressed: () => unawaited(_decline(request)),
-                      child: const Text('Decline'),
+                      child: Text(l10n.groupDecline),
                     ),
                     FilledButton(
                       onPressed: () => unawaited(_approve(request)),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.ink,
                       ),
-                      child: const Text('Approve'),
+                      child: Text(l10n.groupApprove),
                     ),
                   ],
                 ),
@@ -1339,6 +1353,7 @@ class _AdminInviteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -1349,14 +1364,17 @@ class _AdminInviteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.shield_outlined, color: AppColors.ink),
-              SizedBox(width: AppSpacing.md),
+              const Icon(Icons.shield_outlined, color: AppColors.ink),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
-                  'You have been invited to be an admin.',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  l10n.groupAdminInvitePrompt,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -1367,13 +1385,13 @@ class _AdminInviteCard extends StatelessWidget {
             children: [
               TextButton(
                 onPressed: onDecline,
-                child: const Text('Decline'),
+                child: Text(l10n.groupDecline),
               ),
               const SizedBox(width: AppSpacing.sm),
               FilledButton(
                 onPressed: onAccept,
                 style: FilledButton.styleFrom(backgroundColor: AppColors.ink),
-                child: const Text('Accept'),
+                child: Text(l10n.groupAccept),
               ),
             ],
           ),
@@ -1400,6 +1418,7 @@ class _MemberRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final initial = member.name.characters.first.toUpperCase();
     final hasMenu = canRemove || onMakeAdmin != null;
     return ListTile(
@@ -1415,8 +1434,12 @@ class _MemberRow extends StatelessWidget {
           ),
         ),
       ),
-      title: Text(isSelf ? '${member.name} (you)' : member.name),
-      subtitle: Text(member.isAdmin ? 'Admin' : 'Member'),
+      title: Text(
+        isSelf ? l10n.groupMemberNameSelf(member.name) : member.name,
+      ),
+      subtitle: Text(
+        member.isAdmin ? l10n.groupRoleAdmin : l10n.groupRoleMember,
+      ),
       trailing: hasMenu
           ? PopupMenuButton<String>(
               icon: const Icon(Icons.more_horiz, color: AppColors.textMuted),
@@ -1426,16 +1449,16 @@ class _MemberRow extends StatelessWidget {
               },
               itemBuilder: (context) => [
                 if (onMakeAdmin != null)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'admin',
-                    child: Text('Make admin'),
+                    child: Text(l10n.groupMakeAdmin),
                   ),
                 if (canRemove)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'remove',
                     child: Text(
-                      'Remove',
-                      style: TextStyle(color: AppColors.danger),
+                      l10n.groupRemoveAction,
+                      style: const TextStyle(color: AppColors.danger),
                     ),
                   ),
               ],
@@ -1470,6 +1493,7 @@ class _ManageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -1482,7 +1506,7 @@ class _ManageCard extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.label_outline, color: AppColors.ink),
-              title: const Text('Quick tags'),
+              title: Text(l10n.groupQuickTagsTitle),
               trailing: const Icon(
                 Icons.chevron_right,
                 color: AppColors.textFaint,
@@ -1496,11 +1520,15 @@ class _ManageCard extends StatelessWidget {
                   Icons.map_outlined,
                   color: AppColors.ink,
                 ),
-                title: Text(hasArea ? 'Edit mapping area' : 'Set mapping area'),
+                title: Text(
+                  hasArea
+                      ? l10n.groupEditMappingArea
+                      : l10n.groupSetMappingArea,
+                ),
                 subtitle: Text(
                   hasArea
-                      ? 'Redraw the mapping area on the map'
-                      : 'Draw the mapping area on the map',
+                      ? l10n.groupEditMappingAreaDetail
+                      : l10n.groupSetMappingAreaDetail,
                 ),
                 trailing: const Icon(
                   Icons.chevron_right,
@@ -1515,11 +1543,8 @@ class _ManageCard extends StatelessWidget {
                 Icons.offline_pin_outlined,
                 color: AppColors.ink,
               ),
-              title: const Text('Make available offline'),
-              subtitle: const Text(
-                'Save the map here so it works with no '
-                'signal',
-              ),
+              title: Text(l10n.groupMakeOffline),
+              subtitle: Text(l10n.groupMakeOfflineDetail),
               trailing: caching
                   ? const SizedBox(
                       width: 18,
@@ -1536,11 +1561,11 @@ class _ManageCard extends StatelessWidget {
                   Icons.download_outlined,
                   color: AppColors.ink,
                 ),
-                title: const Text('Export data'),
+                title: Text(l10n.groupExportTitle),
                 subtitle: Text(
                   exportForEveryone
-                      ? 'Download this group’s points and photos'
-                      : 'Admins only',
+                      ? l10n.groupExportEveryoneDetail
+                      : l10n.groupExportAdminsOnlyDetail,
                 ),
                 trailing: const Icon(
                   Icons.chevron_right,

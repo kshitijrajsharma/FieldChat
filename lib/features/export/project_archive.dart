@@ -1,21 +1,27 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/export/gpx.dart';
+import 'package:archive/archive_io.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/export/gpx.dart';
 
 /// Resolves the decrypted bytes of a media item by id, or null if absent.
 typedef MediaResolver = Future<Uint8List?> Function(String mediaId);
 
-/// Builds a self-contained project bundle (a .zip) for a group: the points as
-/// GeoJSON with relative media paths, the area, the track, a manifest, and the
-/// media files themselves. It opens in QGIS and travels offline.
+/// Writes a self-contained project bundle (a .zip) for a group to [outputPath]:
+/// the points as GeoJSON with relative media paths, the area, the track, a
+/// manifest, and the media files themselves. It opens in QGIS and travels
+/// offline.
+///
+/// Entries stream to disk as they are added, so peak memory tracks the largest
+/// single media item rather than the size of the whole library.
 ///
 /// Media is read decrypted from the local store: an export is a deliberate
 /// "take my data out" action, so the bundle is plaintext.
-Future<Uint8List> buildProjectArchive({
+Future<void> buildProjectArchive({
+  required String outputPath,
   required Group group,
   required List<HotKey> hotKeys,
   required List<Message> messages,
@@ -24,82 +30,92 @@ Future<Uint8List> buildProjectArchive({
   DateTime? exportedAt,
 }) async {
   final stamp = exportedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-  final archive = Archive();
+  final encoder = ZipFileEncoder()..create(outputPath);
 
-  final mediaPaths = <String, String>{};
-  var mediaCount = 0;
-  for (final message in messages) {
-    final mediaId = message.mediaId;
-    if (mediaId == null || message.deletedAt != null) continue;
-    if (mediaPaths.containsKey(mediaId)) continue;
-    final bytes = await mediaResolver(mediaId);
-    if (bytes == null) continue;
-    final path = 'media/$mediaId.${_extensionForMime(message.mediaMime)}';
-    mediaPaths[mediaId] = path;
-    _addBytes(archive, path, bytes);
-    mediaCount++;
-  }
+  try {
+    final mediaPaths = <String, String>{};
+    var mediaCount = 0;
+    for (final message in messages) {
+      final mediaId = message.mediaId;
+      if (mediaId == null || message.deletedAt != null) continue;
+      if (mediaPaths.containsKey(mediaId)) continue;
+      final bytes = await mediaResolver(mediaId);
+      if (bytes == null) continue;
+      final path = 'media/$mediaId.${_extensionForMime(message.mediaMime)}';
+      mediaPaths[mediaId] = path;
+      // Photos, video and audio are already compressed, so store them rather
+      // than spend CPU deflating them for no gain.
+      encoder.addArchiveFile(
+        ArchiveFile.noCompress(path, bytes.length, bytes),
+      );
+      mediaCount++;
+    }
 
-  final featureCollection = buildFeatureCollection(
-    messages,
-    hotKeys,
-    mediaPaths: mediaPaths,
-  );
-  final pointCount = (featureCollection['features'] as List).length;
-  _addText(
-    archive,
-    'data.geojson',
-    featureCollectionToString(featureCollection),
-  );
-
-  if (group.aoiGeoJson != null) {
-    _addText(archive, 'aoi.geojson', group.aoiGeoJson!);
-  }
-
-  if (track.isNotEmpty) {
-    _addText(
-      archive,
-      'track.gpx',
-      buildGpx(
-        name: group.name,
-        messages: messages,
-        hotKeys: hotKeys,
-        track: track,
-      ),
+    final featureCollection = buildFeatureCollection(
+      messages,
+      hotKeys,
+      mediaPaths: mediaPaths,
     );
+    final pointCount = (featureCollection['features'] as List).length;
+    _addText(
+      encoder,
+      'data.geojson',
+      featureCollectionToString(featureCollection),
+    );
+
+    if (group.aoiGeoJson != null) {
+      _addText(encoder, 'aoi.geojson', group.aoiGeoJson!);
+    }
+
+    if (track.isNotEmpty) {
+      _addText(
+        encoder,
+        'track.gpx',
+        buildGpx(
+          name: group.name,
+          messages: messages,
+          hotKeys: hotKeys,
+          track: track,
+        ),
+      );
+    }
+
+    final manifest = {
+      'app': 'Hulaki',
+      'formatVersion': 1,
+      'group': {'id': group.id, 'name': group.name},
+      'exportedAt': stamp.toUtc().toIso8601String(),
+      'counts': {'points': pointCount, 'media': mediaCount},
+      'hotKeys': [
+        for (final h in hotKeys)
+          {'label': h.label, 'color': _hexColor(h.colorValue)},
+      ],
+      'files': {
+        'data': 'data.geojson',
+        if (group.aoiGeoJson != null) 'aoi': 'aoi.geojson',
+        if (track.isNotEmpty) 'track': 'track.gpx',
+      },
+    };
+    _addText(
+      encoder,
+      'project.json',
+      const JsonEncoder.withIndent('  ').convert(manifest),
+    );
+    _addText(encoder, 'README.txt', _readme(group.name));
+
+    await encoder.close();
+  } on Exception {
+    // The zip is written as it is built, so a failure leaves a truncated file
+    // that would look like a valid export. Remove it and let the caller fail.
+    await encoder.close();
+    final partial = File(outputPath);
+    if (partial.existsSync()) await partial.delete();
+    rethrow;
   }
-
-  final manifest = {
-    'app': 'FieldChat',
-    'formatVersion': 1,
-    'group': {'id': group.id, 'name': group.name},
-    'exportedAt': stamp.toUtc().toIso8601String(),
-    'counts': {'points': pointCount, 'media': mediaCount},
-    'hotKeys': [
-      for (final h in hotKeys)
-        {'label': h.label, 'color': _hexColor(h.colorValue)},
-    ],
-    'files': {
-      'data': 'data.geojson',
-      if (group.aoiGeoJson != null) 'aoi': 'aoi.geojson',
-      if (track.isNotEmpty) 'track': 'track.gpx',
-    },
-  };
-  _addText(
-    archive,
-    'project.json',
-    const JsonEncoder.withIndent('  ').convert(manifest),
-  );
-  _addText(archive, 'README.txt', _readme(group.name));
-
-  return Uint8List.fromList(ZipEncoder().encode(archive));
 }
 
-void _addText(Archive archive, String name, String content) =>
-    _addBytes(archive, name, Uint8List.fromList(utf8.encode(content)));
-
-void _addBytes(Archive archive, String name, Uint8List bytes) =>
-    archive.addFile(ArchiveFile(name, bytes.length, bytes));
+void _addText(ZipFileEncoder encoder, String name, String content) =>
+    encoder.addArchiveFile(ArchiveFile.string(name, content));
 
 String _extensionForMime(String? mime) => switch (mime) {
   'image/jpeg' => 'jpg',
@@ -118,7 +134,7 @@ String _hexColor(int argb) {
 }
 
 String _readme(String groupName) =>
-    'FieldChat project export: $groupName\n\n'
+    'Hulaki project export: $groupName\n\n'
     'data.geojson  Points with tag, sender, time, accuracy and caption.\n'
     '              Photo/video/audio points link to files under media/.\n'
     'aoi.geojson   The mapping area, if one was set.\n'

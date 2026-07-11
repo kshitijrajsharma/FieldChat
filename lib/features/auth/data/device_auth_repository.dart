@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/auth/data/auth_repository.dart';
-import 'package:fieldchat/features/auth/domain/session.dart';
+import 'package:hulaki/features/auth/data/auth_repository.dart';
+import 'package:hulaki/features/auth/domain/session.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 

@@ -4,18 +4,18 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/export/gpx.dart';
-import 'package:fieldchat/features/export/project_archive.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/sync/blob_store.dart';
-import 'package:fieldchat/features/sync/in_memory_transport.dart';
-import 'package:fieldchat/features/sync/sync_service.dart';
-import 'package:fieldchat/features/track/track_recorder.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/export/gpx.dart';
+import 'package:hulaki/features/export/project_archive.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/sync/blob_store.dart';
+import 'package:hulaki/features/sync/in_memory_transport.dart';
+import 'package:hulaki/features/sync/sync_service.dart';
+import 'package:hulaki/features/track/track_recorder.dart';
 import 'package:xml/xml.dart';
 
 /// One simulated member: their own device store and sync engine, all talking
@@ -311,8 +311,13 @@ void main() {
     expect(doc.findAllElements('wpt').length, located);
     expect(doc.findAllElements('trkpt').length, walk.length);
 
+    final outDir = Directory('${Directory.current.path}/.prep/exports')
+      ..createSync(recursive: true);
+
     // 12. Project bundle: a .zip with the geojson, area, track and media.
-    final projectZip = await buildProjectArchive(
+    final zipPath = '${outDir.path}/ward7_litter_project.zip';
+    await buildProjectArchive(
+      outputPath: zipPath,
       group: group,
       hotKeys: groupHotKeys,
       messages: messages,
@@ -320,20 +325,15 @@ void main() {
       track: trail,
       exportedAt: DateTime.utc(2026, 6, 30, 10),
     );
-    final bundle = ZipDecoder().decodeBytes(projectZip);
+    final bundle = ZipDecoder().decodeBytes(File(zipPath).readAsBytesSync());
     expect(
       bundle.files.where((f) => f.name.startsWith('media/')).length,
       greaterThan(0),
     );
 
-    final outDir = Directory('${Directory.current.path}/.prep/exports')
-      ..createSync(recursive: true);
     File(
       '${outDir.path}/ward7_litter.geojson',
     ).writeAsStringSync(featureCollectionToString(featureCollection));
     File('${outDir.path}/ward7_litter.gpx').writeAsStringSync(gpx);
-    File(
-      '${outDir.path}/ward7_litter_project.zip',
-    ).writeAsBytesSync(projectZip);
   });
 }

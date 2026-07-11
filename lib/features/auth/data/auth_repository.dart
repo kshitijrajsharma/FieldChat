@@ -1,4 +1,4 @@
-import 'package:fieldchat/features/auth/domain/session.dart';
+import 'package:hulaki/features/auth/domain/session.dart';
 
 /// Device-identity authentication. Each install holds a stable id and a chosen
 /// username, persisted locally. No phone number or SMS is involved.

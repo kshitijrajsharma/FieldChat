@@ -1,5 +1,5 @@
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/messaging/domain/message_payload.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/messaging/domain/message_payload.dart';
 import 'package:xml/xml.dart';
 
 /// Builds a GPX 1.1 document: one waypoint per located message (named by its
@@ -20,7 +20,7 @@ String buildGpx({
     'gpx',
     attributes: {
       'version': '1.1',
-      'creator': 'FieldChat',
+      'creator': 'Hulaki',
       'xmlns': 'http://www.topografix.com/GPX/1/1',
     },
     nest: () {

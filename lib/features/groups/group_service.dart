@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/groups/invite_link.dart';
-import 'package:fieldchat/features/identity/admin_chain.dart';
-import 'package:fieldchat/features/identity/admin_roles.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/messaging/domain/message_payload.dart';
-import 'package:fieldchat/features/sync/group_cipher.dart';
-import 'package:fieldchat/features/sync/sync_service.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/groups/invite_link.dart';
+import 'package:hulaki/features/identity/admin_chain.dart';
+import 'package:hulaki/features/identity/admin_roles.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/messaging/domain/message_payload.dart';
+import 'package:hulaki/features/sync/group_cipher.dart';
+import 'package:hulaki/features/sync/sync_service.dart';
 import 'package:uuid/uuid.dart';
 
 /// A tag to create on a new group: its label, ARGB colour and optional icon.

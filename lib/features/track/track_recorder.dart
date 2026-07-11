@@ -1,6 +1,6 @@
-import 'package:fieldchat/core/geo.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
+import 'package:hulaki/core/geo.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
 
 /// Keeps the user's breadcrumb trail. Records a point once they have moved at
 /// least [minDistanceM] from the last one, so a stationary phone does not fill

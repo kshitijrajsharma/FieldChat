@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:fieldchat/design/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
 
 /// The group's cover photo, or a neutral pin when none is set. Used in the
 /// chats list, group info and the map overview so a group looks the same

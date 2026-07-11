@@ -1,5 +1,5 @@
-import 'package:fieldchat/design/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
 
 /// Font families bundled with the app. Hanken Grotesk carries the wordmark
 /// and the whole interface; Caveat is the occasional handwritten accent.
@@ -10,7 +10,7 @@ abstract final class AppFonts {
   static const String accent = 'Caveat';
 }
 
-/// The FieldChat text scale. Regular for body, SemiBold for labels,
+/// The Hulaki text scale. Regular for body, SemiBold for labels,
 /// ExtraBold for the wordmark and numbers.
 TextTheme buildTextTheme() {
   return const TextTheme(

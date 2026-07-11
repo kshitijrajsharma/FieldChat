@@ -1,4 +1,4 @@
-import 'package:fieldchat/features/capture/gps_gate.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
 
 /// A source of GPS fixes for the capture gate. The real implementation wraps
 /// the device GPS (geolocator); this interface keeps the composer testable and

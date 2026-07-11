@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/identity/identity_crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
 
 void main() {
   test('a signature verifies against the signer public key', () async {

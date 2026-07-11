@@ -1,10 +1,10 @@
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/core/image_thumbnail.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/export/geojson.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/core/image_thumbnail.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/export/geojson.dart';
 
 /// Writes a group's public listing (name, description, centre, tags) to the
 /// directory. The mapper count is maintained server-side from the group's

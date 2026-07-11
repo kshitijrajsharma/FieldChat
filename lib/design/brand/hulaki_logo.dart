@@ -1,12 +1,12 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_typography.dart';
 import 'package:flutter/widgets.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_typography.dart';
 
-/// The FieldChat mark: a navigation arrow over three typing dots. The
-/// locator is texting. Drawn as vectors so it stays crisp from a billboard
-/// down to a favicon.
-class FieldChatMark extends StatelessWidget {
-  const FieldChatMark({
+/// The Hulaki mark: a navigation arrow whose summit splits into the twin peak
+/// of Machhapuchhre, over three dots for the trail. Drawn as vectors so it
+/// stays crisp from a billboard down to a favicon.
+class HulakiMark extends StatelessWidget {
+  const HulakiMark({
     this.height = 28,
     this.color = AppColors.ink,
     super.key,
@@ -27,8 +27,8 @@ class FieldChatMark extends StatelessWidget {
 
 /// The primary lockup: the mark beside the wordmark in Hanken Grotesk
 /// ExtraBold.
-class FieldChatWordmark extends StatelessWidget {
-  const FieldChatWordmark({
+class HulakiWordmark extends StatelessWidget {
+  const HulakiWordmark({
     this.height = 24,
     this.color = AppColors.ink,
     this.fontSize = 22,
@@ -44,10 +44,10 @@ class FieldChatWordmark extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        FieldChatMark(height: height, color: color),
+        HulakiMark(height: height, color: color),
         const SizedBox(width: 8),
         Text(
-          'FieldChat',
+          'Hulaki',
           style: TextStyle(
             fontFamily: AppFonts.sans,
             fontSize: fontSize,
@@ -76,13 +76,15 @@ class _MarkPainter extends CustomPainter {
       ..color = color
       ..isAntiAlias = true;
 
-    final arrow = Path()
-      ..moveTo(50 * sx, 12 * sy)
+    final peak = Path()
+      ..moveTo(46 * sx, 13 * sy)
+      ..lineTo(50 * sx, 23 * sy)
+      ..lineTo(54 * sx, 13 * sy)
       ..lineTo(72 * sx, 58 * sy)
       ..lineTo(50 * sx, 46 * sy)
       ..lineTo(28 * sx, 58 * sy)
       ..close();
-    canvas.drawPath(arrow, paint);
+    canvas.drawPath(peak, paint);
 
     const dotR = 6.2;
     for (final cx in <double>[35, 50, 65]) {

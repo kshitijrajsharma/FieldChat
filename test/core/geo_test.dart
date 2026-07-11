@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:fieldchat/core/geo.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/core/geo.dart';
 
 void main() {
   group('ringAreaSqMeters', () {

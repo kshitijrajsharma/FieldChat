@@ -1,17 +1,17 @@
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
-import 'package:fieldchat/app/app.dart';
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/capture/gps_source.dart';
-import 'package:fieldchat/features/capture/live_location.dart';
-import 'package:fieldchat/features/chats/chats_home_screen.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/app/app.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/capture/gps_source.dart';
+import 'package:hulaki/features/capture/live_location.dart';
+import 'package:hulaki/features/chats/chats_home_screen.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _session = {
@@ -38,7 +38,7 @@ Future<LocalDatabase> _pumpApp(
         ),
         deviceIdentityProvider.overrideWith((ref) => IdentityKeys.generate()),
       ],
-      child: const FieldChatApp(),
+      child: const HulakiApp(),
     ),
   );
   await _settle(tester);
@@ -65,14 +65,14 @@ void main() {
 
   testWidgets('a fresh launch shows the username onboarding', (tester) async {
     await _pumpApp(tester);
-    expect(find.text('Welcome to FieldChat'), findsOneWidget);
+    expect(find.text('Welcome to Hulaki'), findsOneWidget);
     await _dispose(tester);
   });
 
   testWidgets('a restored session lands on the Chats shell', (tester) async {
     await _pumpApp(tester, prefs: _session);
     expect(find.byType(ChatsHomeScreen), findsOneWidget);
-    expect(find.text('FieldChat'), findsOneWidget);
+    expect(find.text('Hulaki'), findsOneWidget);
     expect(find.text('No groups yet'), findsOneWidget);
     await _dispose(tester);
   });
@@ -81,7 +81,7 @@ void main() {
     tester,
   ) async {
     await _pumpApp(tester);
-    expect(find.text('Welcome to FieldChat'), findsOneWidget);
+    expect(find.text('Welcome to Hulaki'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'ward7_mapper');
     await tester.tap(find.text('Continue'));
@@ -138,7 +138,7 @@ void main() {
 
     await tester.enterText(
       find.byType(TextField),
-      'https://fieldchat.app/g/g-join#key123',
+      'https://hulaki.app/g/g-join#key123',
     );
     await tester.tap(find.text('Join'));
     await _settle(tester);
@@ -157,7 +157,7 @@ void main() {
     await tester.tap(find.text('Join'));
     await _settle(tester);
 
-    expect(find.text('That is not a FieldChat invite link.'), findsOneWidget);
+    expect(find.text('That is not a Hulaki invite link.'), findsOneWidget);
     await _dispose(tester);
   });
 }

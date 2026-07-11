@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/capture/location_permission.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hulaki/features/capture/location_permission.dart';
 
 /// A continuous device location reading. The extras are null when the platform
 /// or the current fix does not report them.

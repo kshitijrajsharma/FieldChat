@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/messaging/domain/message_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/messaging/domain/message_payload.dart';
 
 void main() {
   test('altitude and heading survive a JSON round-trip', () {

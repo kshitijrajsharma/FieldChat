@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/features/groups/invite_link.dart';
-import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/features/groups/invite_link.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
 
 /// Joins the group carried by an invite link that opened the app, then shows
 /// its thread. Handles both the launch link (cold start) and links that arrive

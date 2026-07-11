@@ -5,14 +5,14 @@ import 'dart:developer' as developer;
 import 'package:cryptography/cryptography.dart'
     show SecretBoxAuthenticationError;
 import 'package:drift/drift.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/identity/admin_roles.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/messaging/domain/message_payload.dart';
-import 'package:fieldchat/features/sync/blob_store.dart';
-import 'package:fieldchat/features/sync/group_cipher.dart';
-import 'package:fieldchat/features/sync/message_transport.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/identity/admin_roles.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/messaging/domain/message_payload.dart';
+import 'package:hulaki/features/sync/blob_store.dart';
+import 'package:hulaki/features/sync/group_cipher.dart';
+import 'package:hulaki/features/sync/message_transport.dart';
 import 'package:uuid/uuid.dart';
 
 /// The outcome of verifying an envelope's author signature on ingest.

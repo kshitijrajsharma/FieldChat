@@ -1,7 +1,7 @@
 name: Pages
 
 # Publishes the invite landing page (pages/) to GitHub Pages. The page bounces
-# an invite link into the app via the fieldchat:// scheme, with an install
+# an invite link into the app via the hulaki:// scheme, with an install
 # fallback. Enable Pages once in Settings -> Pages -> Source: GitHub Actions.
 
 on:

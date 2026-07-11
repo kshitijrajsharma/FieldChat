@@ -1,0 +1,1390 @@
+{
+  "@@locale": "en",
+  "languageName": "English",
+  "@languageName": {
+    "description": "This language, written in this language. Shown in the language list on the Me screen."
+  },
+  "commonContinue": "Continue",
+  "@commonContinue": {
+    "description": "Primary button label to proceed"
+  },
+  "commonYou": "You",
+  "@commonYou": {
+    "description": "Fallback name for the signed-in user when no username is known"
+  },
+  "navChats": "Chats",
+  "@navChats": {
+    "description": "Bottom navigation label for the chats tab"
+  },
+  "navMap": "Map",
+  "@navMap": {
+    "description": "Bottom navigation label for the map tab"
+  },
+  "navCommunities": "Communities",
+  "@navCommunities": {
+    "description": "Bottom navigation label for the communities tab"
+  },
+  "navMe": "Me",
+  "@navMe": {
+    "description": "Bottom navigation label and app bar title for the account tab"
+  },
+  "navCommunitiesNeedsConnection": "Communities needs a connection.",
+  "@navCommunitiesNeedsConnection": {
+    "description": "Snack bar shown when the communities tab is tapped while offline"
+  },
+  "authWelcomeTitle": "Welcome to Hulaki",
+  "@authWelcomeTitle": {
+    "description": "Title on the username sign-in screen"
+  },
+  "authWelcomeSubtitle": "Pick a username to get started. It is the name your team sees in chat.",
+  "@authWelcomeSubtitle": {
+    "description": "Subtitle explaining what the username is used for"
+  },
+  "authUsernameHint": "ward7_mapper",
+  "@authUsernameHint": {
+    "description": "Example username shown as the text field hint"
+  },
+  "authUsernameHelper": "3 to 20 characters. Lowercase letters, numbers and _.",
+  "@authUsernameHelper": {
+    "description": "Helper text describing the username rules"
+  },
+  "authSaving": "Saving…",
+  "@authSaving": {
+    "description": "Button label while the username is being saved"
+  },
+  "chatsLoadFailed": "Could not load your groups. Check your connection and try again.",
+  "@chatsLoadFailed": {
+    "description": "Error shown when the group list fails to load"
+  },
+  "chatsNoGroupsYet": "No groups yet",
+  "@chatsNoGroupsYet": {
+    "description": "Empty state title on the chats list"
+  },
+  "chatsEmptyStateBody": "Start a mapping group, or join one a teammate shared.",
+  "@chatsEmptyStateBody": {
+    "description": "Empty state body on the chats list"
+  },
+  "chatsStartNewGroup": "Start a new group",
+  "@chatsStartNewGroup": {
+    "description": "Action to create a new mapping group"
+  },
+  "chatsJoinWithLink": "Join with a link",
+  "@chatsJoinWithLink": {
+    "description": "Action to join an existing group from an invite link"
+  },
+  "chatsNoMatches": "No groups match",
+  "@chatsNoMatches": {
+    "description": "Shown when a group search returns no results"
+  },
+  "chatsNoMessagesYet": "No messages yet",
+  "@chatsNoMessagesYet": {
+    "description": "Group list preview when the group has no messages"
+  },
+  "chatsPreviewPhoto": "Photo",
+  "@chatsPreviewPhoto": {
+    "description": "Group list preview for a photo message"
+  },
+  "chatsPreviewVideo": "Video",
+  "@chatsPreviewVideo": {
+    "description": "Group list preview for a video message"
+  },
+  "chatsPreviewVoiceNote": "Voice note",
+  "@chatsPreviewVoiceNote": {
+    "description": "Group list preview for a voice message"
+  },
+  "chatsPreviewPoint": "Dropped a point",
+  "@chatsPreviewPoint": {
+    "description": "Group list preview for a message that is only a map point"
+  },
+  "meLanguage": "Language",
+  "@meLanguage": {
+    "description": "Title of the language row and of the language picker sheet"
+  },
+  "meLanguageSystem": "System default",
+  "@meLanguageSystem": {
+    "description": "Language option that follows the phone's own language"
+  },
+  "meSectionLanguage": "LANGUAGE",
+  "@meSectionLanguage": {
+    "description": "Section header for the interface language setting"
+  },
+  "meSectionUnits": "UNITS",
+  "@meSectionUnits": {
+    "description": "Section header for measurement unit settings"
+  },
+  "meSectionPrivacy": "PRIVACY",
+  "@meSectionPrivacy": {
+    "description": "Section header for privacy settings"
+  },
+  "meSectionBackground": "BACKGROUND",
+  "@meSectionBackground": {
+    "description": "Section header for background running settings"
+  },
+  "meSectionOfflineAreas": "OFFLINE AREAS",
+  "@meSectionOfflineAreas": {
+    "description": "Section header for map areas saved for offline use"
+  },
+  "meSectionSupport": "SUPPORT",
+  "@meSectionSupport": {
+    "description": "Section header for the project support link"
+  },
+  "meSectionArchivedGroups": "ARCHIVED GROUPS",
+  "@meSectionArchivedGroups": {
+    "description": "Section header for archived groups"
+  },
+  "meDistanceAndElevation": "Distance and elevation",
+  "@meDistanceAndElevation": {
+    "description": "Label for the metric or imperial unit choice"
+  },
+  "meUnitsMetric": "Metric",
+  "@meUnitsMetric": {
+    "description": "Metric unit system option"
+  },
+  "meUnitsImperial": "Imperial",
+  "@meUnitsImperial": {
+    "description": "Imperial unit system option"
+  },
+  "meAppearAnonymous": "Appear anonymous",
+  "@meAppearAnonymous": {
+    "description": "Toggle title for hiding your name from teammates"
+  },
+  "meAppearAnonymousSubtitle": "Teammates see your points without your name.",
+  "@meAppearAnonymousSubtitle": {
+    "description": "Toggle subtitle explaining anonymous mode"
+  },
+  "meRunInBackground": "Run in background",
+  "@meRunInBackground": {
+    "description": "Toggle title for background mapping"
+  },
+  "meRunInBackgroundSubtitle": "Keep mapping with the screen off. A notification shows the live GPS accuracy.",
+  "@meRunInBackgroundSubtitle": {
+    "description": "Toggle subtitle explaining background mapping"
+  },
+  "meNoAreasSaved": "No areas saved yet. Open a group, then “Make available offline”.",
+  "@meNoAreasSaved": {
+    "description": "Empty state for the offline areas list"
+  },
+  "meAnonymousModeOn": "Anonymous mode on",
+  "@meAnonymousModeOn": {
+    "description": "Profile card status line when anonymous mode is enabled"
+  },
+  "meSignedInOnDevice": "Signed in on this device",
+  "@meSignedInOnDevice": {
+    "description": "Profile card status line when anonymous mode is off"
+  },
+  "meRestore": "Restore",
+  "@meRestore": {
+    "description": "Button that unarchives a group"
+  },
+  "meSupportTitle": "Support the developer",
+  "@meSupportTitle": {
+    "description": "Title of the support link row"
+  },
+  "meSupportSubtitle": "Star or sponsor the project on GitHub.",
+  "@meSupportSubtitle": {
+    "description": "Subtitle of the support link row"
+  },
+  "meCouldNotOpenLink": "Could not open the link",
+  "@meCouldNotOpenLink": {
+    "description": "Snack bar shown when an external link fails to open"
+  },
+  "meAreaExpiresToday": "expires today",
+  "@meAreaExpiresToday": {
+    "description": "Detail line fragment for a saved offline area that expires today"
+  },
+  "meAreaExpiresInDays": "{days, plural, =1{expires in 1 day} other{expires in {days} days}}",
+  "@meAreaExpiresInDays": {
+    "description": "Detail line fragment for how long a saved offline area lasts",
+    "placeholders": {
+      "days": {
+        "type": "num"
+      }
+    }
+  },
+  "meSizeBytes": "{size} B",
+  "@meSizeBytes": {
+    "description": "Offline area size in bytes",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "meSizeKilobytes": "{size} KB",
+  "@meSizeKilobytes": {
+    "description": "Offline area size in kilobytes",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "meSizeMegabytes": "{size} MB",
+  "@meSizeMegabytes": {
+    "description": "Offline area size in megabytes",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "meDownloadPercent": "{percent}%",
+  "@meDownloadPercent": {
+    "description": "Progress percentage of an offline area download",
+    "placeholders": {
+      "percent": {
+        "type": "num"
+      }
+    }
+  },
+  "threadNoPointsYet": "No points yet",
+  "@threadNoPointsYet": {
+    "description": "Chat header subtitle when the group has no mapped points"
+  },
+  "threadPointCount": "{count, plural, =1{1 point} other{{count} points}}",
+  "@threadPointCount": {
+    "description": "Number of mapped points in the group, used in the chat header",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "threadMapperCount": "{count, plural, =1{1 mapper} other{{count} mappers}}",
+  "@threadMapperCount": {
+    "description": "Number of people who contributed points, used in the chat header",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "threadStats": "{points} · {mappers}",
+  "@threadStats": {
+    "description": "Chat header subtitle joining the point count and the mapper count",
+    "placeholders": {
+      "points": {
+        "type": "String"
+      },
+      "mappers": {
+        "type": "String"
+      }
+    }
+  },
+  "threadUpToDate": "Up to date",
+  "@threadUpToDate": {
+    "description": "Snack bar shown after a manual refresh finds no new messages"
+  },
+  "threadTakePhoto": "Take a photo",
+  "@threadTakePhoto": {
+    "description": "Attachment sheet option to capture a new photo"
+  },
+  "threadChooseFromGallery": "Choose from gallery",
+  "@threadChooseFromGallery": {
+    "description": "Attachment sheet option to pick an existing photo"
+  },
+  "threadCopyText": "Copy text",
+  "@threadCopyText": {
+    "description": "Message action sheet item that copies the message body"
+  },
+  "threadEdit": "Edit",
+  "@threadEdit": {
+    "description": "Message action sheet item that edits your own message"
+  },
+  "threadDelete": "Delete",
+  "@threadDelete": {
+    "description": "Message action sheet item that deletes your own message"
+  },
+  "threadPlacementAdminsOnly": "Only admins can place points on the map here. Send your live GPS point instead.",
+  "@threadPlacementAdminsOnly": {
+    "description": "Snack bar shown when a non-admin tries to send a map-placed point in a group that disallows it"
+  },
+  "threadGpsTooWeak": "GPS is only accurate to ±{accuracy} m right now. Move to open sky and try again.",
+  "@threadGpsTooWeak": {
+    "description": "Snack bar shown when the GPS fix is weaker than the group accuracy limit",
+    "placeholders": {
+      "accuracy": {
+        "type": "int"
+      }
+    }
+  },
+  "threadOutsideAreaBlocked": "This point is outside the mapping area.",
+  "@threadOutsideAreaBlocked": {
+    "description": "Snack bar shown when a point falls outside the group area and out-of-area points are not allowed"
+  },
+  "threadOutsideAreaTitle": "Outside the mapping area",
+  "@threadOutsideAreaTitle": {
+    "description": "Title of the dialog confirming a point outside the group mapping area"
+  },
+  "threadOutsideAreaBody": "This point is outside the group mapping area. Send it anyway?",
+  "@threadOutsideAreaBody": {
+    "description": "Body of the dialog confirming a point outside the group mapping area"
+  },
+  "threadCancel": "Cancel",
+  "@threadCancel": {
+    "description": "Dialog button that dismisses without acting"
+  },
+  "threadSendAnyway": "Send anyway",
+  "@threadSendAnyway": {
+    "description": "Dialog button that sends a point outside the mapping area"
+  },
+  "threadSave": "Save",
+  "@threadSave": {
+    "description": "Dialog button that saves the edited message text"
+  },
+  "threadEditMessageTitle": "Edit message",
+  "@threadEditMessageTitle": {
+    "description": "Title of the dialog for editing a sent message"
+  },
+  "threadRefreshTooltip": "Refresh this group",
+  "@threadRefreshTooltip": {
+    "description": "Tooltip on the chat header sync button"
+  },
+  "threadCoachTapTag": "Tap a tag, then Send to drop a mapped point here.",
+  "@threadCoachTapTag": {
+    "description": "First-run coach tip explaining the capture loop"
+  },
+  "threadCoachPullToRefresh": "Not seeing older points? Pull down to refresh.",
+  "@threadCoachPullToRefresh": {
+    "description": "First-run coach tip explaining how to pull older messages in"
+  },
+  "threadLoadError": "Could not load this group. Check your connection and pull down to try again.",
+  "@threadLoadError": {
+    "description": "Shown in place of the message list when the group fails to load"
+  },
+  "threadLoadingMessages": "Loading messages…",
+  "@threadLoadingMessages": {
+    "description": "Shown while the group's messages are syncing for the first time"
+  },
+  "threadMemberFallback": "Member",
+  "@threadMemberFallback": {
+    "description": "Fallback name on a message bubble when the sender has no known display name"
+  },
+  "threadAnonymousNotice": "You're anonymous. Teammates won't see your name.",
+  "@threadAnonymousNotice": {
+    "description": "Bar above the composer while anonymous mode is on"
+  },
+  "threadStagedPointBanner": "Your next message drops a point at this map spot",
+  "@threadStagedPointBanner": {
+    "description": "Bar above the composer while a map-tapped location is staged for the next send"
+  },
+  "threadTagTheNextPoint": "Tag the next point",
+  "@threadTagTheNextPoint": {
+    "description": "Title of the sheet listing every quick tag"
+  },
+  "threadPhotoReady": "Photo ready. Add a note and tap a tag, then send.",
+  "@threadPhotoReady": {
+    "description": "Hint next to a photo staged in the composer"
+  },
+  "threadComposerHint": "Message",
+  "@threadComposerHint": {
+    "description": "Placeholder text in the message composer field"
+  },
+  "pointDetailTitle": "Point detail",
+  "@pointDetailTitle": {
+    "description": "Title of the screen showing a single observation in full"
+  },
+  "pointMapFallbackName": "Map",
+  "@pointMapFallbackName": {
+    "description": "Title of the full map when the group name is unavailable"
+  },
+  "pointBack": "Back",
+  "@pointBack": {
+    "description": "Back label on the full map opened from a point"
+  },
+  "pointCoordinatesCopied": "Coordinates copied",
+  "@pointCoordinatesCopied": {
+    "description": "Snack bar shown after copying a point's coordinates"
+  },
+  "pointDeleteTitle": "Delete this point?",
+  "@pointDeleteTitle": {
+    "description": "Title of the dialog confirming deletion of a point"
+  },
+  "pointDeleteBody": "It is removed for everyone in the group.",
+  "@pointDeleteBody": {
+    "description": "Body of the dialog confirming deletion of a point"
+  },
+  "pointCancel": "Cancel",
+  "@pointCancel": {
+    "description": "Button that dismisses without acting"
+  },
+  "pointDelete": "Delete",
+  "@pointDelete": {
+    "description": "Button that confirms deleting the point"
+  },
+  "pointSave": "Save",
+  "@pointSave": {
+    "description": "Button that saves the edited note"
+  },
+  "pointByAuthor": "by {name}",
+  "@pointByAuthor": {
+    "description": "Credit line naming who sent the point",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pointMemberFallback": "Member",
+  "@pointMemberFallback": {
+    "description": "Fallback name when the sender of a point has no known display name"
+  },
+  "pointLocationPending": "Location pending",
+  "@pointLocationPending": {
+    "description": "Shown instead of coordinates while the point is still waiting for a GPS fix"
+  },
+  "pointCoordinates": "{lat}, {lng}",
+  "@pointCoordinates": {
+    "description": "The point's latitude and longitude",
+    "placeholders": {
+      "lat": {
+        "type": "String"
+      },
+      "lng": {
+        "type": "String"
+      }
+    }
+  },
+  "pointAccuracy": "{tier} · ±{accuracy} m",
+  "@pointAccuracy": {
+    "description": "The GPS accuracy of the point, as a quality tier and a radius in metres",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "accuracy": {
+        "type": "int"
+      }
+    }
+  },
+  "pointPlacedOnMap": "Placed on map",
+  "@pointPlacedOnMap": {
+    "description": "Shown instead of an accuracy when the point was tapped on the map rather than captured from GPS"
+  },
+  "pointDistanceFromYou": "{distance} from you",
+  "@pointDistanceFromYou": {
+    "description": "How far the point is from the user's current location",
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "pointElevation": "Elevation {elevation}",
+  "@pointElevation": {
+    "description": "The altitude recorded with the point",
+    "placeholders": {
+      "elevation": {
+        "type": "String"
+      }
+    }
+  },
+  "pointFacing": "Facing {direction} · {degrees}°",
+  "@pointFacing": {
+    "description": "The compass direction the device faced when the point was captured",
+    "placeholders": {
+      "direction": {
+        "type": "String"
+      },
+      "degrees": {
+        "type": "int"
+      }
+    }
+  },
+  "pointSentAt": "Sent {when}",
+  "@pointSentAt": {
+    "description": "When the point was sent, either a relative phrase or an exact time",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "pointOpenFullMap": "Open full map",
+  "@pointOpenFullMap": {
+    "description": "Hint over the mini-map inviting the user to open the full map"
+  },
+  "pointOpenInChat": "Open in chat",
+  "@pointOpenInChat": {
+    "description": "Button that returns from the point to its message in the chat"
+  },
+  "pointNavigate": "Navigate",
+  "@pointNavigate": {
+    "description": "Button that starts navigation to the point"
+  },
+  "pointNoteHint": "Describe this point",
+  "@pointNoteHint": {
+    "description": "Placeholder text in the point note editor"
+  },
+  "pointAddNote": "Add note",
+  "@pointAddNote": {
+    "description": "Placeholder that starts writing a note on a point that has none"
+  },
+  "pointAddTag": "Add tag",
+  "@pointAddTag": {
+    "description": "Placeholder chip that tags a point that has no tag"
+  },
+  "pointChangeTag": "Change tag",
+  "@pointChangeTag": {
+    "description": "Title of the sheet for changing a point's tag"
+  },
+  "pointNoTag": "No tag",
+  "@pointNoTag": {
+    "description": "Option in the tag sheet that clears the point's tag"
+  },
+  "discoverTitle": "Communities",
+  "@discoverTitle": {
+    "description": "Title of the tab listing public groups"
+  },
+  "discoverSearchHint": "Search communities",
+  "@discoverSearchHint": {
+    "description": "Placeholder text in the community search field"
+  },
+  "discoverFindingLocation": "Finding your location…",
+  "@discoverFindingLocation": {
+    "description": "Shown while waiting for a GPS fix to look up nearby groups"
+  },
+  "discoverLookingNearby": "Looking nearby…",
+  "@discoverLookingNearby": {
+    "description": "Shown while the nearby public groups are loading"
+  },
+  "discoverNoNearbyGroups": "No public groups nearby yet. Start one and make it public to put it on the map.",
+  "@discoverNoNearbyGroups": {
+    "description": "Shown when no public group is mapping near the user"
+  },
+  "discoverSearching": "Searching…",
+  "@discoverSearching": {
+    "description": "Shown while a community search is running"
+  },
+  "discoverNoSearchResults": "No public groups match \"{query}\".",
+  "@discoverNoSearchResults": {
+    "description": "Shown when a community search returns nothing",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "discoverGroupTitle": "Group",
+  "@discoverGroupTitle": {
+    "description": "Title of the screen previewing a public group before joining"
+  },
+  "discoverJoinGroup": "Join group",
+  "@discoverJoinGroup": {
+    "description": "Button that joins an open public group"
+  },
+  "discoverJoining": "Joining…",
+  "@discoverJoining": {
+    "description": "Button label while the join is in progress"
+  },
+  "discoverOpen": "Open",
+  "@discoverOpen": {
+    "description": "Button that opens a group this device already belongs to"
+  },
+  "discoverRequestToJoin": "Request to join",
+  "@discoverRequestToJoin": {
+    "description": "Button that files a join request for an approval-gated group"
+  },
+  "discoverRequesting": "Requesting…",
+  "@discoverRequesting": {
+    "description": "Button label while the join request is being filed"
+  },
+  "discoverWaitingApproval": "Waiting for approval…",
+  "@discoverWaitingApproval": {
+    "description": "Button label while an admin has yet to approve the join request"
+  },
+  "mapBackChat": "Chat",
+  "@mapBackChat": {
+    "description": "Back control label on the group map when it was opened from the chat thread"
+  },
+  "mapBack": "Back",
+  "@mapBack": {
+    "description": "Back control label on the group map when it was opened from the Map tab"
+  },
+  "mapLoadingMap": "Loading map…",
+  "@mapLoadingMap": {
+    "description": "Chip shown over the map while the basemap style loads"
+  },
+  "mapLoadingPoints": "Loading points…",
+  "@mapLoadingPoints": {
+    "description": "Chip shown over the map while the points are being drawn"
+  },
+  "mapCoachTip": "Tap a point to open it. Tap the crosshair to jump to your location.",
+  "@mapCoachTip": {
+    "description": "One-time coach tip shown at the top of the group map"
+  },
+  "mapZoomToArea": "Zoom to mapping area",
+  "@mapZoomToArea": {
+    "description": "Pill that frames the group's mapping area when it is off screen"
+  },
+  "mapZoomToPoints": "Zoom to points",
+  "@mapZoomToPoints": {
+    "description": "Pill that frames the group's points when they are off screen"
+  },
+  "mapFilterAll": "All",
+  "@mapFilterAll": {
+    "description": "Map filter segment showing every member's points"
+  },
+  "mapFilterMine": "Mine",
+  "@mapFilterMine": {
+    "description": "Map filter segment showing only the current user's points"
+  },
+  "mapLegendOthers": "Others",
+  "@mapLegendOthers": {
+    "description": "Legend bucket for points that carry no quick tag"
+  },
+  "mapLegendChip": "{label} · {count}",
+  "@mapLegendChip": {
+    "description": "Map legend chip: a tag name and how many points carry it",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "mapTagsTitle": "Tags",
+  "@mapTagsTitle": {
+    "description": "Title of the sheet listing every tag on the map"
+  },
+  "mapBasemapSatellite": "Satellite",
+  "@mapBasemapSatellite": {
+    "description": "Basemap switch label for changing to satellite imagery"
+  },
+  "mapBasemapMap": "Map",
+  "@mapBasemapMap": {
+    "description": "Basemap switch label for changing back to the street map"
+  },
+  "mapNearbyTitle": "Groups near you",
+  "@mapNearbyTitle": {
+    "description": "Title card on the Map tab while browsing public groups"
+  },
+  "mapNearbySubtitle": "Within {radiusKm} km · tap a group to preview",
+  "@mapNearbySubtitle": {
+    "description": "Subtitle telling the user how far the nearby search reaches",
+    "placeholders": {
+      "radiusKm": {
+        "type": "num"
+      }
+    }
+  },
+  "mapAreasTitle": "Your map areas",
+  "@mapAreasTitle": {
+    "description": "Title card on the Map tab while showing the user's own groups"
+  },
+  "mapAreasSubtitle": "Tap an area to open its group map",
+  "@mapAreasSubtitle": {
+    "description": "Subtitle under the user's own map areas"
+  },
+  "mapAreaSummary": "{count, plural, =1{1 point} other{{count} points}} · {mappers, plural, =1{1 person} other{{mappers} people}}",
+  "@mapAreaSummary": {
+    "description": "Card summary for one map area: how many points and how many people mapped them",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      },
+      "mappers": {
+        "type": "num"
+      }
+    }
+  },
+  "mapClusterGroups": "groups",
+  "@mapClusterGroups": {
+    "description": "Word next to the count on a card that merges several nearby groups"
+  },
+  "mapToggleMyGroups": "My groups",
+  "@mapToggleMyGroups": {
+    "description": "Map tab switch segment showing the user's own groups"
+  },
+  "mapToggleCommunities": "Communities",
+  "@mapToggleCommunities": {
+    "description": "Map tab switch segment showing public groups nearby"
+  },
+  "mapNoNearbyGroupsTitle": "No public groups nearby",
+  "@mapNoNearbyGroupsTitle": {
+    "description": "Empty state title when no public group is within the search radius"
+  },
+  "mapNoNearbyGroupsBody": "Start a group and make it public to put it on the map for people around you.",
+  "@mapNoNearbyGroupsBody": {
+    "description": "Empty state body when no public group is within the search radius"
+  },
+  "mapNoAreasTitle": "No areas yet",
+  "@mapNoAreasTitle": {
+    "description": "Empty state title when the user's groups have no area and no points"
+  },
+  "mapNoAreasBody": "Draw a mapping area or drop a few points in a group, and it lands here.",
+  "@mapNoAreasBody": {
+    "description": "Empty state body when the user's groups have no area and no points"
+  },
+  "mapDropPointTitle": "Drop a point here",
+  "@mapDropPointTitle": {
+    "description": "Title of the sheet opened by tapping an empty spot on the map"
+  },
+  "mapPlaceAdminsOnly": "Only admins can place points in this group. Send your live GPS point from the chat instead.",
+  "@mapPlaceAdminsOnly": {
+    "description": "Explains why the add action is withheld when a group restricts placing points"
+  },
+  "mapNavigateHere": "Navigate here",
+  "@mapNavigateHere": {
+    "description": "Button that hands the tapped spot to an external navigation app"
+  },
+  "mapAddPoint": "Add a point",
+  "@mapAddPoint": {
+    "description": "Button that stages the tapped spot as a new observation"
+  },
+  "mapLocationPending": "Location pending",
+  "@mapLocationPending": {
+    "description": "Shown in place of coordinates while a point still has no fix"
+  },
+  "mapInChat": "In chat",
+  "@mapInChat": {
+    "description": "Button that opens the tapped point in its chat thread"
+  },
+  "mapNavigate": "Navigate",
+  "@mapNavigate": {
+    "description": "Button that hands the tapped point to an external navigation app"
+  },
+  "mapFullDetail": "Full detail",
+  "@mapFullDetail": {
+    "description": "Button that opens the full detail screen for the tapped point"
+  },
+  "mapCoordsCopied": "Coordinates copied",
+  "@mapCoordsCopied": {
+    "description": "Confirmation after copying a point's coordinates to the clipboard"
+  },
+  "gpsYourLocation": "Your location",
+  "@gpsYourLocation": {
+    "description": "Title of the live GPS detail sheet"
+  },
+  "gpsLocating": "Locating GPS…",
+  "@gpsLocating": {
+    "description": "Shown while the device has no GPS fix yet"
+  },
+  "gpsExcellent": "Excellent",
+  "@gpsExcellent": {
+    "description": "GPS signal quality tier: accuracy within 5 metres"
+  },
+  "gpsGood": "Good",
+  "@gpsGood": {
+    "description": "GPS signal quality tier: accuracy within 10 metres"
+  },
+  "gpsWeak": "Weak",
+  "@gpsWeak": {
+    "description": "GPS signal quality tier: accuracy within 15 metres"
+  },
+  "gpsPoor": "Poor",
+  "@gpsPoor": {
+    "description": "GPS signal quality tier: accuracy worse than 15 metres"
+  },
+  "gpsAccuracy": "±{meters} m",
+  "@gpsAccuracy": {
+    "description": "The current fix accuracy in metres",
+    "placeholders": {
+      "meters": {
+        "type": "String"
+      }
+    }
+  },
+  "gpsCoordinatesLabel": "COORDINATES",
+  "@gpsCoordinatesLabel": {
+    "description": "Section label above the current coordinates"
+  },
+  "gpsCoordsCopied": "Coordinates copied",
+  "@gpsCoordsCopied": {
+    "description": "Confirmation after copying the current coordinates to the clipboard"
+  },
+  "gpsFormatLatLon": "Lat/Lon",
+  "@gpsFormatLatLon": {
+    "description": "Coordinate format switch: decimal latitude and longitude"
+  },
+  "gpsFormatUtm": "UTM",
+  "@gpsFormatUtm": {
+    "description": "Coordinate format switch: Universal Transverse Mercator"
+  },
+  "gpsUtmZone": "UTM zone {zone}",
+  "@gpsUtmZone": {
+    "description": "The UTM zone and hemisphere of the current position",
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "gpsAltitude": "Altitude",
+  "@gpsAltitude": {
+    "description": "Metric row label for the current altitude"
+  },
+  "gpsHeading": "Heading",
+  "@gpsHeading": {
+    "description": "Metric row label for the current compass heading"
+  },
+  "gpsMeters": "{meters} m",
+  "@gpsMeters": {
+    "description": "A distance in metres, used for the altitude reading",
+    "placeholders": {
+      "meters": {
+        "type": "String"
+      }
+    }
+  },
+  "gpsHeadingValue": "{degrees}° {cardinal}",
+  "@gpsHeadingValue": {
+    "description": "The compass heading in degrees with its cardinal direction",
+    "placeholders": {
+      "degrees": {
+        "type": "String"
+      },
+      "cardinal": {
+        "type": "String"
+      }
+    }
+  },
+  "groupCreateTitle": "New mapping group",
+  "@groupCreateTitle": {
+    "description": "App bar title of the create group screen"
+  },
+  "groupCoverPhotoPrompt": "Set a cover photo",
+  "@groupCoverPhotoPrompt": {
+    "description": "Caption under the group avatar picker when creating a group"
+  },
+  "groupNameLabel": "Group name",
+  "@groupNameLabel": {
+    "description": "Label and hint for the group name field"
+  },
+  "groupNameHint": "Ward 7 · Litter survey",
+  "@groupNameHint": {
+    "description": "Example placeholder text in the group name field"
+  },
+  "groupDescriptionLabel": "Description (optional)",
+  "@groupDescriptionLabel": {
+    "description": "Label for the optional group description field"
+  },
+  "groupDescriptionHint": "What are you mapping, and how?",
+  "@groupDescriptionHint": {
+    "description": "Placeholder text in the group description field"
+  },
+  "groupQuickTagsHeading": "QUICK TAGS",
+  "@groupQuickTagsHeading": {
+    "description": "Section heading above the quick tag chips on the create group screen"
+  },
+  "groupQuickTagsExplainer": "Quick tags everyone taps while sending. They label the message and colour its pin on the map.",
+  "@groupQuickTagsExplainer": {
+    "description": "Explains what quick tags do, shown under the quick tags heading"
+  },
+  "groupEdit": "Edit",
+  "@groupEdit": {
+    "description": "Button that opens the quick tag editor"
+  },
+  "groupSetMappingAreaOptional": "Set mapping area (optional)",
+  "@groupSetMappingAreaOptional": {
+    "description": "Button to draw an optional mapping area while creating a group"
+  },
+  "groupMappingAreaSet": "Mapping area set",
+  "@groupMappingAreaSet": {
+    "description": "Button label once a mapping area has been drawn"
+  },
+  "groupCreating": "Creating…",
+  "@groupCreating": {
+    "description": "Create group button label while the group is being created"
+  },
+  "groupCreateAction": "Create group",
+  "@groupCreateAction": {
+    "description": "Button that creates the group"
+  },
+  "groupQuickTagsTitle": "Quick tags",
+  "@groupQuickTagsTitle": {
+    "description": "Title of the quick tag editor screen and of the quick tags row in group info"
+  },
+  "groupAddTag": "Add tag",
+  "@groupAddTag": {
+    "description": "Button that adds a new quick tag"
+  },
+  "groupDone": "Done",
+  "@groupDone": {
+    "description": "Button that saves the edited quick tags and closes the editor"
+  },
+  "groupClose": "Close",
+  "@groupClose": {
+    "description": "Button that closes the read only quick tag list"
+  },
+  "groupNewTagTitle": "New tag",
+  "@groupNewTagTitle": {
+    "description": "Title of the dialog that creates a quick tag"
+  },
+  "groupEditTagTitle": "Edit tag",
+  "@groupEditTagTitle": {
+    "description": "Title of the dialog that edits an existing quick tag"
+  },
+  "groupTagLabelHint": "Label, e.g. Pothole",
+  "@groupTagLabelHint": {
+    "description": "Placeholder text in the quick tag label field"
+  },
+  "groupIconOptional": "Icon (optional)",
+  "@groupIconOptional": {
+    "description": "Label above the optional icon picker for a quick tag"
+  },
+  "groupSearchIconsHint": "Search icons (tree, water, sign…)",
+  "@groupSearchIconsHint": {
+    "description": "Placeholder text in the quick tag icon search field"
+  },
+  "groupCancel": "Cancel",
+  "@groupCancel": {
+    "description": "Button that dismisses a dialog without applying changes"
+  },
+  "groupSave": "Save",
+  "@groupSave": {
+    "description": "Button that saves the quick tag being edited"
+  },
+  "groupJoinTitle": "Join a group",
+  "@groupJoinTitle": {
+    "description": "App bar title of the join group screen"
+  },
+  "groupPasteInviteLink": "Paste an invite link",
+  "@groupPasteInviteLink": {
+    "description": "Heading on the join group screen"
+  },
+  "groupPasteInviteLinkHelp": "A teammate can share it from a group under Members, Add.",
+  "@groupPasteInviteLinkHelp": {
+    "description": "Explains where to get an invite link"
+  },
+  "groupInviteLinkHint": "Paste the invite link here",
+  "@groupInviteLinkHint": {
+    "description": "Placeholder text in the invite link field"
+  },
+  "groupInvalidInviteLink": "That is not a Hulaki invite link.",
+  "@groupInvalidInviteLink": {
+    "description": "Error under the invite link field when the pasted text is not a valid invite link"
+  },
+  "groupScanQrCode": "Scan a QR code",
+  "@groupScanQrCode": {
+    "description": "Button that opens the camera to scan an invite QR code"
+  },
+  "groupJoining": "Joining…",
+  "@groupJoining": {
+    "description": "Join button label while joining is in progress"
+  },
+  "groupJoinAction": "Join",
+  "@groupJoinAction": {
+    "description": "Button that joins the group from the pasted invite link"
+  },
+  "groupScanInviteQrTitle": "Scan invite QR",
+  "@groupScanInviteQrTitle": {
+    "description": "App bar title of the QR scanning screen"
+  },
+  "groupMappingAreaTitle": "Mapping area",
+  "@groupMappingAreaTitle": {
+    "description": "App bar title of the screen where the mapping area is drawn"
+  },
+  "groupImportGeoJson": "Import GeoJSON",
+  "@groupImportGeoJson": {
+    "description": "Tooltip of the button that imports a mapping area from a GeoJSON file"
+  },
+  "groupUndo": "Undo",
+  "@groupUndo": {
+    "description": "Button that removes the last drawn corner of the mapping area"
+  },
+  "groupSearchPlaceHint": "Search a place",
+  "@groupSearchPlaceHint": {
+    "description": "Placeholder text in the place search field on the area drawing map"
+  },
+  "groupAreaDrawHint": "Tap the map to drop at least 3 corners.",
+  "@groupAreaDrawHint": {
+    "description": "Hint shown while the drawn area has fewer than three corners"
+  },
+  "groupAreaCornerCount": "{count, plural, =1{1 corner. Tap to add more.} other{{count} corners. Tap to add more.}}",
+  "@groupAreaCornerCount": {
+    "description": "Number of corners dropped on the mapping area so far",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "groupUseThisArea": "Use this area",
+  "@groupUseThisArea": {
+    "description": "Button that accepts the drawn mapping area"
+  },
+  "groupLocationUnavailable": "Could not get your location",
+  "@groupLocationUnavailable": {
+    "description": "Snack bar shown when the device location cannot be read"
+  },
+  "groupNoPlaceFound": "No place found for that search",
+  "@groupNoPlaceFound": {
+    "description": "Snack bar shown when a place search returns no result"
+  },
+  "groupPlaceSearchUnavailable": "Place search is unavailable here",
+  "@groupPlaceSearchUnavailable": {
+    "description": "Snack bar shown when place search is not supported on the device"
+  },
+  "groupAreaTooSmall": "Area is too small. Draw a larger shape.",
+  "@groupAreaTooSmall": {
+    "description": "Snack bar shown when the drawn mapping area is below the minimum size"
+  },
+  "groupInvalidGeoJson": "That is not a valid GeoJSON area",
+  "@groupInvalidGeoJson": {
+    "description": "Snack bar shown when an imported file is not a usable GeoJSON area"
+  },
+  "groupInfoTitle": "Group info",
+  "@groupInfoTitle": {
+    "description": "App bar title of the group info screen"
+  },
+  "groupMappingGroupSubtitle": "Mapping group",
+  "@groupMappingGroupSubtitle": {
+    "description": "Subtitle under the group name on the group info screen"
+  },
+  "groupNeedAreaOrPoints": "Draw an area or add points first",
+  "@groupNeedAreaOrPoints": {
+    "description": "Snack bar shown when saving offline maps without an area or any points"
+  },
+  "groupOfflineAreaSaved": "Area saved for offline use",
+  "@groupOfflineAreaSaved": {
+    "description": "Snack bar shown when the map area has been saved for offline use"
+  },
+  "groupOfflineDownloadFailed": "Offline download failed",
+  "@groupOfflineDownloadFailed": {
+    "description": "Snack bar shown when the offline map download fails"
+  },
+  "groupNeedAreaBeforePublic": "Draw an area or add points before going public",
+  "@groupNeedAreaBeforePublic": {
+    "description": "Snack bar shown when a group cannot be listed publicly because it has no location"
+  },
+  "groupNowAdmin": "You are now an admin of this group",
+  "@groupNowAdmin": {
+    "description": "Snack bar shown after accepting an admin invite"
+  },
+  "groupQuickTagsUpdated": "Quick tags updated",
+  "@groupQuickTagsUpdated": {
+    "description": "Snack bar shown after the group's quick tags are saved"
+  },
+  "groupInviteLinkHeading": "INVITE LINK",
+  "@groupInviteLinkHeading": {
+    "description": "Heading of the invite link card on the group info screen"
+  },
+  "groupInviteLinkCopied": "Invite link copied",
+  "@groupInviteLinkCopied": {
+    "description": "Snack bar shown after the invite link is copied to the clipboard"
+  },
+  "groupShareInvite": "Join my Hulaki mapping group: {link}",
+  "@groupShareInvite": {
+    "description": "Text shared with someone to invite them to the group",
+    "placeholders": {
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "groupScanToJoin": "Scan to join",
+  "@groupScanToJoin": {
+    "description": "Title of the dialog showing the invite QR code"
+  },
+  "groupMemberCount": "{count, plural, =1{Members · 1} other{Members · {count}}}",
+  "@groupMemberCount": {
+    "description": "Row title showing how many members the group has",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "groupAddMember": "Add",
+  "@groupAddMember": {
+    "description": "Button that shares the invite link to add a member"
+  },
+  "groupMemberNameSelf": "{name} (you)",
+  "@groupMemberNameSelf": {
+    "description": "Member row title when the member is the current device user",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "groupRoleAdmin": "Admin",
+  "@groupRoleAdmin": {
+    "description": "Role shown under a member who is an admin"
+  },
+  "groupRoleMember": "Member",
+  "@groupRoleMember": {
+    "description": "Role shown under a member who is not an admin"
+  },
+  "groupMakeAdmin": "Make admin",
+  "@groupMakeAdmin": {
+    "description": "Menu item that invites a member to become an admin"
+  },
+  "groupRemoveAction": "Remove",
+  "@groupRemoveAction": {
+    "description": "Menu item and confirm button that removes a member from the group"
+  },
+  "groupRemoveMemberTitle": "Remove {name}?",
+  "@groupRemoveMemberTitle": {
+    "description": "Title of the dialog confirming a member removal",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "groupRemoveMemberBody": "They stay off this group’s roster on this device. Sharing the invite link lets them rejoin.",
+  "@groupRemoveMemberBody": {
+    "description": "Body of the dialog confirming a member removal"
+  },
+  "groupAdminInviteSent": "Invited {name} to be an admin",
+  "@groupAdminInviteSent": {
+    "description": "Snack bar shown after inviting a member to become an admin",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "groupMemberHasNoIdentity": "{name} has not shared an identity yet",
+  "@groupMemberHasNoIdentity": {
+    "description": "Snack bar shown when a member cannot be promoted because their device keys are unknown",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "groupJoinRequestCount": "{count, plural, =1{Join requests · 1} other{Join requests · {count}}}",
+  "@groupJoinRequestCount": {
+    "description": "Row title showing how many people are waiting for approval to join",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "groupSomeone": "Someone",
+  "@groupSomeone": {
+    "description": "Fallback name for a join requester who shared no name"
+  },
+  "groupWantsToJoin": "wants to join",
+  "@groupWantsToJoin": {
+    "description": "Subtitle under the name of a person requesting to join"
+  },
+  "groupApprove": "Approve",
+  "@groupApprove": {
+    "description": "Button that approves a join request"
+  },
+  "groupDecline": "Decline",
+  "@groupDecline": {
+    "description": "Button that declines a join request or an admin invite"
+  },
+  "groupAccept": "Accept",
+  "@groupAccept": {
+    "description": "Button that accepts an admin invite"
+  },
+  "groupAdminInvitePrompt": "You have been invited to be an admin.",
+  "@groupAdminInvitePrompt": {
+    "description": "Card shown on this device when it has a pending admin invite"
+  },
+  "groupModerationHeading": "MODERATION",
+  "@groupModerationHeading": {
+    "description": "Heading of the admin only moderation card"
+  },
+  "groupRequireApproval": "Require approval to join",
+  "@groupRequireApproval": {
+    "description": "Switch that gates joining a public group behind admin approval"
+  },
+  "groupRequireApprovalDetail": "People request access; an admin approves",
+  "@groupRequireApprovalDetail": {
+    "description": "Explains the join approval switch"
+  },
+  "groupAllowMemberExport": "Allow everyone to export",
+  "@groupAllowMemberExport": {
+    "description": "Switch that lets members, not only admins, export the group data"
+  },
+  "groupAllowMemberExportDetail": "Members can download the data, not just admins",
+  "@groupAllowMemberExportDetail": {
+    "description": "Explains the member export switch"
+  },
+  "groupAllowMemberPlace": "Allow members to place points",
+  "@groupAllowMemberPlace": {
+    "description": "Switch that lets members place points anywhere on the map"
+  },
+  "groupAllowMemberPlaceDetail": "Off means members can only send their live GPS point",
+  "@groupAllowMemberPlaceDetail": {
+    "description": "Explains the member point placement switch"
+  },
+  "groupAllowMemberTags": "Allow everyone to add or delete tags",
+  "@groupAllowMemberTags": {
+    "description": "Switch that lets members edit the group's quick tags"
+  },
+  "groupAllowMemberTagsDetail": "Off means only admins change the quick tags",
+  "@groupAllowMemberTagsDetail": {
+    "description": "Explains the member tag editing switch"
+  },
+  "groupAllowOutsideArea": "Allow points outside the area",
+  "@groupAllowOutsideArea": {
+    "description": "Switch that allows sending points beyond the mapping area"
+  },
+  "groupAllowOutsideAreaDetail": "Off blocks sending beyond the mapping area",
+  "@groupAllowOutsideAreaDetail": {
+    "description": "Explains the outside area switch"
+  },
+  "groupRequireGoodGps": "Require good GPS",
+  "@groupRequireGoodGps": {
+    "description": "Row and dialog title for the GPS accuracy cap"
+  },
+  "groupGpsLimitOff": "Off",
+  "@groupGpsLimitOff": {
+    "description": "Option in the GPS accuracy dialog that applies no accuracy cap"
+  },
+  "groupGpsLimitWithin": "Within ±{meters} m",
+  "@groupGpsLimitWithin": {
+    "description": "Option in the GPS accuracy dialog capping accuracy to the given metres",
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "groupGpsLimitOffDetail": "Off. Send at any GPS accuracy",
+  "@groupGpsLimitOffDetail": {
+    "description": "Subtitle of the GPS accuracy row when no cap is set"
+  },
+  "groupGpsLimitDetail": "Block points less accurate than ±{meters} m",
+  "@groupGpsLimitDetail": {
+    "description": "Subtitle of the GPS accuracy row when a cap is set",
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "groupPublicGroup": "Public group",
+  "@groupPublicGroup": {
+    "description": "Switch that lists the group in the public directory"
+  },
+  "groupPublicGroupDetail": "Discoverable by people nearby",
+  "@groupPublicGroupDetail": {
+    "description": "Explains the public group switch"
+  },
+  "groupArchiveGroup": "Archive group",
+  "@groupArchiveGroup": {
+    "description": "Row that archives the group"
+  },
+  "groupDeleteGroup": "Delete group",
+  "@groupDeleteGroup": {
+    "description": "Row that deletes the group for everyone"
+  },
+  "groupLeaveGroup": "Leave group",
+  "@groupLeaveGroup": {
+    "description": "Row that leaves the group on this device"
+  },
+  "groupLeaveConfirmTitle": "Leave this group?",
+  "@groupLeaveConfirmTitle": {
+    "description": "Title of the dialog confirming leaving the group"
+  },
+  "groupLeaveConfirmBody": "It is removed from this device. Other members keep it.",
+  "@groupLeaveConfirmBody": {
+    "description": "Body of the dialog confirming leaving the group"
+  },
+  "groupLeaveAction": "Leave",
+  "@groupLeaveAction": {
+    "description": "Confirm button that leaves the group"
+  },
+  "groupDeleteConfirmTitle": "Delete this group?",
+  "@groupDeleteConfirmTitle": {
+    "description": "Title of the dialog confirming deletion of the group"
+  },
+  "groupDeleteConfirmBody": "This erases the group and its points for everyone, on the server and on this device. It cannot be undone.",
+  "@groupDeleteConfirmBody": {
+    "description": "Body of the dialog confirming deletion of the group"
+  },
+  "groupDeleteTypeName": "Type the group name to confirm.",
+  "@groupDeleteTypeName": {
+    "description": "Instruction to type the group name before deletion is allowed"
+  },
+  "groupDeleteAction": "Delete",
+  "@groupDeleteAction": {
+    "description": "Confirm button that deletes the group"
+  },
+  "groupEditMappingArea": "Edit mapping area",
+  "@groupEditMappingArea": {
+    "description": "Row that redraws an existing mapping area"
+  },
+  "groupEditMappingAreaDetail": "Redraw the mapping area on the map",
+  "@groupEditMappingAreaDetail": {
+    "description": "Subtitle of the row that redraws an existing mapping area"
+  },
+  "groupSetMappingArea": "Set mapping area",
+  "@groupSetMappingArea": {
+    "description": "Row that draws a mapping area for the first time"
+  },
+  "groupSetMappingAreaDetail": "Draw the mapping area on the map",
+  "@groupSetMappingAreaDetail": {
+    "description": "Subtitle of the row that draws a mapping area for the first time"
+  },
+  "groupMakeOffline": "Make available offline",
+  "@groupMakeOffline": {
+    "description": "Row that downloads the group's map tiles for offline use"
+  },
+  "groupMakeOfflineDetail": "Save the map here so it works with no signal",
+  "@groupMakeOfflineDetail": {
+    "description": "Subtitle of the offline map row"
+  },
+  "groupExportTitle": "Export data",
+  "@groupExportTitle": {
+    "description": "Title of the export sheet and of the export row in group info"
+  },
+  "groupExportEveryoneDetail": "Download this group’s points and photos",
+  "@groupExportEveryoneDetail": {
+    "description": "Subtitle of the export row when every member may export"
+  },
+  "groupExportAdminsOnlyDetail": "Admins only",
+  "@groupExportAdminsOnlyDetail": {
+    "description": "Subtitle of the export row when only admins may export"
+  },
+  "groupExportProjectZip": "Project .zip",
+  "@groupExportProjectZip": {
+    "description": "Export format option: a self-contained project archive"
+  },
+  "groupExportProjectZipDetail": "Points, area, track and the photos. Self-contained.",
+  "@groupExportProjectZipDetail": {
+    "description": "Describes what the project archive export contains"
+  },
+  "groupExportGeoJson": "GeoJSON",
+  "@groupExportGeoJson": {
+    "description": "Export format option: GeoJSON"
+  },
+  "groupExportGeoJsonDetail": "Points + tags + accuracy. Opens in QGIS.",
+  "@groupExportGeoJsonDetail": {
+    "description": "Describes what the GeoJSON export contains"
+  },
+  "groupExportGpx": "GPX",
+  "@groupExportGpx": {
+    "description": "Export format option: GPX"
+  },
+  "groupExportGpxDetail": "Waypoints + your track. Opens in OsmAnd and Garmin.",
+  "@groupExportGpxDetail": {
+    "description": "Describes what the GPX export contains"
+  },
+  "groupExportPreparing": "Preparing…",
+  "@groupExportPreparing": {
+    "description": "Export button label while the export file is being written"
+  },
+  "groupExportAction": "Export",
+  "@groupExportAction": {
+    "description": "Button that exports the group data in the chosen format"
+  },
+  "groupDefaultTagTrash": "Trash",
+  "@groupDefaultTagTrash": {
+    "description": "Suggested starting quick tag: rubbish or litter"
+  },
+  "groupDefaultTagCrossings": "Crossings",
+  "@groupDefaultTagCrossings": {
+    "description": "Suggested starting quick tag: pedestrian crossings"
+  },
+  "groupDefaultTagStreetlight": "Streetlight",
+  "@groupDefaultTagStreetlight": {
+    "description": "Suggested starting quick tag: street lighting"
+  },
+  "groupDefaultTagPole": "Pole",
+  "@groupDefaultTagPole": {
+    "description": "Suggested starting quick tag: a utility pole"
+  }
+}

@@ -1,6 +1,6 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
 
 /// A tap-able tag. One tap captions a capture, sets its map colour and files
 /// it under that tag. Selected fills with the tag colour; otherwise it shows

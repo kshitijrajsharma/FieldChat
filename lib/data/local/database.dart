@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:fieldchat/features/groups/group_member_view.dart';
+import 'package:hulaki/features/groups/group_member_view.dart';
 
 part 'database.g.dart';
 
@@ -203,7 +203,7 @@ class SyncCursors extends Table {
 )
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase([QueryExecutor? executor])
-    : super(executor ?? driftDatabase(name: 'fieldchat'));
+    : super(executor ?? driftDatabase(name: 'hulaki'));
 
   @override
   int get schemaVersion => 12;

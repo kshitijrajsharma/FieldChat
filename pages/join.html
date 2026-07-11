@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex" />
-  <title>Join a FieldChat group</title>
+  <title>Join a Hulaki group</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -65,22 +65,22 @@
 <body>
   <div class="card">
     <div class="lockup">
-      <!-- The FieldChat mark from lib/design/brand: a navigation arrow over
-           three typing dots, in a 100x84 viewbox. -->
+      <!-- The Hulaki mark from lib/design/brand: a navigation arrow whose summit
+           splits into a twin peak, over three dots. 100x84 viewbox. -->
       <svg width="26" height="22" viewBox="0 0 100 84" aria-hidden="true"
         fill="#15181B">
-        <polygon points="50,12 72,58 50,46 28,58" />
+        <polygon points="46,13 50,23 54,13 72,58 50,46 28,58" />
         <circle cx="35" cy="74" r="6.2" />
         <circle cx="50" cy="74" r="6.2" />
         <circle cx="65" cy="74" r="6.2" />
       </svg>
-      <span class="wordmark">FieldChat</span>
+      <span class="wordmark">Hulaki</span>
     </div>
     <h1>Open this group</h1>
     <p id="status">Opening the app…</p>
-    <a class="btn primary" id="openApp" href="#">Open in FieldChat</a>
+    <a class="btn primary" id="openApp" href="#">Open in Hulaki</a>
     <a class="btn ghost" id="install"
-       href="https://github.com/kshitijrajsharma/FieldChat">Get the app</a>
+       href="https://github.com/kshitijrajsharma/Hulaki">Get the app</a>
     <div class="muted">The group key stays in this link's fragment and is
       never sent to a server.</div>
   </div>
@@ -97,7 +97,7 @@
           'This invite link is incomplete.';
         return;
       }
-      var appUrl = 'fieldchat://join?g=' + encodeURIComponent(groupId) +
+      var appUrl = 'hulaki://join?g=' + encodeURIComponent(groupId) +
         '#' + key;
       document.getElementById('openApp').setAttribute('href', appUrl);
       // Auto-attempt the app on load; the button is the manual fallback.

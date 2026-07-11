@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fieldchat/features/identity/identity_crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
 
 /// Loads this device's identity keys, creating them once on first use. The
 /// private seeds live in the platform keystore; only the public keys ever leave

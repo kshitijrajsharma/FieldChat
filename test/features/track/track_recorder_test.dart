@@ -1,8 +1,8 @@
 import 'package:drift/native.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/track/track_recorder.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/track/track_recorder.dart';
 
 void main() {
   late LocalDatabase db;

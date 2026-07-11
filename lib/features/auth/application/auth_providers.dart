@@ -1,8 +1,8 @@
-import 'package:fieldchat/features/auth/application/auth_controller.dart';
-import 'package:fieldchat/features/auth/application/auth_state.dart';
-import 'package:fieldchat/features/auth/data/auth_repository.dart';
-import 'package:fieldchat/features/auth/data/device_auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/features/auth/application/auth_controller.dart';
+import 'package:hulaki/features/auth/application/auth_state.dart';
+import 'package:hulaki/features/auth/data/auth_repository.dart';
+import 'package:hulaki/features/auth/data/device_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The loaded SharedPreferences instance. Overridden at app start; tests

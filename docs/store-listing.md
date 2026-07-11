@@ -5,13 +5,13 @@ the Play submission. Apple fields are kept at the end for later.
 
 ## Names
 
-- App name (max 30): FieldChat
+- App name (max 30): Hulaki
 - Short description (Play, max 80): Offline-first, encrypted group chat where
   every message is a mapped point.
 
 ## Full description (Play, max 4000)
 
-FieldChat is a field mapping app. Every chat message is a point on the map, so
+Hulaki is a field mapping app. Every chat message is a point on the map, so
 a group can record what they see in the field and see it in one place.
 
 It is offline first. You can drop points and send messages with no signal, and
@@ -34,7 +34,7 @@ What you can do:
 - Find public groups near you and ask to join.
 - Export points as GeoJSON or GPX.
 
-FieldChat is a personal, non-commercial project, open source under AGPL-3.0. It
+Hulaki is a personal, non-commercial project, open source under AGPL-3.0. It
 is provided as is, without warranty. Do not rely on it for navigation,
 emergency, or safety of life.
 
@@ -62,16 +62,21 @@ emergency, or safety of life.
 
 ## URLs
 
-- Privacy policy: https://kshitijrajsharma.github.io/FieldChat/privacy-policy.html
-- Terms of use: https://kshitijrajsharma.github.io/FieldChat/terms.html
+- Privacy policy: https://kshitijrajsharma.github.io/Hulaki/privacy-policy.html
+- Terms of use: https://kshitijrajsharma.github.io/Hulaki/terms.html
 - Support email: krschap@proton.me
-- Support site: https://github.com/kshitijrajsharma/FieldChat
+- Support site: https://github.com/kshitijrajsharma/Hulaki
 
 ## Assets to provide
 
-- App icon (in assets/icon), and a 512x512 PNG for the listing.
-- Feature graphic, 1024x500.
-- At least two phone screenshots (capture from a device or the emulator).
+- App icon 512x512: `pages/icon-512.png`.
+- Feature graphic 1024x500: `pages/feature-graphic.png`.
+- Phone screenshots: the five images in `pages/shots/`.
+
+## Copy and paste
+
+Every field above, with a copy button per field, is on the published home page:
+https://kshitijrajsharma.github.io/Hulaki/
 
 ## Apple fields (for later)
 

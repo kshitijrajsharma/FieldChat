@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:fieldchat/app/connectivity.dart';
-import 'package:fieldchat/app/providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/connectivity.dart';
+import 'package:hulaki/app/providers.dart';
 
 /// Reflects the device network state into the app: updates the offline banner
 /// and drives sync (queue when offline, drain and catch up when back).

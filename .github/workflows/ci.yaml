@@ -23,7 +23,24 @@ jobs:
       - run: flutter pub get
       - run: dart format --set-exit-if-changed .
       - run: flutter analyze
-      - run: flutter test --exclude-tags golden
+      # Load tests allocate hundreds of MB by design, so they stay out of CI.
+      - run: flutter test --exclude-tags golden,load
+
+  translations:
+    name: Translations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Anyone can contribute a language by adding one ARB file, so this reports
+      # missing keys and dropped placeholders in plain words on their pull
+      # request instead of failing later as a build error.
+      - run: dart run tool/verify_translations.dart
 
   build-android:
     name: Build Android (APK)

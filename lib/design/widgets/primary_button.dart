@@ -1,6 +1,6 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
 
 /// The ink call-to-action used for the one primary action on a screen:
 /// Continue, Create group, Export. Full width by default.

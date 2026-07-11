@@ -1,8 +1,8 @@
 # Copy to android/key.properties and fill in. Never commit the real file.
 # Generate a keystore once:
-#   keytool -genkey -v -keystore ~/fieldchat-release.jks \
-#     -keyalg RSA -keysize 2048 -validity 10000 -alias fieldchat
-storeFile=/absolute/path/to/fieldchat-release.jks
+#   keytool -genkey -v -keystore ~/hulaki-release.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias hulaki
+storeFile=/absolute/path/to/hulaki-release.jks
 storePassword=CHANGE_ME
-keyAlias=fieldchat
+keyAlias=hulaki
 keyPassword=CHANGE_ME

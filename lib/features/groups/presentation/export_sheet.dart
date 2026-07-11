@@ -1,16 +1,17 @@
 import 'dart:io';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/export/gpx.dart';
-import 'package:fieldchat/features/export/project_archive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/export/gpx.dart';
+import 'package:hulaki/features/export/project_archive.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -71,7 +72,9 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
           );
           file = XFile(path);
         case _Format.project:
-          final zip = await buildProjectArchive(
+          final path = '${dir.path}/$slug.zip';
+          await buildProjectArchive(
+            outputPath: path,
             group: widget.group,
             hotKeys: hotKeys,
             messages: messages,
@@ -79,8 +82,6 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
             track: track,
             exportedAt: DateTime.now(),
           );
-          final path = '${dir.path}/$slug.zip';
-          await File(path).writeAsBytes(zip);
           file = XFile(path);
       }
       await SharePlus.instance.share(ShareParams(files: [file]));
@@ -92,6 +93,7 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.white,
@@ -113,35 +115,38 @@ class _ExportSheetState extends ConsumerState<ExportSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('Export data', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            l10n.groupExportTitle,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           Text(
             widget.group.name,
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           _FormatCard(
-            title: 'Project .zip',
-            subtitle: 'Points, area, track and the photos. Self-contained.',
+            title: l10n.groupExportProjectZip,
+            subtitle: l10n.groupExportProjectZipDetail,
             selected: _format == _Format.project,
             onTap: () => setState(() => _format = _Format.project),
           ),
           const SizedBox(height: AppSpacing.sm),
           _FormatCard(
-            title: 'GeoJSON',
-            subtitle: 'Points + tags + accuracy. Opens in QGIS.',
+            title: l10n.groupExportGeoJson,
+            subtitle: l10n.groupExportGeoJsonDetail,
             selected: _format == _Format.geojson,
             onTap: () => setState(() => _format = _Format.geojson),
           ),
           const SizedBox(height: AppSpacing.sm),
           _FormatCard(
-            title: 'GPX',
-            subtitle: 'Waypoints + your track. Opens in OsmAnd and Garmin.',
+            title: l10n.groupExportGpx,
+            subtitle: l10n.groupExportGpxDetail,
             selected: _format == _Format.gpx,
             onTap: () => setState(() => _format = _Format.gpx),
           ),
           const SizedBox(height: AppSpacing.lg),
           PrimaryButton(
-            label: _busy ? 'Preparing…' : 'Export',
+            label: _busy ? l10n.groupExportPreparing : l10n.groupExportAction,
             onPressed: _busy ? null : _export,
           ),
         ],

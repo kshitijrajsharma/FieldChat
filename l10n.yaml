@@ -1,0 +1,7 @@
+# Every language is one ARB file in lib/l10n. Adding a language means adding
+# app_<code>.arb there; no Dart changes are needed.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

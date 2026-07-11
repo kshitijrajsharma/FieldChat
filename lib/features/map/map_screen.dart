@@ -2,25 +2,26 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/capture/location_permission.dart';
-import 'package:fieldchat/features/capture/presentation/live_gps_strip.dart';
-import 'package:fieldchat/features/capture/staged_point.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/groups/hot_key_icons.dart';
-import 'package:fieldchat/features/map/map_tap_sheet.dart';
-import 'package:fieldchat/features/map/marker_images.dart';
-import 'package:fieldchat/features/map/point_sheet.dart';
-import 'package:fieldchat/features/onboarding/coach_tip.dart';
-import 'package:fieldchat/features/track/track_recorder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart'
     show Geolocator, LocationSettings, Position;
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/capture/location_permission.dart';
+import 'package:hulaki/features/capture/presentation/live_gps_strip.dart';
+import 'package:hulaki/features/capture/staged_point.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/groups/hot_key_icons.dart';
+import 'package:hulaki/features/map/map_tap_sheet.dart';
+import 'package:hulaki/features/map/marker_images.dart';
+import 'package:hulaki/features/map/point_sheet.dart';
+import 'package:hulaki/features/onboarding/coach_tip.dart';
+import 'package:hulaki/features/track/track_recorder.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide buildFeatureCollection;
 
 /// The shared map for a group: every located message is a tag-coloured pin over
@@ -32,7 +33,7 @@ class MapScreen extends ConsumerStatefulWidget {
     required this.groupId,
     required this.groupName,
     this.focusMessageId,
-    this.backLabel = 'Chat',
+    this.backLabel,
     super.key,
   });
 
@@ -40,8 +41,8 @@ class MapScreen extends ConsumerStatefulWidget {
   final String groupName;
 
   /// Label on the back control, so the map reads correctly whether it was
-  /// opened from a chat or from the Map tab.
-  final String backLabel;
+  /// opened from a chat or from the Map tab. Null reads as the chat label.
+  final String? backLabel;
 
   /// When set, the map centers on this point and opens its detail sheet once
   /// the pins are ready. Used when arriving from a point's mini-map.
@@ -236,6 +237,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     ref.listen(messagesProvider(widget.groupId), (_, _) => _refreshPins());
 
     // The legend sits in its own SafeArea, so its top edge is the bottom inset
@@ -275,15 +277,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onCameraIdle: () => unawaited(_onCameraIdle()),
           ),
           if (!_mapStyled)
-            const Positioned.fill(
+            Positioned.fill(
               child: ColoredBox(
                 color: AppColors.mist,
-                child: Center(child: _MapLoadingChip(label: 'Loading map…')),
+                child: Center(
+                  child: _MapLoadingChip(label: l10n.mapLoadingMap),
+                ),
               ),
             )
           else if (!_pointsSettled)
-            const Positioned.fill(
-              child: IgnorePointer(child: Center(child: _MapLoadingChip())),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Center(
+                  child: _MapLoadingChip(label: l10n.mapLoadingPoints),
+                ),
+              ),
             ),
           Positioned(
             right: 16,
@@ -305,7 +313,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 children: [
                   _MapHeader(
                     groupName: widget.groupName,
-                    backLabel: widget.backLabel,
+                    backLabel: widget.backLabel ?? l10n.mapBackChat,
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -325,12 +333,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                     ],
                   ),
-                  const CoachTip(
+                  CoachTip(
                     tipKey: 'map',
                     translucent: true,
-                    message:
-                        'Tap a point to open it. Tap the crosshair to '
-                        'jump to your location.',
+                    message: l10n.mapCoachTip,
                   ),
                 ],
               ),
@@ -344,8 +350,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: Center(
                 child: _ZoomToAreaPill(
                   label: _aoiGeoJson != null
-                      ? 'Zoom to mapping area'
-                      : 'Zoom to points',
+                      ? l10n.mapZoomToArea
+                      : l10n.mapZoomToPoints,
                   onTap: () => unawaited(_frameData()),
                 ),
               ),
@@ -435,7 +441,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         clusterRadius: 45,
       ),
     );
-    // Clustered groups: a dark bubble whose size steps up with the count.
     await controller.addCircleLayer(
       'points',
       'clusters',
@@ -495,7 +500,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ],
       enableInteraction: false,
     );
-    // Single points: the tag-coloured icon pin.
     await controller.addSymbolLayer(
       'points',
       'points-symbols',
@@ -825,7 +829,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Future<Map<String, dynamic>> _featureCollection() async {
     final db = ref.read(databaseProvider);
     final all = await db.messagesFor(widget.groupId);
-    // The Mine/All switch filters the map (and its legend counts) by author.
     final selfId = ref.read(currentUserIdProvider);
     final messages = _mineOnly
         ? [
@@ -841,8 +844,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       return tag != null && hotKeyIds.contains(tag) ? tag : _othersKey;
     }
 
-    // Live per-tag counts over located points, plus an "Others" bucket for
-    // untagged ones, feeding the map legend.
     final counts = <String, int>{};
     for (final m in messages) {
       if (m.lat == null || m.lng == null || m.deletedAt != null) continue;
@@ -860,14 +861,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       if ((counts[_othersKey] ?? 0) > 0)
         _LegendEntry(
           tagKey: _othersKey,
-          label: 'Others',
           color: AppColors.textMuted,
           count: counts[_othersKey]!,
         ),
     ];
     if (mounted) setState(() => _legend = legend);
 
-    // Drop points whose tag the user has toggled off.
     final visible = [
       for (final m in messages)
         if (!(m.lat != null &&
@@ -960,7 +959,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 /// A small centred chip shown over the map while the points are loading in, so
 /// an empty-looking map reads as loading rather than broken.
 class _MapLoadingChip extends StatelessWidget {
-  const _MapLoadingChip({this.label = 'Loading points…'});
+  const _MapLoadingChip({required this.label});
 
   final String label;
 
@@ -1009,6 +1008,7 @@ class _MineAllToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(11),
@@ -1018,8 +1018,16 @@ class _MineAllToggle extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _segment('All', selected: !mineOnly, onTap: () => onChanged(false)),
-            _segment('Mine', selected: mineOnly, onTap: () => onChanged(true)),
+            _segment(
+              l10n.mapFilterAll,
+              selected: !mineOnly,
+              onTap: () => onChanged(false),
+            ),
+            _segment(
+              l10n.mapFilterMine,
+              selected: mineOnly,
+              onTap: () => onChanged(true),
+            ),
           ],
         ),
       ),
@@ -1191,13 +1199,16 @@ class _MapHeader extends StatelessWidget {
 class _LegendEntry {
   const _LegendEntry({
     required this.tagKey,
-    required this.label,
     required this.color,
     required this.count,
+    this.label,
   });
 
   final String tagKey;
-  final String label;
+
+  /// A quick tag's own name. Null is the untagged bucket, which the legend
+  /// labels at render time so the name follows the app language.
+  final String? label;
   final Color color;
   final int count;
 }
@@ -1222,6 +1233,7 @@ class _LegendBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final sorted = [...entries]..sort((a, b) => b.count.compareTo(a.count));
     final showMore = sorted.length > _maxInline;
 
@@ -1249,8 +1261,14 @@ class _LegendBar extends StatelessWidget {
                   ),
                   itemCount: sorted.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 6),
-                  itemBuilder: (context, i) =>
-                      _chip(sorted[i], on: !hidden.contains(sorted[i].tagKey)),
+                  itemBuilder: (context, i) => _chip(
+                    sorted[i],
+                    on: !hidden.contains(sorted[i].tagKey),
+                    text: l10n.mapLegendChip(
+                      sorted[i].label ?? l10n.mapLegendOthers,
+                      sorted[i].count,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1287,7 +1305,11 @@ class _LegendBar extends StatelessWidget {
     );
   }
 
-  Widget _chip(_LegendEntry entry, {required bool on}) {
+  Widget _chip(
+    _LegendEntry entry, {
+    required bool on,
+    required String text,
+  }) {
     return InkWell(
       onTap: () => onToggle(entry.tagKey),
       borderRadius: BorderRadius.circular(20),
@@ -1315,7 +1337,7 @@ class _LegendBar extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              '${entry.label} · ${entry.count}',
+              text,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -1386,6 +1408,7 @@ class _TagSheetState extends State<_TagSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.white,
@@ -1405,20 +1428,26 @@ class _TagSheetState extends State<_TagSheet> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Tags',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  l10n.mapTagsTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                children: [for (final entry in widget.entries) _row(entry)],
+                children: [
+                  for (final entry in widget.entries)
+                    _row(entry, entry.label ?? l10n.mapLegendOthers),
+                ],
               ),
             ),
             const SizedBox(height: 8),
@@ -1428,7 +1457,7 @@ class _TagSheetState extends State<_TagSheet> {
     );
   }
 
-  Widget _row(_LegendEntry entry) {
+  Widget _row(_LegendEntry entry, String label) {
     final on = !_hidden.contains(entry.tagKey);
     return ListTile(
       onTap: () => _toggle(entry.tagKey),
@@ -1441,7 +1470,7 @@ class _TagSheetState extends State<_TagSheet> {
         ),
       ),
       title: Text(
-        entry.label,
+        label,
         style: TextStyle(
           fontWeight: FontWeight.w600,
           color: on ? AppColors.ink : AppColors.textFaint,
@@ -1480,6 +1509,7 @@ class _BasemapToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final toSatellite = !satellite;
     return Material(
       color: AppColors.white,
@@ -1504,7 +1534,7 @@ class _BasemapToggle extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               Text(
-                toSatellite ? 'Satellite' : 'Map',
+                toSatellite ? l10n.mapBasemapSatellite : l10n.mapBasemapMap,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,

@@ -1,4 +1,4 @@
-import 'package:fieldchat/features/auth/domain/session.dart';
+import 'package:hulaki/features/auth/domain/session.dart';
 
 /// Where the user stands with authentication. Drives the top-level routing.
 sealed class AuthState {

@@ -61,3 +61,6 @@ android/key.properties
 **/*.keystore
 # Golden test diff artifacts
 test/failures/
+
+# Generated from the ARB files in lib/l10n by `flutter pub get`.
+lib/l10n/app_localizations*.dart

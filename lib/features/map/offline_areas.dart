@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/export/geojson.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/export/geojson.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide buildFeatureCollection;
 
 /// Offline tiles are a cache, not permanent storage: an area is dropped this
@@ -111,7 +111,7 @@ class CachedArea {
   final DateTime? expiresAt;
 }
 
-/// The cached regions that belong to a FieldChat group.
+/// The cached regions that belong to a Hulaki group.
 Future<List<OfflineRegion>> cachedGroupRegions() async {
   final regions = await getListOfRegions();
   return regions.where((r) => r.metadata['group'] != null).toList();

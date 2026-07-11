@@ -3,9 +3,9 @@ library;
 
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/export/geojson.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/export/geojson.dart';
 
 /// Load test: a group holding many points must query and render fast. Run with
 /// `flutter test --tags perf test/performance/load_test.dart`.

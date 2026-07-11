@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/identity/admin_chain.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/identity/admin_chain.dart';
 
 /// Recomputes a group's verified admin set from its stored handshake events and
 /// writes the result into member roles. Returns the verified admin ids. Before

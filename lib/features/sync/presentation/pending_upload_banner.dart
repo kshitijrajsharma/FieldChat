@@ -1,9 +1,9 @@
-import 'package:fieldchat/app/connectivity.dart';
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/connectivity.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
 
 /// A calm banner shown while some captures have not uploaded yet, so a user
 /// returning from the field sees upload progress and knows nothing is lost:

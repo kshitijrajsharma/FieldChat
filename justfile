@@ -1,4 +1,4 @@
-# FieldChat task entrypoint. Requires the Flutter SDK on PATH
+# Hulaki task entrypoint. Requires the Flutter SDK on PATH
 # (export PATH="$HOME/flutter/bin:$PATH").
 
 # List available recipes.
@@ -19,13 +19,21 @@ fix:
     dart fix --apply
     dart format .
 
-# Run the test suite (excludes platform-sensitive screenshot goldens).
+# Run the test suite (excludes screenshot goldens and the slow load tests).
 test:
-    flutter test --exclude-tags golden
+    flutter test --exclude-tags golden,load
 
 # Regenerate the screenshot previews in test/goldens.
 screenshots:
     flutter test --tags golden --update-goldens test/screenshots_test.dart
+
+# Run the load tests (slow, allocates hundreds of MB).
+load:
+    flutter test --tags load
+
+# Check every language file against the English template.
+translations:
+    dart run tool/verify_translations.dart
 
 # Regenerate launcher icons from assets/icon.
 icons:

@@ -1,7 +1,7 @@
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/capture/gps_source.dart';
-import 'package:fieldchat/features/capture/location_permission.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/capture/gps_source.dart';
+import 'package:hulaki/features/capture/location_permission.dart';
 
 /// Real device GPS. Emits a short burst of fixes for one capture so the gate
 /// can lock the spot fast and sharpen it. Requests permission on first use.

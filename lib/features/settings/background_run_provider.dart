@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
 
 const _backgroundRunKey = 'settings.runInBackground';
 

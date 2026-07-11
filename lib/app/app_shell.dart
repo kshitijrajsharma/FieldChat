@@ -1,11 +1,12 @@
-import 'package:fieldchat/app/connectivity.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/features/chats/chats_home_screen.dart';
-import 'package:fieldchat/features/discovery/communities_screen.dart';
-import 'package:fieldchat/features/map/map_tab_screen.dart';
-import 'package:fieldchat/features/me/me_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/connectivity.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/features/chats/chats_home_screen.dart';
+import 'package:hulaki/features/discovery/communities_screen.dart';
+import 'package:hulaki/features/map/map_tab_screen.dart';
+import 'package:hulaki/features/me/me_screen.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// The four top-level destinations: Chats, Map, Communities and Me. Kept as a
 /// single shell so the network and local state live above the tabs.
@@ -34,14 +35,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     };
   }
 
-  void _onTap(int value) {
+  void _onTap(int value, String offlineMessage) {
     final online = ref.read(onlineProvider);
     if (value == _communitiesIndex && !online) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Communities needs a connection.')),
-        );
+        ..showSnackBar(SnackBar(content: Text(offlineMessage)));
       return;
     }
     setState(() {
@@ -52,6 +51,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final online = ref.watch(onlineProvider);
     final communitiesColor = online ? null : AppColors.textFaint;
 
@@ -62,28 +62,28 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
-        onTap: _onTap,
+        onTap: (value) => _onTap(value, l10n.navCommunitiesNeedsConnection),
         type: BottomNavigationBarType.fixed,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
-            label: 'Chats',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.chat_bubble_outline),
+            activeIcon: const Icon(Icons.chat_bubble),
+            label: l10n.navChats,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map),
-            label: 'Map',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.map_outlined),
+            activeIcon: const Icon(Icons.map),
+            label: l10n.navMap,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.explore_outlined, color: communitiesColor),
             activeIcon: const Icon(Icons.explore),
-            label: 'Communities',
+            label: l10n.navCommunities,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Me',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person_outline),
+            activeIcon: const Icon(Icons.person),
+            label: l10n.navMe,
           ),
         ],
       ),

@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/groups/invite_link.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/groups/invite_link.dart';
 
 void main() {
   const groupId = '642ffd5e-b7bc-416f-8173-cf1c5a428823';
@@ -22,14 +22,14 @@ void main() {
       expect('${uri.path}?${uri.query}', isNot(contains(key)));
     });
 
-    test('parses the fieldchat:// app-scheme form', () {
-      final parsed = InviteLink.parse('fieldchat://join?g=$groupId#$key');
+    test('parses the hulaki:// app-scheme form', () {
+      final parsed = InviteLink.parse('hulaki://join?g=$groupId#$key');
       expect(parsed.groupId, groupId);
       expect(parsed.key, key);
     });
 
     test('still parses the legacy path form', () {
-      final parsed = InviteLink.parse('https://fieldchat.app/g/$groupId#$key');
+      final parsed = InviteLink.parse('https://hulaki.app/g/$groupId#$key');
       expect(parsed.groupId, groupId);
       expect(parsed.key, key);
     });

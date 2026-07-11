@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:fieldchat/core/geo.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/features/capture/location_permission.dart';
-import 'package:fieldchat/features/export/geojson.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart' show Geolocator, LocationSettings;
+import 'package:hulaki/core/geo.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/features/capture/location_permission.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 /// Draw a mapping area by tapping the map to drop polygon corners. Returns the
@@ -39,19 +40,20 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mapping area'),
+        title: Text(l10n.groupMappingAreaTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.file_upload_outlined),
-            tooltip: 'Import GeoJSON',
-            onPressed: _importGeoJson,
+            tooltip: l10n.groupImportGeoJson,
+            onPressed: () => unawaited(_importGeoJson(l10n)),
           ),
           if (_points.isNotEmpty)
             TextButton(
               onPressed: _undo,
-              child: const Text('Undo'),
+              child: Text(l10n.groupUndo),
             ),
         ],
       ),
@@ -66,7 +68,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
             myLocationEnabled: true,
             myLocationRenderMode: MyLocationRenderMode.compass,
             onMapCreated: (controller) => _controller = controller,
-            onStyleLoadedCallback: _onStyleLoaded,
+            onStyleLoadedCallback: () => unawaited(_onStyleLoaded(l10n)),
             onMapClick: _onTap,
           ),
           Positioned(
@@ -91,11 +93,11 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
                       child: TextField(
                         controller: _searchController,
                         textInputAction: TextInputAction.search,
-                        decoration: const InputDecoration(
-                          hintText: 'Search a place',
+                        decoration: InputDecoration(
+                          hintText: l10n.groupSearchPlaceHint,
                           border: InputBorder.none,
                         ),
-                        onSubmitted: (_) => _search(),
+                        onSubmitted: (_) => unawaited(_search(l10n)),
                       ),
                     ),
                   ],
@@ -110,7 +112,9 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
               heroTag: 'area-my-location',
               backgroundColor: AppColors.white,
               foregroundColor: AppColors.ink,
-              onPressed: _locating ? null : _goToMyLocation,
+              onPressed: _locating
+                  ? null
+                  : () => unawaited(_goToMyLocation(l10n)),
               child: _locating
                   ? const SizedBox(
                       width: 18,
@@ -140,8 +144,8 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
                   ),
                   child: Text(
                     _points.length < 3
-                        ? 'Tap the map to drop at least 3 corners.'
-                        : '${_points.length} corners. Tap to add more.',
+                        ? l10n.groupAreaDrawHint
+                        : l10n.groupAreaCornerCount(_points.length),
                     style: const TextStyle(fontSize: 13),
                   ),
                 ),
@@ -149,12 +153,12 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _points.length >= 3 ? _use : null,
+                    onPressed: _points.length >= 3 ? () => _use(l10n) : null,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.ink,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Use this area'),
+                    child: Text(l10n.groupUseThisArea),
                   ),
                 ),
               ],
@@ -165,7 +169,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
     );
   }
 
-  Future<void> _onStyleLoaded() async {
+  Future<void> _onStyleLoaded(AppLocalizations l10n) async {
     final controller = _controller;
     if (controller == null) return;
     await controller.addGeoJsonSource('aoi-poly', _empty());
@@ -190,12 +194,15 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
         circleRadius: 5,
       ),
     );
-    unawaited(_goToMyLocation(initial: true));
+    unawaited(_goToMyLocation(l10n, initial: true));
   }
 
   /// Centers the map on the device's location. On open it only nudges the
   /// starting view; the recenter button jumps closer.
-  Future<void> _goToMyLocation({bool initial = false}) async {
+  Future<void> _goToMyLocation(
+    AppLocalizations l10n, {
+    bool initial = false,
+  }) async {
     if (_locating) return;
     setState(() => _locating = true);
     try {
@@ -216,7 +223,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
     } on TimeoutException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not get your location')),
+          SnackBar(content: Text(l10n.groupLocationUnavailable)),
         );
       }
     } finally {
@@ -225,7 +232,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
   }
 
   /// Moves the camera to the first geocoding match for the typed place.
-  Future<void> _search() async {
+  Future<void> _search(AppLocalizations l10n) async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
     FocusScope.of(context).unfocus();
@@ -234,7 +241,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
       if (!mounted) return;
       if (results.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No place found for that search')),
+          SnackBar(content: Text(l10n.groupNoPlaceFound)),
         );
         return;
       }
@@ -248,7 +255,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
     } on PlatformException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Place search is unavailable here')),
+          SnackBar(content: Text(l10n.groupPlaceSearchUnavailable)),
         );
       }
     }
@@ -274,12 +281,10 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
   /// rejected rather than saved as a sliver polygon.
   static const _minAreaSqMeters = 100.0;
 
-  void _use() {
+  void _use(AppLocalizations l10n) {
     if (_areaSqMeters() < _minAreaSqMeters) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Area is too small. Draw a larger shape.'),
-        ),
+        SnackBar(content: Text(l10n.groupAreaTooSmall)),
       );
       return;
     }
@@ -293,7 +298,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
 
   /// Pick a .geojson/.json file and use it as the area. Validated by extracting
   /// its bounds (Feature/FeatureCollection/Polygon); a valid area is returned.
-  Future<void> _importGeoJson() async {
+  Future<void> _importGeoJson(AppLocalizations l10n) async {
     // No type filter: Android resolves .geojson to octet-stream, so filtering
     // by MIME hides valid files. The content is validated below instead.
     final file = await openFile();
@@ -303,7 +308,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
     if (aoiBounds(text) == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('That is not a valid GeoJSON area')),
+          SnackBar(content: Text(l10n.groupInvalidGeoJson)),
         );
       }
       return;

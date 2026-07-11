@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/map/offline_areas.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/features/map/offline_areas.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide buildFeatureCollection;
 
 /// A group's offline download while it is in flight, with progress from 0 to 1.

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:fieldchat/features/discovery/public_directory.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// The production public directory. Proximity search uses a bounding box on the

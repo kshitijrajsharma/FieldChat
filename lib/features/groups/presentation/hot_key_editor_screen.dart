@@ -1,9 +1,10 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/groups/hot_key_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/groups/hot_key_icons.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// Add, rename, recolour and remove a group's hot-keys. Returns the edited
 /// list, or null if cancelled.
@@ -55,8 +56,9 @@ class _HotKeyEditorScreenState extends State<HotKeyEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Quick tags')),
+      appBar: AppBar(title: Text(l10n.groupQuickTagsTitle)),
       body: Column(
         children: [
           Expanded(
@@ -95,7 +97,7 @@ class _HotKeyEditorScreenState extends State<HotKeyEditorScreen> {
                   TextButton.icon(
                     onPressed: _edit,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add tag'),
+                    label: Text(l10n.groupAddTag),
                   ),
               ],
             ),
@@ -104,13 +106,13 @@ class _HotKeyEditorScreenState extends State<HotKeyEditorScreen> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: widget.editable
                 ? PrimaryButton(
-                    label: 'Done',
+                    label: l10n.groupDone,
                     onPressed: _hotKeys.isEmpty
                         ? null
                         : () => Navigator.of(context).pop(_hotKeys),
                   )
                 : PrimaryButton(
-                    label: 'Close',
+                    label: l10n.groupClose,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
           ),
@@ -146,12 +148,17 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final matches = [
       for (final entry in kHotKeyIcons.entries)
         if (_iconQuery.isEmpty || entry.key.contains(_iconQuery)) entry,
     ];
     return AlertDialog(
-      title: Text(widget.existing == null ? 'New tag' : 'Edit tag'),
+      title: Text(
+        widget.existing == null
+            ? l10n.groupNewTagTitle
+            : l10n.groupEditTagTitle,
+      ),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -162,8 +169,8 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
               TextField(
                 controller: _controller,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Label, e.g. Pothole',
+                decoration: InputDecoration(
+                  hintText: l10n.groupTagLabelHint,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -192,18 +199,21 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              const Text(
-                'Icon (optional)',
-                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              Text(
+                l10n.groupIconOptional,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               TextField(
                 onChanged: (value) =>
                     setState(() => _iconQuery = value.trim().toLowerCase()),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
-                  hintText: 'Search icons (tree, water, sign…)',
-                  prefixIcon: Icon(Icons.search, size: 18),
+                  hintText: l10n.groupSearchIconsHint,
+                  prefixIcon: const Icon(Icons.search, size: 18),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -236,7 +246,7 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.groupCancel),
         ),
         TextButton(
           onPressed: () {
@@ -251,7 +261,7 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(l10n.groupSave),
         ),
       ],
     );

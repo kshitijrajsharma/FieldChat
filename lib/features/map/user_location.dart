@@ -1,5 +1,5 @@
-import 'package:fieldchat/features/capture/location_permission.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hulaki/features/capture/location_permission.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 Future<LatLng?> currentUserLatLng() async {

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/messaging/domain/message_payload.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/messaging/domain/message_payload.dart';
 
 /// Builds the GeoJSON FeatureCollection that is both the map's pin source and
 /// the export format. One Point feature per located, non-deleted message,

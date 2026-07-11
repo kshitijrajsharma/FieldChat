@@ -2,23 +2,24 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:fieldchat/app/connectivity.dart';
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/data/local/database_provider.dart';
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/brand/field_chat_logo.dart';
-import 'package:fieldchat/features/capture/staged_point.dart';
-import 'package:fieldchat/features/discovery/group_preview_screen.dart';
-import 'package:fieldchat/features/discovery/public_directory.dart';
-import 'package:fieldchat/features/export/geojson.dart';
-import 'package:fieldchat/features/map/map_screen.dart';
-import 'package:fieldchat/features/map/user_location.dart';
-import 'package:fieldchat/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/connectivity.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/data/local/database_provider.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/brand/hulaki_logo.dart';
+import 'package:hulaki/features/capture/staged_point.dart';
+import 'package:hulaki/features/discovery/group_preview_screen.dart';
+import 'package:hulaki/features/discovery/public_directory.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/map/map_screen.dart';
+import 'package:hulaki/features/map/user_location.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide buildFeatureCollection;
 
 /// The Map tab: an overview of every group's mapping area. A group with a drawn
@@ -47,6 +48,7 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(activeGroupsProvider, (_, _) => unawaited(_refreshAreas()));
+    final l10n = AppLocalizations.of(context);
     final online = ref.watch(onlineProvider);
     if (!online && _showCommunities) {
       _showCommunities = false;
@@ -79,8 +81,9 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
                 _AreaLabel(
                   area: cluster.members.first,
                   offset: cluster.offset,
-                  onTap: () =>
-                      unawaited(_openGroup(cluster.members.first.group)),
+                  onTap: () => unawaited(
+                    _openGroup(cluster.members.first.group, l10n.mapBack),
+                  ),
                 )
               else
                 _CommunityClusterCard(
@@ -108,15 +111,15 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
               child: _showCommunities
                   ? (_communities.isEmpty && _ready
                         ? const _CommunitiesEmptyHint()
-                        : const _TitleCard(
-                            title: 'Groups near you',
-                            subtitle: 'Within 25 km · tap a group to preview',
+                        : _TitleCard(
+                            title: l10n.mapNearbyTitle,
+                            subtitle: l10n.mapNearbySubtitle(25),
                           ))
                   : (_areas.isEmpty && _ready
                         ? const _EmptyHint()
-                        : const _TitleCard(
-                            title: 'Your map areas',
-                            subtitle: 'Tap an area to open its group map',
+                        : _TitleCard(
+                            title: l10n.mapAreasTitle,
+                            subtitle: l10n.mapAreasSubtitle,
                           )),
             ),
           ),
@@ -471,16 +474,18 @@ class _MapTabScreenState extends ConsumerState<MapTabScreen> {
     if (layerId != 'areas-fill') return;
     final index = int.tryParse(id);
     if (index == null || index < 0 || index >= _areas.length) return;
-    unawaited(_openGroup(_areas[index].group));
+    unawaited(
+      _openGroup(_areas[index].group, AppLocalizations.of(context).mapBack),
+    );
   }
 
-  Future<void> _openGroup(Group group) async {
+  Future<void> _openGroup(Group group, String backLabel) async {
     final staged = await Navigator.of(context).push<Object?>(
       MaterialPageRoute<Object?>(
         builder: (_) => MapScreen(
           groupId: group.id,
           groupName: group.name,
-          backLabel: 'Back',
+          backLabel: backLabel,
         ),
       ),
     );
@@ -648,9 +653,6 @@ class _MapArea {
   };
 }
 
-String _plural(int count, String noun) =>
-    '$count $noun${count == 1 ? '' : 's'}';
-
 class _AreaLabel extends StatelessWidget {
   const _AreaLabel({
     required this.area,
@@ -664,6 +666,7 @@ class _AreaLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Positioned(
       left: offset.dx - 92,
       top: offset.dy - 26,
@@ -696,9 +699,7 @@ class _AreaLabel extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${_plural(area.points, 'point')} · '
-                      '${area.mappers} '
-                      '${area.mappers == 1 ? 'person' : 'people'}',
+                      l10n.mapAreaSummary(area.points, area.mappers),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -806,6 +807,7 @@ class _MapToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(22),
@@ -816,13 +818,13 @@ class _MapToggle extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _Segment(
-              label: 'My groups',
+              label: l10n.mapToggleMyGroups,
               selected: !showCommunities,
               enabled: true,
               onTap: () => onChanged(false),
             ),
             _Segment(
-              label: 'Communities',
+              label: l10n.mapToggleCommunities,
               selected: showCommunities,
               enabled: online,
               onTap: () => onChanged(true),
@@ -967,6 +969,7 @@ class _CommunityClusterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Positioned(
       left: offset.dx - 70,
       top: offset.dy - 18,
@@ -995,9 +998,9 @@ class _CommunityClusterCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'groups',
-                style: TextStyle(
+              Text(
+                l10n.mapClusterGroups,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,
@@ -1016,6 +1019,7 @@ class _CommunitiesEmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -1029,15 +1033,14 @@ class _CommunitiesEmptyHint extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'No public groups nearby',
+              l10n.mapNoNearbyGroupsTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Start a group and make it public to put it on the map for '
-              'people around you.',
+            Text(
+              l10n.mapNoNearbyGroupsBody,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -1051,24 +1054,24 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const FieldChatMark(height: 40, color: AppColors.textFaint),
+            const HulakiMark(height: 40, color: AppColors.textFaint),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'No areas yet',
+              l10n.mapNoAreasTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Draw a mapping area or drop a few points in a group, '
-              'and it lands here.',
+            Text(
+              l10n.mapNoAreasBody,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
           ],
         ),

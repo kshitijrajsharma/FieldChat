@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/sync/group_cipher.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/features/sync/group_cipher.dart';
 
 void main() {
   test('round-trips a JSON payload', () async {

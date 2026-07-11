@@ -1,5 +1,5 @@
-name: fieldchat
-description: "FieldChat: collect field data while chatting. Offline-first, E2E encrypted."
+name: hulaki
+description: "Hulaki: a field mapping application. Offline-first and end-to-end encrypted."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -33,7 +33,6 @@ dependencies:
   archive: ^4.0.9
   connectivity_plus: ^7.2.0
   cryptography: ^2.9.0
-  cupertino_icons: ^1.0.8
   drift: ^2.34.0
   drift_flutter: ^0.3.0
   file_selector: ^1.1.0
@@ -41,19 +40,19 @@ dependencies:
     sdk: flutter
   flutter_compass: ^0.8.1
   flutter_foreground_task: ^9.2.2
+  flutter_localizations:
+    sdk: flutter
   flutter_riverpod: ^3.3.2
   flutter_secure_storage: ^10.3.1
   geocoding: ^5.0.0
   geolocator: ^14.0.3
   image: ^4.9.1
   image_picker: ^1.2.3
-  intl: ^0.20.3
-  libsignal_protocol_dart: ^0.8.2
+  intl: any
   maplibre_gl: ^0.26.2
   mobile_scanner: ^7.2.0
   package_info_plus: ^10.2.0
   path_provider: ^2.1.6
-  pinput: ^6.0.2
   proj4dart: ^3.0.0
   qr_flutter: ^4.1.0
   share_plus: ^13.2.0
@@ -83,6 +82,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Generates AppLocalizations from the ARB files in lib/l10n.
+  generate: true
 
   assets:
     - assets/icon/

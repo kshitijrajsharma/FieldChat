@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/groups/invite_link.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hulaki/features/groups/invite_link.dart';
 
 /// One of a group's quick tags as shown in its public preview.
 class DirectoryTag {

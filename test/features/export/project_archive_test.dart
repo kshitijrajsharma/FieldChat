@@ -1,18 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
-import 'package:fieldchat/data/local/database.dart';
-import 'package:fieldchat/features/capture/gps_gate.dart';
-import 'package:fieldchat/features/export/project_archive.dart';
-import 'package:fieldchat/features/groups/group_service.dart';
-import 'package:fieldchat/features/identity/identity_crypto.dart';
-import 'package:fieldchat/features/sync/blob_store.dart';
-import 'package:fieldchat/features/sync/in_memory_transport.dart';
-import 'package:fieldchat/features/sync/sync_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hulaki/data/local/database.dart';
+import 'package:hulaki/features/capture/gps_gate.dart';
+import 'package:hulaki/features/export/project_archive.dart';
+import 'package:hulaki/features/groups/group_service.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/sync/blob_store.dart';
+import 'package:hulaki/features/sync/in_memory_transport.dart';
+import 'package:hulaki/features/sync/sync_service.dart';
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -52,7 +53,9 @@ void main() {
     final messages = await db.messagesFor(group.id);
     final mediaId = messages.firstWhere((m) => m.id == photoId).mediaId!;
 
-    final zipBytes = await buildProjectArchive(
+    final zipPath = _tempZipPath();
+    await buildProjectArchive(
+      outputPath: zipPath,
       group: group,
       hotKeys: await db.hotKeysFor(group.id),
       messages: messages,
@@ -60,7 +63,7 @@ void main() {
       exportedAt: DateTime.utc(2026, 6, 30, 10),
     );
 
-    final archive = ZipDecoder().decodeBytes(zipBytes);
+    final archive = ZipDecoder().decodeBytes(File(zipPath).readAsBytesSync());
     final names = archive.files.map((f) => f.name).toSet();
     expect(names, contains('data.geojson'));
     expect(names, contains('project.json'));
@@ -137,7 +140,9 @@ void main() {
       base.subtract(const Duration(hours: 1)),
     );
 
-    final zipBytes = await buildProjectArchive(
+    final zipPath = _tempZipPath();
+    await buildProjectArchive(
+      outputPath: zipPath,
       group: group,
       hotKeys: await db.hotKeysFor(group.id),
       messages: await db.messagesFor(group.id),
@@ -146,7 +151,7 @@ void main() {
       exportedAt: DateTime.utc(2026, 6, 30, 10),
     );
 
-    final archive = ZipDecoder().decodeBytes(zipBytes);
+    final archive = ZipDecoder().decodeBytes(File(zipPath).readAsBytesSync());
     final names = archive.files.map((f) => f.name).toSet();
     expect(names, contains('track.gpx'));
 
@@ -169,4 +174,10 @@ void main() {
             as Map<String, dynamic>;
     expect((manifest['files'] as Map)['track'], 'track.gpx');
   });
+}
+
+String _tempZipPath() {
+  final dir = Directory.systemTemp.createTempSync('hulaki_export');
+  addTearDown(() => dir.deleteSync(recursive: true));
+  return '${dir.path}/project.zip';
 }

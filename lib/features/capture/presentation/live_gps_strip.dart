@@ -1,8 +1,8 @@
-import 'package:fieldchat/app/providers.dart';
-import 'package:fieldchat/design/widgets/gps_strip.dart';
-import 'package:fieldchat/features/capture/presentation/gps_detail_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/design/widgets/gps_strip.dart';
+import 'package:hulaki/features/capture/presentation/gps_detail_sheet.dart';
 
 /// The GPS strip wired to the live device location. Shows real accuracy and an
 /// acquiring state until the first fix arrives. Subscribing here is what

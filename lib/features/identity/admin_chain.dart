@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:fieldchat/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/identity/identity_crypto.dart';
 
 /// A signed admin control event exchanged in the group channel. Two kinds form
 /// the promotion handshake: an existing admin `invite`s a member, and that

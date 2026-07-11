@@ -1,12 +1,13 @@
-import 'package:fieldchat/design/app_colors.dart';
-import 'package:fieldchat/design/app_spacing.dart';
-import 'package:fieldchat/design/widgets/primary_button.dart';
-import 'package:fieldchat/features/auth/application/auth_providers.dart';
-import 'package:fieldchat/features/auth/data/auth_repository.dart';
-import 'package:fieldchat/features/auth/domain/username.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/primary_button.dart';
+import 'package:hulaki/features/auth/application/auth_providers.dart';
+import 'package:hulaki/features/auth/data/auth_repository.dart';
+import 'package:hulaki/features/auth/domain/username.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
 
 /// The whole sign-in: pick a handle and start. It is the name teammates see
 /// in chat. No phone number, no password, no email.
@@ -54,6 +55,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -63,14 +65,16 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
             children: [
               const SizedBox(height: 64),
               Text(
-                'Welcome to FieldChat',
+                l10n.authWelcomeTitle,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: AppSpacing.xs),
-              const Text(
-                'Pick a username to get started. It is the name your team '
-                'sees in chat.',
-                style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+              Text(
+                l10n.authWelcomeSubtitle,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(height: 18),
               TextField(
@@ -88,10 +92,8 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
                 ),
                 decoration: InputDecoration(
                   prefixText: '@',
-                  hintText: 'ward7_mapper',
-                  helperText:
-                      '3 to 20 characters. Lowercase letters, numbers '
-                      'and _.',
+                  hintText: l10n.authUsernameHint,
+                  helperText: l10n.authUsernameHelper,
                   errorText: _error,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
@@ -116,7 +118,7 @@ class _UsernameScreenState extends ConsumerState<UsernameScreen> {
               ),
               const Spacer(),
               PrimaryButton(
-                label: _busy ? 'Saving…' : 'Continue',
+                label: _busy ? l10n.authSaving : l10n.commonContinue,
                 loading: _busy,
                 onPressed: _busy ? null : _submit,
               ),
