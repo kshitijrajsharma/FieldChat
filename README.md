@@ -1,7 +1,6 @@
 # Hulaki
 
-An offline-first, privacy-focused, chatting-inspired field mapping application.
-Flutter, shipping to Android and iOS.
+An offline-first, privacy-focused field mapping app. Flutter, shipping to Android and iOS.
 
 A *hulaki* stands for a mail runner: the postman who carried message letters on foot across Nepal, over ground in past where there were no roads and signal.
 

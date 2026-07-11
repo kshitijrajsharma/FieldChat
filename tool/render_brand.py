@@ -12,6 +12,7 @@ from pathlib import Path
 
 INK = "#15181B"
 WHITE = "#FFFFFF"
+TAGLINE = "An offline-first, privacy-focused field mapping app."
 
 # The mark, in its 100x84 space. The summit splits into the twin peak of
 # Machhapuchhre; the three dots below read as the trail.
@@ -114,7 +115,7 @@ def feature_graphic(root: Path, out: Path) -> None:
     )
     draw.text(
         (width / 2, mid + 140),
-        "A field mapping application",
+        TAGLINE,
         font=tagline,
         fill="#8C887F",
         anchor="mm",
