@@ -22,12 +22,11 @@ void main() {
     IdentityKeys signer,
     IdentityKeys subject, {
     String groupId = 'g1',
-  }) =>
-      signAdminStatement(
-        signer: signer,
-        groupId: groupId,
-        adminPublic: subject.signingPublic,
-      );
+  }) => signAdminStatement(
+    signer: signer,
+    groupId: groupId,
+    adminPublic: subject.signingPublic,
+  );
 
   test('a self-signed root seeds the group', () async {
     final registry = InMemoryAdminRegistry();

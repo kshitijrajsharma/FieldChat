@@ -22,27 +22,25 @@ class GuardRequest {
     required IdentityKeys identity,
     required String groupId,
     required int ts,
-  }) async =>
-      _signed(
-        action: 'purge-group',
-        groupId: groupId,
-        ts: ts,
-        message: purgeGroupMessage(groupId, ts),
-        identity: identity,
-      );
+  }) async => _signed(
+    action: 'purge-group',
+    groupId: groupId,
+    ts: ts,
+    message: purgeGroupMessage(groupId, ts),
+    identity: identity,
+  );
 
   static Future<Map<String, dynamic>> deleteListing({
     required IdentityKeys identity,
     required String groupId,
     required int ts,
-  }) async =>
-      _signed(
-        action: 'delete-listing',
-        groupId: groupId,
-        ts: ts,
-        message: deleteListingMessage(groupId, ts),
-        identity: identity,
-      );
+  }) async => _signed(
+    action: 'delete-listing',
+    groupId: groupId,
+    ts: ts,
+    message: deleteListingMessage(groupId, ts),
+    identity: identity,
+  );
 
   static Future<Map<String, dynamic>> editListing({
     required IdentityKeys identity,
