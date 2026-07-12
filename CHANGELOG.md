@@ -1,3 +1,9 @@
+## Unreleased
+
+### Feat
+
+- **release**: enhance release workflow with track input and build number
+
 ## v0.0.4 (2026-07-12)
 
 ### Fix

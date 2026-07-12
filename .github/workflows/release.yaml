@@ -1,20 +1,8 @@
 name: Release
 
-
-#   IOS_CERTIFICATE_BASE64, IOS_CERTIFICATE_PASSWORD   (Apple distribution cert)
-#   IOS_PROVISIONING_PROFILE_BASE64
-#   APPSTORE_ISSUER_ID, APPSTORE_KEY_ID, APPSTORE_PRIVATE_KEY  (App Store Connect API)
-
 on:
-  workflow_dispatch:
-    inputs:
-      track:
-        description: 'Play track to upload to'
-        type: choice
-        options: [internal, alpha]
-        default: internal
-  push:
-    tags: ['v*']
+  release:
+    types: [published]
 
 env:
   FLUTTER_VERSION: 3.44.4
@@ -48,23 +36,36 @@ jobs:
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           EOF
       - name: Build AAB
+        env:
+          TAG: ${{ github.event.release.tag_name }}
         run: |
           flutter build appbundle --release \
+            --build-name=${TAG#v} \
             --build-number=$(git rev-list --count HEAD) \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+      - name: Release notes for Play
+        env:
+          NOTES: ${{ github.event.release.body }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir -p distribution/whatsnew
+          printf '%s' "$NOTES" | head -c 500 > distribution/whatsnew/whatsnew-en-US
+          [ -s distribution/whatsnew/whatsnew-en-US ] \
+            || printf 'Release %s' "$TAG" > distribution/whatsnew/whatsnew-en-US
       - uses: actions/upload-artifact@v7
         with:
           name: hulaki-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
-      - name: Upload to Google Play
+      - name: Upload to Google Play (internal testing)
         uses: r0adkll/upload-google-play@v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: app.hulaki
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: ${{ github.event.inputs.track || 'internal' }}
+          track: internal
           status: completed
+          whatsNewDirectory: distribution/whatsnew
 
   ios:
     name: iOS IPA
@@ -89,8 +90,12 @@ jobs:
           echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 -d \
             > ~/Library/MobileDevice/Provisioning\ Profiles/hulaki.mobileprovision
       - name: Build IPA
+        env:
+          TAG: ${{ github.event.release.tag_name }}
         run: |
           flutter build ipa --release \
+            --build-name=${TAG#v} \
+            --build-number=$(git rev-list --count HEAD) \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --export-options-plist=ios/ExportOptions.plist
