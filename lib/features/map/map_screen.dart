@@ -543,6 +543,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final focusId = widget.focusMessageId;
     if (focusId != null && await _focusMessage(focusId)) return;
 
+    await _warmUpOnLastPoint();
+
     // On first open, frame the task area first so a stray far point cannot
     // zoom the map out, then the points, then the user. The recenter button
     // jumps back to your location. Animated so the frame reliably applies on
@@ -770,6 +772,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  /// Zooms tight onto the most recent point first, forcing MapLibre to paint
+  /// the symbol layer on a cold first load; bounded so it can't stall the
+  /// overview framing the caller does next.
+  Future<void> _warmUpOnLastPoint() async {
+    if (_pointMessages.isEmpty) return;
+    final last = _pointMessages.last;
+    try {
+      await Future(() async {
+        await _controller?.animateCamera(
+          CameraUpdate.newLatLngZoom(LatLng(last.lat!, last.lng!), 17),
+        );
+        await _refreshPins();
+      }).timeout(const Duration(seconds: 4));
+    } on TimeoutException {
+      // Caller's overview framing still runs regardless.
+    }
+  }
+
   /// Centers on one point and opens its detail sheet. Returns false when the
   /// point is not on the map (unlocated or not in this group).
   Future<bool> _focusMessage(String messageId) async {
@@ -943,6 +963,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ref.read(currentUserIdProvider),
           DateTime.now().subtract(const Duration(hours: 24)),
         );
+    // A LineString needs 2+ positions; fewer is invalid GeoJSON and crashes
+    // the native map.
+    if (points.length < 2) return _emptyFeatures();
     return {
       'type': 'Feature',
       'geometry': {

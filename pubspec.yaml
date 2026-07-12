@@ -133,6 +133,9 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   image_path: "assets/icon/app_icon.png"
+  # Alpha-free copy of app_icon.png; flutter_launcher_icons 0.14.4 blacks out
+  # the iOS icon otherwise. Regenerate with tool/flatten_ios_icon.dart.
+  image_path_ios: "assets/icon/app_icon_ios.png"
   adaptive_icon_background: "#15181B"
   adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
   min_sdk_android: 21
