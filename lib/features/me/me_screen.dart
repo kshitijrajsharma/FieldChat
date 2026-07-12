@@ -41,6 +41,10 @@ class _MeScreenState extends ConsumerState<MeScreen> {
     _reloadAreas();
   }
 
+  static final Uri _repoUri = Uri.parse(
+    'https://github.com/kshitijrajsharma/hulaki',
+  );
+
   static final Uri _supportUri = Uri.parse(
     'https://github.com/sponsors/kshitijrajsharma',
   );
@@ -222,86 +226,31 @@ class _MeScreenState extends ConsumerState<MeScreen> {
           const SizedBox(height: AppSpacing.xl),
           _SectionLabel(l10n.meSectionSupport),
           const SizedBox(height: AppSpacing.sm),
-          _Card(
-            child: InkWell(
-              onTap: () => unawaited(
-                _openLink(_supportUri, l10n.meCouldNotOpenLink),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.favorite_outline,
-                    color: AppColors.danger,
-                    size: 20,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.meSupportTitle,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          l10n.meSupportSubtitle,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.open_in_new,
-                    size: 18,
-                    color: AppColors.textMuted,
-                  ),
-                ],
-              ),
-            ),
+          _SupportRow(
+            icon: Icons.star_outline,
+            iconColor: AppColors.ink,
+            title: l10n.meRepoTitle,
+            subtitle: l10n.meRepoSubtitle,
+            onTap: () =>
+                unawaited(_openLink(_repoUri, l10n.meCouldNotOpenLink)),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _Card(
-            child: InkWell(
-              onTap: () => unawaited(
-                _openLink(_reportUri, l10n.meCouldNotOpenLink),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.flag_outlined,
-                    color: AppColors.textMuted,
-                    size: 20,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.meReportTitle,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          l10n.meReportSubtitle,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.open_in_new,
-                    size: 18,
-                    color: AppColors.textMuted,
-                  ),
-                ],
-              ),
-            ),
+          _SupportRow(
+            icon: Icons.favorite_outline,
+            iconColor: AppColors.danger,
+            title: l10n.meSupportTitle,
+            subtitle: l10n.meSupportSubtitle,
+            onTap: () =>
+                unawaited(_openLink(_supportUri, l10n.meCouldNotOpenLink)),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _SupportRow(
+            icon: Icons.flag_outlined,
+            iconColor: AppColors.textMuted,
+            title: l10n.meReportTitle,
+            subtitle: l10n.meReportSubtitle,
+            onTap: () =>
+                unawaited(_openLink(_reportUri, l10n.meCouldNotOpenLink)),
           ),
           const SizedBox(height: AppSpacing.xl),
           Center(
@@ -636,6 +585,62 @@ class _Card extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: child,
+      ),
+    );
+  }
+}
+
+/// A tappable Support row: an icon, a title and subtitle, and an external-link
+/// affordance. Opens a link when tapped.
+class _SupportRow extends StatelessWidget {
+  const _SupportRow({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.open_in_new,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

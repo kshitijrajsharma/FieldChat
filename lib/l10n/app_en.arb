@@ -176,11 +176,19 @@
   "@meRestore": {
     "description": "Button that unarchives a group"
   },
+  "meRepoTitle": "Star or raise an issue",
+  "@meRepoTitle": {
+    "description": "Title of the row that opens the GitHub repository"
+  },
+  "meRepoSubtitle": "See the code and open issues on GitHub.",
+  "@meRepoSubtitle": {
+    "description": "Subtitle of the row that opens the GitHub repository"
+  },
   "meSupportTitle": "Support the developer",
   "@meSupportTitle": {
     "description": "Title of the support link row"
   },
-  "meSupportSubtitle": "Star or sponsor the project on GitHub.",
+  "meSupportSubtitle": "Sponsor the project on GitHub.",
   "@meSupportSubtitle": {
     "description": "Subtitle of the support link row"
   },
