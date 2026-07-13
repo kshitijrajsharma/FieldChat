@@ -1,3 +1,9 @@
+## v0.0.7 (2026-07-14)
+
+### Fix
+
+- **tutorial**: fixes the tutorial and getstarted page on the screen
+
 ## v0.0.6 (2026-07-12)
 
 ## v0.0.5 (2026-07-12)
