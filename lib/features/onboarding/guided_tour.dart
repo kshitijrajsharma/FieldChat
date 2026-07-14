@@ -3,9 +3,11 @@ import 'package:hulaki/design/app_colors.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 
-/// One stop on the guided tour: a bottom-nav destination ([tabIndex]), the
-/// Chats floating action button when [fab] is set, or the first row of the
-/// Chats list when [sampleRow] is set, plus the words to show.
+/// One stop on the guided tour. The target is a bottom-nav destination
+/// ([tabIndex]), the Chats floating action button ([fab]), the first row of
+/// the Chats list ([sampleRow]), or any widget carrying [targetKey].
+/// [continuesAfter] keeps the button reading "Next" on the final step, for when
+/// the tour hands off to another one.
 class TourStep {
   const TourStep({
     required this.tabIndex,
@@ -14,6 +16,8 @@ class TourStep {
     required this.body,
     this.fab = false,
     this.sampleRow = false,
+    this.targetKey,
+    this.continuesAfter = false,
   });
 
   final int tabIndex;
@@ -22,6 +26,8 @@ class TourStep {
   final String body;
   final bool fab;
   final bool sampleRow;
+  final GlobalKey? targetKey;
+  final bool continuesAfter;
 }
 
 /// A one-time spotlight tour that dims the app and lights up one destination at
@@ -38,7 +44,11 @@ class GuidedTour extends StatefulWidget {
   final List<TourStep> steps;
   final int itemCount;
   final ValueChanged<int> onStep;
-  final VoidCallback onFinish;
+
+  /// Called when the tour ends. The flag is true when the user reached the last
+  /// stop, false when they skipped, so the caller can open the sample only on a
+  /// full walkthrough.
+  final ValueChanged<bool> onFinish;
 
   @override
   State<GuidedTour> createState() => _GuidedTourState();
@@ -60,7 +70,7 @@ class _GuidedTourState extends State<GuidedTour> {
 
   void _next() {
     if (_current >= widget.steps.length - 1) {
-      widget.onFinish();
+      widget.onFinish(true);
       return;
     }
     final next = _current + 1;
@@ -74,6 +84,14 @@ class _GuidedTourState extends State<GuidedTour> {
     final navTop = media.size.height - media.viewPadding.bottom - navHeight;
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final step = widget.steps[_current];
+    if (step.targetKey != null) {
+      final box =
+          step.targetKey!.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize) {
+        final origin = box.localToGlobal(Offset.zero);
+        return (origin & box.size).inflate(6);
+      }
+    }
     if (step.sampleRow) {
       final top = media.viewPadding.top + kToolbarHeight + AppSpacing.sm;
       return Rect.fromLTWH(
@@ -115,13 +133,12 @@ class _GuidedTourState extends State<GuidedTour> {
       rect,
       Radius.circular(step.fab ? rect.height / 2 : AppRadii.card),
     );
-    // The plus button sits above the nav bar, so lift the card clear of it.
-    final cardBottom = step.fab
-        ? media.viewPadding.bottom +
-              kBottomNavigationBarHeight +
-              _fabMargin +
-              _fabSize +
-              AppSpacing.md
+    // Put the card clear of the highlight: above it when the target sits low on
+    // the screen (nav bar, plus button, composer), at the default bottom slot
+    // otherwise.
+    final aboveTarget = rect.center.dy > media.size.height / 2;
+    final cardBottom = aboveTarget
+        ? media.size.height - rect.top + AppSpacing.md
         : media.viewPadding.bottom + kBottomNavigationBarHeight + AppSpacing.sm;
     return Material(
       type: MaterialType.transparency,
@@ -142,7 +159,7 @@ class _GuidedTourState extends State<GuidedTour> {
                 index: _current,
                 total: widget.steps.length,
                 onNext: _next,
-                onSkip: widget.onFinish,
+                onSkip: () => widget.onFinish(false),
               ),
             ),
           ],
@@ -196,7 +213,8 @@ class _TourCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isLast = index == total - 1;
+    // "Next" also shows on the final step when it hands off to another tour.
+    final showingNext = index < total - 1 || step.continuesAfter;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -246,7 +264,7 @@ class _TourCard extends StatelessWidget {
             children: [
               _Dots(index: index, total: total),
               const Spacer(),
-              if (!isLast)
+              if (showingNext)
                 TextButton(
                   onPressed: onSkip,
                   child: Text(
@@ -264,7 +282,7 @@ class _TourCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadii.field),
                   ),
                 ),
-                child: Text(isLast ? l10n.tourDone : l10n.tourNext),
+                child: Text(showingNext ? l10n.tourNext : l10n.tourDone),
               ),
             ],
           ),

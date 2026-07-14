@@ -25,6 +25,7 @@ import 'package:hulaki/features/messaging/presentation/message_bubble.dart';
 import 'package:hulaki/features/messaging/presentation/point_detail_screen.dart';
 import 'package:hulaki/features/onboarding/coach_tip.dart';
 import 'package:hulaki/features/onboarding/demo_group.dart';
+import 'package:hulaki/features/onboarding/guided_tour.dart';
 import 'package:hulaki/features/settings/privacy_provider.dart';
 import 'package:hulaki/features/sync/presentation/pending_upload_banner.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
@@ -37,6 +38,7 @@ class ChatThreadScreen extends ConsumerStatefulWidget {
     required this.groupId,
     required this.groupName,
     this.stagedPoint,
+    this.showComposerTour = false,
     super.key,
   });
 
@@ -45,6 +47,10 @@ class ChatThreadScreen extends ConsumerStatefulWidget {
 
   /// A map-tapped location to drop the next send at, instead of the live fix.
   final StagedPoint? stagedPoint;
+
+  /// Runs the one-time capture walkthrough (pick a tag, add a note, send) the
+  /// first time a user lands here from the guided tour.
+  final bool showComposerTour;
 
   @override
   ConsumerState<ChatThreadScreen> createState() => _ChatThreadScreenState();
@@ -58,6 +64,12 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
   bool _sending = false;
   Uint8List? _pendingPhoto;
   StagedPoint? _stagedPoint;
+
+  // Targets for the capture walkthrough spotlight.
+  final GlobalKey _tagBarKey = GlobalKey();
+  final GlobalKey _fieldKey = GlobalKey();
+  final GlobalKey _sendKey = GlobalKey();
+  late bool _composerTour = widget.showComposerTour;
 
   /// The last non-null compass heading. The magnetometer often reports null
   /// while it settles (especially on iOS), so a fresh read at send time is
@@ -423,7 +435,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     final photo = match.isEmpty ? null : match.first.photo;
     final isSample = match.isNotEmpty && match.first.isSample;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: AppColors.mist,
       appBar: AppBar(
         titleSpacing: 0,
@@ -596,6 +608,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             ),
           if (anonymous) const _AnonymousBar(),
           _HotKeyBar(
+            key: _tagBarKey,
             hotKeys: hotKeys,
             selectedId: _selectedTagId,
             onSelect: (id) => setState(
@@ -606,12 +619,49 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
             controller: _controller,
             sending: _sending,
             attachment: _pendingPhoto,
+            fieldKey: _fieldKey,
+            sendKey: _sendKey,
             onSend: () => _send(l10n),
             onAttach: () => _attachPhoto(l10n),
             onRemoveAttachment: () => setState(() => _pendingPhoto = null),
           ),
         ],
       ),
+    );
+
+    if (!_composerTour) return scaffold;
+    return Stack(
+      children: [
+        scaffold,
+        GuidedTour(
+          itemCount: 1,
+          onStep: (_) {},
+          onFinish: (_) => setState(() => _composerTour = false),
+          steps: [
+            TourStep(
+              tabIndex: 0,
+              targetKey: _tagBarKey,
+              icon: Icons.sell_outlined,
+              title: l10n.tourTagTitle,
+              body: l10n.tourTagBody,
+            ),
+            TourStep(
+              tabIndex: 0,
+              targetKey: _fieldKey,
+              icon: Icons.edit_outlined,
+              title: l10n.tourNoteTitle,
+              body: l10n.tourNoteBody,
+            ),
+            TourStep(
+              tabIndex: 0,
+              targetKey: _sendKey,
+              icon: Icons.send_outlined,
+              title: l10n.tourSendTitle,
+              body: l10n.tourSendBody,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -742,6 +792,7 @@ class _HotKeyBar extends StatelessWidget {
     required this.hotKeys,
     required this.selectedId,
     required this.onSelect,
+    super.key,
   });
 
   final List<HotKey> hotKeys;
@@ -932,6 +983,8 @@ class _Composer extends StatelessWidget {
     required this.controller,
     required this.sending,
     required this.attachment,
+    required this.fieldKey,
+    required this.sendKey,
     required this.onSend,
     required this.onAttach,
     required this.onRemoveAttachment,
@@ -940,6 +993,8 @@ class _Composer extends StatelessWidget {
   final TextEditingController controller;
   final bool sending;
   final Uint8List? attachment;
+  final Key fieldKey;
+  final Key sendKey;
   final Future<void> Function() onSend;
   final Future<void> Function() onAttach;
   final VoidCallback onRemoveAttachment;
@@ -994,6 +1049,7 @@ class _Composer extends StatelessWidget {
                   onPressed: onAttach,
                 ),
                 Expanded(
+                  key: fieldKey,
                   child: TextField(
                     key: const Key('composer-field'),
                     controller: controller,
@@ -1017,6 +1073,7 @@ class _Composer extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 GestureDetector(
+                  key: sendKey,
                   onTap: sending ? null : onSend,
                   child: Container(
                     width: 40,

@@ -1555,13 +1555,37 @@
   "@tourMeBody": {
     "description": "Guided tour: what the Me tab is for"
   },
-  "tourSampleTitle": "Your sample project",
+  "tourSampleTitle": "Your sample group",
   "@tourSampleTitle": {
     "description": "Guided tour: title for the seeded sample group"
   },
-  "tourSampleBody": "We set this one up for you. Tap to open it, drop a point, and watch it appear on the map.",
+  "tourSampleBody": "This is a sample group, explore it to see how everything works. Then add your own point and watch it appear on the map.",
   "@tourSampleBody": {
     "description": "Guided tour: what the sample group is for"
+  },
+  "tourTagTitle": "Pick a tag",
+  "@tourTagTitle": {
+    "description": "Capture walkthrough: the quick-tag row"
+  },
+  "tourTagBody": "Tap a tag for what you see, like trash or a crossing.",
+  "@tourTagBody": {
+    "description": "Capture walkthrough: what the tag row does"
+  },
+  "tourNoteTitle": "Add a note",
+  "@tourNoteTitle": {
+    "description": "Capture walkthrough: the message field"
+  },
+  "tourNoteBody": "Type an optional note here, or attach a photo with the plus.",
+  "@tourNoteBody": {
+    "description": "Capture walkthrough: what the message field does"
+  },
+  "tourSendTitle": "Send it",
+  "@tourSendTitle": {
+    "description": "Capture walkthrough: the send button"
+  },
+  "tourSendBody": "Tap send to drop the point on the map for your whole group.",
+  "@tourSendBody": {
+    "description": "Capture walkthrough: what the send button does"
   },
   "tourNext": "Next",
   "@tourNext": {

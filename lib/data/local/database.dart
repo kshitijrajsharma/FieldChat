@@ -294,6 +294,14 @@ class LocalDatabase extends _$LocalDatabase {
   Future<Profile?> profileById(String id) =>
       (select(profiles)..where((p) => p.id.equals(id))).getSingleOrNull();
 
+  /// The seeded sample group, if one is still present, so the tour can drop the
+  /// user into it at the end.
+  Future<Group?> sampleGroup() =>
+      (select(groups)
+            ..where((g) => g.isSample.equals(true))
+            ..limit(1))
+          .getSingleOrNull();
+
   /// Stores a handshake event once, ignoring a replay of the same id.
   Future<void> insertAdminEvent(AdminEventsCompanion event) =>
       into(adminEvents).insert(event, mode: InsertMode.insertOrIgnore);

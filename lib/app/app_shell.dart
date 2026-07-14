@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/connectivity.dart';
+import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/chats/chats_home_screen.dart';
 import 'package:hulaki/features/discovery/communities_screen.dart';
 import 'package:hulaki/features/map/map_tab_screen.dart';
 import 'package:hulaki/features/me/me_screen.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:hulaki/features/onboarding/guided_tour.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 
@@ -66,15 +68,34 @@ class _AppShellState extends ConsumerState<AppShell> {
     TourStep(
       tabIndex: 0,
       sampleRow: true,
+      continuesAfter: true,
       icon: Icons.science_outlined,
       title: l10n.tourSampleTitle,
       body: l10n.tourSampleBody,
     ),
   ];
 
-  Future<void> _finishTour() async {
+  Future<void> _finishTour(bool completed) async {
     await ref.read(sharedPreferencesProvider).setBool(_tourPendingKey, false);
-    if (mounted) setState(() => _showTour = false);
+    if (!mounted) return;
+    setState(() => _showTour = false);
+    if (completed) await _openSampleGroup();
+  }
+
+  /// Opens the sample group's thread, so a user who finished the tour lands
+  /// inside it ready to try a point.
+  Future<void> _openSampleGroup() async {
+    final group = await ref.read(databaseProvider).sampleGroup();
+    if (group == null || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChatThreadScreen(
+          groupId: group.id,
+          groupName: group.name,
+          showComposerTour: true,
+        ),
+      ),
+    );
   }
 
   /// Builds a tab only once it has been opened, then keeps it alive in the
