@@ -53,7 +53,9 @@ app.*.map.json
 .env.*
 !.env.example
 CLAUDE.md
-design
+# Top-level design references only; must stay anchored so it never matches
+# lib/design source.
+/design/
 
 # Android release signing
 android/key.properties
