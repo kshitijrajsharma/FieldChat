@@ -625,6 +625,21 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _allowChatModeMeta = const VerificationMeta(
+    'allowChatMode',
+  );
+  @override
+  late final GeneratedColumn<bool> allowChatMode = GeneratedColumn<bool>(
+    'allow_chat_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("allow_chat_mode" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _photoMeta = const VerificationMeta('photo');
   @override
   late final GeneratedColumn<Uint8List> photo = GeneratedColumn<Uint8List>(
@@ -697,6 +712,7 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     allowOutsideArea,
     gpsLimitM,
     allowMemberTags,
+    allowChatMode,
     photo,
     photoBlobId,
     photoKey,
@@ -840,6 +856,15 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         ),
       );
     }
+    if (data.containsKey('allow_chat_mode')) {
+      context.handle(
+        _allowChatModeMeta,
+        allowChatMode.isAcceptableOrUnknown(
+          data['allow_chat_mode']!,
+          _allowChatModeMeta,
+        ),
+      );
+    }
     if (data.containsKey('photo')) {
       context.handle(
         _photoMeta,
@@ -946,6 +971,10 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         DriftSqlType.bool,
         data['${effectivePrefix}allow_member_tags'],
       )!,
+      allowChatMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}allow_chat_mode'],
+      )!,
       photo: attachedDatabase.typeMapping.read(
         DriftSqlType.blob,
         data['${effectivePrefix}photo'],
@@ -1004,6 +1033,10 @@ class Group extends DataClass implements Insertable<Group> {
   final bool allowOutsideArea;
   final int? gpsLimitM;
   final bool allowMemberTags;
+
+  /// When true, members may switch a thread into chat mode: plain messages with
+  /// no tag and no location, for coordinating without dropping points.
+  final bool allowChatMode;
   final Uint8List? photo;
 
   /// The cover photo shared with members: its encrypted blob id in object
@@ -1030,6 +1063,7 @@ class Group extends DataClass implements Insertable<Group> {
     required this.allowOutsideArea,
     this.gpsLimitM,
     required this.allowMemberTags,
+    required this.allowChatMode,
     this.photo,
     this.photoBlobId,
     this.photoKey,
@@ -1063,6 +1097,7 @@ class Group extends DataClass implements Insertable<Group> {
       map['gps_limit_m'] = Variable<int>(gpsLimitM);
     }
     map['allow_member_tags'] = Variable<bool>(allowMemberTags);
+    map['allow_chat_mode'] = Variable<bool>(allowChatMode);
     if (!nullToAbsent || photo != null) {
       map['photo'] = Variable<Uint8List>(photo);
     }
@@ -1105,6 +1140,7 @@ class Group extends DataClass implements Insertable<Group> {
           ? const Value.absent()
           : Value(gpsLimitM),
       allowMemberTags: Value(allowMemberTags),
+      allowChatMode: Value(allowChatMode),
       photo: photo == null && nullToAbsent
           ? const Value.absent()
           : Value(photo),
@@ -1143,6 +1179,7 @@ class Group extends DataClass implements Insertable<Group> {
       allowOutsideArea: serializer.fromJson<bool>(json['allowOutsideArea']),
       gpsLimitM: serializer.fromJson<int?>(json['gpsLimitM']),
       allowMemberTags: serializer.fromJson<bool>(json['allowMemberTags']),
+      allowChatMode: serializer.fromJson<bool>(json['allowChatMode']),
       photo: serializer.fromJson<Uint8List?>(json['photo']),
       photoBlobId: serializer.fromJson<String?>(json['photoBlobId']),
       photoKey: serializer.fromJson<String?>(json['photoKey']),
@@ -1170,6 +1207,7 @@ class Group extends DataClass implements Insertable<Group> {
       'allowOutsideArea': serializer.toJson<bool>(allowOutsideArea),
       'gpsLimitM': serializer.toJson<int?>(gpsLimitM),
       'allowMemberTags': serializer.toJson<bool>(allowMemberTags),
+      'allowChatMode': serializer.toJson<bool>(allowChatMode),
       'photo': serializer.toJson<Uint8List?>(photo),
       'photoBlobId': serializer.toJson<String?>(photoBlobId),
       'photoKey': serializer.toJson<String?>(photoKey),
@@ -1195,6 +1233,7 @@ class Group extends DataClass implements Insertable<Group> {
     bool? allowOutsideArea,
     Value<int?> gpsLimitM = const Value.absent(),
     bool? allowMemberTags,
+    bool? allowChatMode,
     Value<Uint8List?> photo = const Value.absent(),
     Value<String?> photoBlobId = const Value.absent(),
     Value<String?> photoKey = const Value.absent(),
@@ -1217,6 +1256,7 @@ class Group extends DataClass implements Insertable<Group> {
     allowOutsideArea: allowOutsideArea ?? this.allowOutsideArea,
     gpsLimitM: gpsLimitM.present ? gpsLimitM.value : this.gpsLimitM,
     allowMemberTags: allowMemberTags ?? this.allowMemberTags,
+    allowChatMode: allowChatMode ?? this.allowChatMode,
     photo: photo.present ? photo.value : this.photo,
     photoBlobId: photoBlobId.present ? photoBlobId.value : this.photoBlobId,
     photoKey: photoKey.present ? photoKey.value : this.photoKey,
@@ -1257,6 +1297,9 @@ class Group extends DataClass implements Insertable<Group> {
       allowMemberTags: data.allowMemberTags.present
           ? data.allowMemberTags.value
           : this.allowMemberTags,
+      allowChatMode: data.allowChatMode.present
+          ? data.allowChatMode.value
+          : this.allowChatMode,
       photo: data.photo.present ? data.photo.value : this.photo,
       photoBlobId: data.photoBlobId.present
           ? data.photoBlobId.value
@@ -1288,6 +1331,7 @@ class Group extends DataClass implements Insertable<Group> {
           ..write('allowOutsideArea: $allowOutsideArea, ')
           ..write('gpsLimitM: $gpsLimitM, ')
           ..write('allowMemberTags: $allowMemberTags, ')
+          ..write('allowChatMode: $allowChatMode, ')
           ..write('photo: $photo, ')
           ..write('photoBlobId: $photoBlobId, ')
           ..write('photoKey: $photoKey, ')
@@ -1315,6 +1359,7 @@ class Group extends DataClass implements Insertable<Group> {
     allowOutsideArea,
     gpsLimitM,
     allowMemberTags,
+    allowChatMode,
     $driftBlobEquality.hash(photo),
     photoBlobId,
     photoKey,
@@ -1341,6 +1386,7 @@ class Group extends DataClass implements Insertable<Group> {
           other.allowOutsideArea == this.allowOutsideArea &&
           other.gpsLimitM == this.gpsLimitM &&
           other.allowMemberTags == this.allowMemberTags &&
+          other.allowChatMode == this.allowChatMode &&
           $driftBlobEquality.equals(other.photo, this.photo) &&
           other.photoBlobId == this.photoBlobId &&
           other.photoKey == this.photoKey &&
@@ -1365,6 +1411,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<bool> allowOutsideArea;
   final Value<int?> gpsLimitM;
   final Value<bool> allowMemberTags;
+  final Value<bool> allowChatMode;
   final Value<Uint8List?> photo;
   final Value<String?> photoBlobId;
   final Value<String?> photoKey;
@@ -1388,6 +1435,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.allowOutsideArea = const Value.absent(),
     this.gpsLimitM = const Value.absent(),
     this.allowMemberTags = const Value.absent(),
+    this.allowChatMode = const Value.absent(),
     this.photo = const Value.absent(),
     this.photoBlobId = const Value.absent(),
     this.photoKey = const Value.absent(),
@@ -1412,6 +1460,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.allowOutsideArea = const Value.absent(),
     this.gpsLimitM = const Value.absent(),
     this.allowMemberTags = const Value.absent(),
+    this.allowChatMode = const Value.absent(),
     this.photo = const Value.absent(),
     this.photoBlobId = const Value.absent(),
     this.photoKey = const Value.absent(),
@@ -1439,6 +1488,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Expression<bool>? allowOutsideArea,
     Expression<int>? gpsLimitM,
     Expression<bool>? allowMemberTags,
+    Expression<bool>? allowChatMode,
     Expression<Uint8List>? photo,
     Expression<String>? photoBlobId,
     Expression<String>? photoKey,
@@ -1463,6 +1513,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       if (allowOutsideArea != null) 'allow_outside_area': allowOutsideArea,
       if (gpsLimitM != null) 'gps_limit_m': gpsLimitM,
       if (allowMemberTags != null) 'allow_member_tags': allowMemberTags,
+      if (allowChatMode != null) 'allow_chat_mode': allowChatMode,
       if (photo != null) 'photo': photo,
       if (photoBlobId != null) 'photo_blob_id': photoBlobId,
       if (photoKey != null) 'photo_key': photoKey,
@@ -1489,6 +1540,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Value<bool>? allowOutsideArea,
     Value<int?>? gpsLimitM,
     Value<bool>? allowMemberTags,
+    Value<bool>? allowChatMode,
     Value<Uint8List?>? photo,
     Value<String?>? photoBlobId,
     Value<String?>? photoKey,
@@ -1513,6 +1565,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       allowOutsideArea: allowOutsideArea ?? this.allowOutsideArea,
       gpsLimitM: gpsLimitM ?? this.gpsLimitM,
       allowMemberTags: allowMemberTags ?? this.allowMemberTags,
+      allowChatMode: allowChatMode ?? this.allowChatMode,
       photo: photo ?? this.photo,
       photoBlobId: photoBlobId ?? this.photoBlobId,
       photoKey: photoKey ?? this.photoKey,
@@ -1573,6 +1626,9 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     if (allowMemberTags.present) {
       map['allow_member_tags'] = Variable<bool>(allowMemberTags.value);
     }
+    if (allowChatMode.present) {
+      map['allow_chat_mode'] = Variable<bool>(allowChatMode.value);
+    }
     if (photo.present) {
       map['photo'] = Variable<Uint8List>(photo.value);
     }
@@ -1613,6 +1669,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
           ..write('allowOutsideArea: $allowOutsideArea, ')
           ..write('gpsLimitM: $gpsLimitM, ')
           ..write('allowMemberTags: $allowMemberTags, ')
+          ..write('allowChatMode: $allowChatMode, ')
           ..write('photo: $photo, ')
           ..write('photoBlobId: $photoBlobId, ')
           ..write('photoKey: $photoKey, ')
@@ -1695,6 +1752,17 @@ class $HotKeysTable extends HotKeys with TableInfo<$HotKeysTable, HotKey> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1703,6 +1771,7 @@ class $HotKeysTable extends HotKeys with TableInfo<$HotKeysTable, HotKey> {
     colorValue,
     iconName,
     position,
+    description,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1757,6 +1826,15 @@ class $HotKeysTable extends HotKeys with TableInfo<$HotKeysTable, HotKey> {
         position.isAcceptableOrUnknown(data['position']!, _positionMeta),
       );
     }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1790,6 +1868,10 @@ class $HotKeysTable extends HotKeys with TableInfo<$HotKeysTable, HotKey> {
         DriftSqlType.int,
         data['${effectivePrefix}position'],
       )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
     );
   }
 
@@ -1806,6 +1888,10 @@ class HotKey extends DataClass implements Insertable<HotKey> {
   final int colorValue;
   final String? iconName;
   final int position;
+
+  /// An optional one-line note on what the tag is for, shown from its info dot
+  /// so members tag consistently.
+  final String? description;
   const HotKey({
     required this.id,
     required this.groupId,
@@ -1813,6 +1899,7 @@ class HotKey extends DataClass implements Insertable<HotKey> {
     required this.colorValue,
     this.iconName,
     required this.position,
+    this.description,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1825,6 +1912,9 @@ class HotKey extends DataClass implements Insertable<HotKey> {
       map['icon_name'] = Variable<String>(iconName);
     }
     map['position'] = Variable<int>(position);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
     return map;
   }
 
@@ -1838,6 +1928,9 @@ class HotKey extends DataClass implements Insertable<HotKey> {
           ? const Value.absent()
           : Value(iconName),
       position: Value(position),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
     );
   }
 
@@ -1853,6 +1946,7 @@ class HotKey extends DataClass implements Insertable<HotKey> {
       colorValue: serializer.fromJson<int>(json['colorValue']),
       iconName: serializer.fromJson<String?>(json['iconName']),
       position: serializer.fromJson<int>(json['position']),
+      description: serializer.fromJson<String?>(json['description']),
     );
   }
   @override
@@ -1865,6 +1959,7 @@ class HotKey extends DataClass implements Insertable<HotKey> {
       'colorValue': serializer.toJson<int>(colorValue),
       'iconName': serializer.toJson<String?>(iconName),
       'position': serializer.toJson<int>(position),
+      'description': serializer.toJson<String?>(description),
     };
   }
 
@@ -1875,6 +1970,7 @@ class HotKey extends DataClass implements Insertable<HotKey> {
     int? colorValue,
     Value<String?> iconName = const Value.absent(),
     int? position,
+    Value<String?> description = const Value.absent(),
   }) => HotKey(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
@@ -1882,6 +1978,7 @@ class HotKey extends DataClass implements Insertable<HotKey> {
     colorValue: colorValue ?? this.colorValue,
     iconName: iconName.present ? iconName.value : this.iconName,
     position: position ?? this.position,
+    description: description.present ? description.value : this.description,
   );
   HotKey copyWithCompanion(HotKeysCompanion data) {
     return HotKey(
@@ -1893,6 +1990,9 @@ class HotKey extends DataClass implements Insertable<HotKey> {
           : this.colorValue,
       iconName: data.iconName.present ? data.iconName.value : this.iconName,
       position: data.position.present ? data.position.value : this.position,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
     );
   }
 
@@ -1904,14 +2004,22 @@ class HotKey extends DataClass implements Insertable<HotKey> {
           ..write('label: $label, ')
           ..write('colorValue: $colorValue, ')
           ..write('iconName: $iconName, ')
-          ..write('position: $position')
+          ..write('position: $position, ')
+          ..write('description: $description')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, groupId, label, colorValue, iconName, position);
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    label,
+    colorValue,
+    iconName,
+    position,
+    description,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1921,7 +2029,8 @@ class HotKey extends DataClass implements Insertable<HotKey> {
           other.label == this.label &&
           other.colorValue == this.colorValue &&
           other.iconName == this.iconName &&
-          other.position == this.position);
+          other.position == this.position &&
+          other.description == this.description);
 }
 
 class HotKeysCompanion extends UpdateCompanion<HotKey> {
@@ -1931,6 +2040,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
   final Value<int> colorValue;
   final Value<String?> iconName;
   final Value<int> position;
+  final Value<String?> description;
   final Value<int> rowid;
   const HotKeysCompanion({
     this.id = const Value.absent(),
@@ -1939,6 +2049,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
     this.colorValue = const Value.absent(),
     this.iconName = const Value.absent(),
     this.position = const Value.absent(),
+    this.description = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   HotKeysCompanion.insert({
@@ -1948,6 +2059,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
     required int colorValue,
     this.iconName = const Value.absent(),
     this.position = const Value.absent(),
+    this.description = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
@@ -1960,6 +2072,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
     Expression<int>? colorValue,
     Expression<String>? iconName,
     Expression<int>? position,
+    Expression<String>? description,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1969,6 +2082,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
       if (colorValue != null) 'color_value': colorValue,
       if (iconName != null) 'icon_name': iconName,
       if (position != null) 'position': position,
+      if (description != null) 'description': description,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1980,6 +2094,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
     Value<int>? colorValue,
     Value<String?>? iconName,
     Value<int>? position,
+    Value<String?>? description,
     Value<int>? rowid,
   }) {
     return HotKeysCompanion(
@@ -1989,6 +2104,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
       colorValue: colorValue ?? this.colorValue,
       iconName: iconName ?? this.iconName,
       position: position ?? this.position,
+      description: description ?? this.description,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2014,6 +2130,9 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
     if (position.present) {
       map['position'] = Variable<int>(position.value);
     }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2029,6 +2148,7 @@ class HotKeysCompanion extends UpdateCompanion<HotKey> {
           ..write('colorValue: $colorValue, ')
           ..write('iconName: $iconName, ')
           ..write('position: $position, ')
+          ..write('description: $description, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6083,6 +6203,7 @@ typedef $$GroupsTableCreateCompanionBuilder =
       Value<bool> allowOutsideArea,
       Value<int?> gpsLimitM,
       Value<bool> allowMemberTags,
+      Value<bool> allowChatMode,
       Value<Uint8List?> photo,
       Value<String?> photoBlobId,
       Value<String?> photoKey,
@@ -6108,6 +6229,7 @@ typedef $$GroupsTableUpdateCompanionBuilder =
       Value<bool> allowOutsideArea,
       Value<int?> gpsLimitM,
       Value<bool> allowMemberTags,
+      Value<bool> allowChatMode,
       Value<Uint8List?> photo,
       Value<String?> photoBlobId,
       Value<String?> photoKey,
@@ -6263,6 +6385,11 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<bool> get allowMemberTags => $composableBuilder(
     column: $table.allowMemberTags,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get allowChatMode => $composableBuilder(
+    column: $table.allowChatMode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6456,6 +6583,11 @@ class $$GroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get allowChatMode => $composableBuilder(
+    column: $table.allowChatMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<Uint8List> get photo => $composableBuilder(
     column: $table.photo,
     builder: (column) => ColumnOrderings(column),
@@ -6552,6 +6684,11 @@ class $$GroupsTableAnnotationComposer
 
   GeneratedColumn<bool> get allowMemberTags => $composableBuilder(
     column: $table.allowMemberTags,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get allowChatMode => $composableBuilder(
+    column: $table.allowChatMode,
     builder: (column) => column,
   );
 
@@ -6698,6 +6835,7 @@ class $$GroupsTableTableManager
                 Value<bool> allowOutsideArea = const Value.absent(),
                 Value<int?> gpsLimitM = const Value.absent(),
                 Value<bool> allowMemberTags = const Value.absent(),
+                Value<bool> allowChatMode = const Value.absent(),
                 Value<Uint8List?> photo = const Value.absent(),
                 Value<String?> photoBlobId = const Value.absent(),
                 Value<String?> photoKey = const Value.absent(),
@@ -6721,6 +6859,7 @@ class $$GroupsTableTableManager
                 allowOutsideArea: allowOutsideArea,
                 gpsLimitM: gpsLimitM,
                 allowMemberTags: allowMemberTags,
+                allowChatMode: allowChatMode,
                 photo: photo,
                 photoBlobId: photoBlobId,
                 photoKey: photoKey,
@@ -6746,6 +6885,7 @@ class $$GroupsTableTableManager
                 Value<bool> allowOutsideArea = const Value.absent(),
                 Value<int?> gpsLimitM = const Value.absent(),
                 Value<bool> allowMemberTags = const Value.absent(),
+                Value<bool> allowChatMode = const Value.absent(),
                 Value<Uint8List?> photo = const Value.absent(),
                 Value<String?> photoBlobId = const Value.absent(),
                 Value<String?> photoKey = const Value.absent(),
@@ -6769,6 +6909,7 @@ class $$GroupsTableTableManager
                 allowOutsideArea: allowOutsideArea,
                 gpsLimitM: gpsLimitM,
                 allowMemberTags: allowMemberTags,
+                allowChatMode: allowChatMode,
                 photo: photo,
                 photoBlobId: photoBlobId,
                 photoKey: photoKey,
@@ -6887,6 +7028,7 @@ typedef $$HotKeysTableCreateCompanionBuilder =
       required int colorValue,
       Value<String?> iconName,
       Value<int> position,
+      Value<String?> description,
       Value<int> rowid,
     });
 typedef $$HotKeysTableUpdateCompanionBuilder =
@@ -6897,6 +7039,7 @@ typedef $$HotKeysTableUpdateCompanionBuilder =
       Value<int> colorValue,
       Value<String?> iconName,
       Value<int> position,
+      Value<String?> description,
       Value<int> rowid,
     });
 
@@ -6953,6 +7096,11 @@ class $$HotKeysTableFilterComposer
 
   ColumnFilters<int> get position => $composableBuilder(
     column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7014,6 +7162,11 @@ class $$HotKeysTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GroupsTableOrderingComposer get groupId {
     final $$GroupsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -7063,6 +7216,11 @@ class $$HotKeysTableAnnotationComposer
 
   GeneratedColumn<int> get position =>
       $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
 
   $$GroupsTableAnnotationComposer get groupId {
     final $$GroupsTableAnnotationComposer composer = $composerBuilder(
@@ -7122,6 +7280,7 @@ class $$HotKeysTableTableManager
                 Value<int> colorValue = const Value.absent(),
                 Value<String?> iconName = const Value.absent(),
                 Value<int> position = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HotKeysCompanion(
                 id: id,
@@ -7130,6 +7289,7 @@ class $$HotKeysTableTableManager
                 colorValue: colorValue,
                 iconName: iconName,
                 position: position,
+                description: description,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7140,6 +7300,7 @@ class $$HotKeysTableTableManager
                 required int colorValue,
                 Value<String?> iconName = const Value.absent(),
                 Value<int> position = const Value.absent(),
+                Value<String?> description = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HotKeysCompanion.insert(
                 id: id,
@@ -7148,6 +7309,7 @@ class $$HotKeysTableTableManager
                 colorValue: colorValue,
                 iconName: iconName,
                 position: position,
+                description: description,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

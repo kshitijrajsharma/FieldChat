@@ -7,6 +7,7 @@ import 'package:hulaki/design/app_colors.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/features/groups/hot_key_icons.dart';
 import 'package:hulaki/features/map/navigate_sheet.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:hulaki/features/messaging/presentation/point_detail_screen.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 
@@ -19,6 +20,7 @@ Future<void> showPointSheet({
   required Message message,
   required HotKey? tag,
   required MediaResolver mediaResolver,
+  required String groupName,
 }) {
   final tagColor = tag == null ? null : Color(tag.colorValue);
   final mediaId = message.mediaId;
@@ -28,6 +30,8 @@ Future<void> showPointSheet({
   return showModalBottomSheet<void>(
     context: context,
     backgroundColor: AppColors.white,
+    // Size to content so a point with a photo does not clip its action row.
+    isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -131,7 +135,17 @@ Future<void> showPointSheet({
                     child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.of(sheetContext).pop();
-                        unawaited(Navigator.of(context).maybePop());
+                        unawaited(
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => ChatThreadScreen(
+                                groupId: message.groupId,
+                                groupName: groupName,
+                                highlightMessageId: message.id,
+                              ),
+                            ),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.chat_bubble_outline, size: 16),
                       label: Text(l10n.mapInChat),

@@ -10,6 +10,7 @@ import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
 import 'package:hulaki/design/app_spacing.dart';
+import 'package:hulaki/design/widgets/info_dot.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/discovery/listing_publisher.dart';
 import 'package:hulaki/features/discovery/public_directory.dart';
@@ -162,6 +163,14 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
         await ref
             .read(groupServiceProvider)
             .setAllowMemberTags(groupId, value: value);
+        _reload();
+      });
+
+  Future<void> _setAllowChatMode(String groupId, bool value) =>
+      _guard(() async {
+        await ref
+            .read(groupServiceProvider)
+            .setAllowChatMode(groupId, value: value);
         _reload();
       });
 
@@ -489,6 +498,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   allowMemberPlace: group.allowMemberPlace,
                   allowOutsideArea: group.allowOutsideArea,
                   allowMemberTags: group.allowMemberTags,
+                  allowChatMode: group.allowChatMode,
                   gpsLimitM: group.gpsLimitM,
                   onToggleApproval: (value) =>
                       unawaited(_setJoinApproval(group.id, value)),
@@ -500,6 +510,8 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                       unawaited(_setAllowOutsideArea(group.id, value)),
                   onToggleMemberTags: (value) =>
                       unawaited(_setAllowMemberTags(group.id, value)),
+                  onToggleChatMode: (value) =>
+                      unawaited(_setAllowChatMode(group.id, value)),
                   onEditGpsLimit: () => unawaited(
                     _editGpsLimit(group.id, group.gpsLimitM, l10n),
                   ),
@@ -747,12 +759,14 @@ class _ModerationCard extends StatelessWidget {
     required this.allowMemberPlace,
     required this.allowOutsideArea,
     required this.allowMemberTags,
+    required this.allowChatMode,
     required this.gpsLimitM,
     required this.onToggleApproval,
     required this.onToggleMemberExport,
     required this.onToggleMemberPlace,
     required this.onToggleOutsideArea,
     required this.onToggleMemberTags,
+    required this.onToggleChatMode,
     required this.onEditGpsLimit,
   });
 
@@ -763,12 +777,14 @@ class _ModerationCard extends StatelessWidget {
   final bool allowMemberPlace;
   final bool allowOutsideArea;
   final bool allowMemberTags;
+  final bool allowChatMode;
   final int? gpsLimitM;
   final ValueChanged<bool> onToggleApproval;
   final ValueChanged<bool> onToggleMemberExport;
   final ValueChanged<bool> onToggleMemberPlace;
   final ValueChanged<bool> onToggleOutsideArea;
   final ValueChanged<bool> onToggleMemberTags;
+  final ValueChanged<bool> onToggleChatMode;
   final VoidCallback onEditGpsLimit;
 
   @override
@@ -811,8 +827,10 @@ class _ModerationCard extends StatelessWidget {
                   Icons.verified_user_outlined,
                   color: AppColors.ink,
                 ),
-                title: Text(l10n.groupRequireApproval),
-                subtitle: Text(l10n.groupRequireApprovalDetail),
+                title: _ModTitle(
+                  label: l10n.groupRequireApproval,
+                  detail: l10n.groupRequireApprovalDetail,
+                ),
                 value: joinApproval,
                 onChanged: onToggleApproval,
               ),
@@ -823,8 +841,10 @@ class _ModerationCard extends StatelessWidget {
                 Icons.download_outlined,
                 color: AppColors.ink,
               ),
-              title: Text(l10n.groupAllowMemberExport),
-              subtitle: Text(l10n.groupAllowMemberExportDetail),
+              title: _ModTitle(
+                label: l10n.groupAllowMemberExport,
+                detail: l10n.groupAllowMemberExportDetail,
+              ),
               value: allowMemberExport,
               onChanged: onToggleMemberExport,
             ),
@@ -834,8 +854,10 @@ class _ModerationCard extends StatelessWidget {
                 Icons.add_location_alt_outlined,
                 color: AppColors.ink,
               ),
-              title: Text(l10n.groupAllowMemberPlace),
-              subtitle: Text(l10n.groupAllowMemberPlaceDetail),
+              title: _ModTitle(
+                label: l10n.groupAllowMemberPlace,
+                detail: l10n.groupAllowMemberPlaceDetail,
+              ),
               value: allowMemberPlace,
               onChanged: onToggleMemberPlace,
             ),
@@ -845,10 +867,25 @@ class _ModerationCard extends StatelessWidget {
                 Icons.label_outline,
                 color: AppColors.ink,
               ),
-              title: Text(l10n.groupAllowMemberTags),
-              subtitle: Text(l10n.groupAllowMemberTagsDetail),
+              title: _ModTitle(
+                label: l10n.groupAllowMemberTags,
+                detail: l10n.groupAllowMemberTagsDetail,
+              ),
               value: allowMemberTags,
               onChanged: onToggleMemberTags,
+            ),
+            const Divider(height: 1),
+            SwitchListTile(
+              secondary: const Icon(
+                Icons.chat_bubble_outline,
+                color: AppColors.ink,
+              ),
+              title: _ModTitle(
+                label: l10n.groupAllowChatMode,
+                detail: l10n.groupAllowChatModeDetail,
+              ),
+              value: allowChatMode,
+              onChanged: onToggleChatMode,
             ),
             if (hasArea) ...[
               const Divider(height: 1),
@@ -857,8 +894,10 @@ class _ModerationCard extends StatelessWidget {
                   Icons.fmd_bad_outlined,
                   color: AppColors.ink,
                 ),
-                title: Text(l10n.groupAllowOutsideArea),
-                subtitle: Text(l10n.groupAllowOutsideAreaDetail),
+                title: _ModTitle(
+                  label: l10n.groupAllowOutsideArea,
+                  detail: l10n.groupAllowOutsideAreaDetail,
+                ),
                 value: allowOutsideArea,
                 onChanged: onToggleOutsideArea,
               ),
@@ -884,6 +923,27 @@ class _ModerationCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A moderation row's title: the option name with a small info dot that opens
+/// its explanation, so the list stays scannable instead of carrying a subtitle
+/// under every switch.
+class _ModTitle extends StatelessWidget {
+  const _ModTitle({required this.label, required this.detail});
+
+  final String label;
+  final String detail;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Flexible(child: Text(label)),
+        const SizedBox(width: AppSpacing.xs),
+        InfoDot(title: label, message: detail),
+      ],
     );
   }
 }

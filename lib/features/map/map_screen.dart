@@ -81,6 +81,11 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
+  /// The zoom level used whenever the camera centers on a single location (the
+  /// user, or the recenter button): close enough to read the street, wide
+  /// enough to keep bearings.
+  static const double _zoom = 16.5;
+
   MapLibreMapController? _controller;
   StreamSubscription<Position>? _positionSub;
   TrackRecorder? _tracker;
@@ -169,7 +174,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _pendingInitialCenter = false;
       unawaited(
         _controller?.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(lat, lng), 16.5),
+          CameraUpdate.newLatLngZoom(LatLng(lat, lng), _zoom),
         ),
       );
     }
@@ -231,7 +236,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final target = _lastLocation;
     if (target == null) return;
     await _controller?.animateCamera(
-      CameraUpdate.newLatLngZoom(target, 16.5),
+      CameraUpdate.newLatLngZoom(target, _zoom),
     );
   }
 
@@ -543,12 +548,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final focusId = widget.focusMessageId;
     if (focusId != null && await _focusMessage(focusId)) return;
 
-    await _warmUpOnLastPoint();
-
-    // On first open, frame the task area first so a stray far point cannot
-    // zoom the map out, then the points, then the user. The recenter button
-    // jumps back to your location. Animated so the frame reliably applies on
-    // iOS, where an instant move right after style load can be dropped.
+    // One deterministic framing on first open, in priority order: the mapping
+    // area, else the points, else the user's location. The recenter button
+    // jumps back to your location on demand. Pins paint via _settlePins, so no
+    // throwaway camera move is needed to force them.
     if (_aoiGeoJson != null) {
       await _frameAoi();
       return;
@@ -559,7 +562,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
     final me = _lastLocation;
     if (me != null) {
-      await _controller?.animateCamera(CameraUpdate.newLatLngZoom(me, 16.5));
+      await _controller?.animateCamera(CameraUpdate.newLatLngZoom(me, _zoom));
       return;
     }
     _pendingInitialCenter = true;
@@ -593,7 +596,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _pendingInitialCenter = false;
     _lastLocation = target;
     await _controller?.animateCamera(
-      CameraUpdate.newLatLngZoom(target, 16.5),
+      CameraUpdate.newLatLngZoom(target, _zoom),
     );
   }
 
@@ -775,21 +778,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Zooms tight onto the most recent point first, forcing MapLibre to paint
   /// the symbol layer on a cold first load; bounded so it can't stall the
   /// overview framing the caller does next.
-  Future<void> _warmUpOnLastPoint() async {
-    if (_pointMessages.isEmpty) return;
-    final last = _pointMessages.last;
-    try {
-      await Future(() async {
-        await _controller?.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(last.lat!, last.lng!), 17),
-        );
-        await _refreshPins();
-      }).timeout(const Duration(seconds: 4));
-    } on TimeoutException {
-      // Caller's overview framing still runs regardless.
-    }
-  }
-
   /// Centers on one point and opens its detail sheet. Returns false when the
   /// point is not on the map (unlocated or not in this group).
   Future<bool> _focusMessage(String messageId) async {
@@ -808,6 +796,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         message: message,
         tag: tag,
         mediaResolver: ref.read(databaseProvider).mediaBytes,
+        groupName: widget.groupName,
       ),
     );
     return true;
@@ -952,6 +941,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         message: message,
         tag: tag,
         mediaResolver: ref.read(databaseProvider).mediaBytes,
+        groupName: widget.groupName,
       ),
     );
   }

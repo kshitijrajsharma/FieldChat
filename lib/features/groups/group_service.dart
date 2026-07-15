@@ -13,17 +13,20 @@ import 'package:hulaki/features/sync/group_cipher.dart';
 import 'package:hulaki/features/sync/sync_service.dart';
 import 'package:uuid/uuid.dart';
 
-/// A tag to create on a new group: its label, ARGB colour and optional icon.
+/// A tag to create on a new group: its label, ARGB colour, optional icon and
+/// optional one-line description of what it is for.
 class HotKeySpec {
   const HotKeySpec({
     required this.label,
     required this.colorValue,
     this.iconName,
+    this.description,
   });
 
   final String label;
   final int colorValue;
   final String? iconName;
+  final String? description;
 }
 
 /// A hot-key being edited. A null [id] is a new one; an existing id is kept so
@@ -33,6 +36,7 @@ class EditableHotKey {
     required this.label,
     required this.colorValue,
     this.iconName,
+    this.description,
     this.id,
   });
 
@@ -40,6 +44,7 @@ class EditableHotKey {
   String label;
   int colorValue;
   String? iconName;
+  String? description;
 }
 
 /// Creating and joining mapping groups. A new group gets a fresh encryption
@@ -128,6 +133,7 @@ class GroupService {
               label: hotKeys[i].label,
               colorValue: hotKeys[i].colorValue,
               iconName: Value(hotKeys[i].iconName),
+              description: Value(hotKeys[i].description),
               position: Value(i),
             ),
           );
@@ -136,6 +142,7 @@ class GroupService {
         'label': hotKeys[i].label,
         'colorValue': hotKeys[i].colorValue,
         'iconName': hotKeys[i].iconName,
+        'description': hotKeys[i].description,
         'position': i,
       });
     }
@@ -214,6 +221,7 @@ class GroupService {
               label: hotKey.label,
               colorValue: hotKey.colorValue,
               iconName: Value(hotKey.iconName),
+              description: Value(hotKey.description),
               position: Value(i),
             ),
             onConflict: DoUpdate(
@@ -221,6 +229,7 @@ class GroupService {
                 label: Value(hotKey.label),
                 colorValue: Value(hotKey.colorValue),
                 iconName: Value(hotKey.iconName),
+                description: Value(hotKey.description),
                 position: Value(i),
               ),
             ),
@@ -230,6 +239,7 @@ class GroupService {
         'label': hotKey.label,
         'colorValue': hotKey.colorValue,
         'iconName': hotKey.iconName,
+        'description': hotKey.description,
         'position': i,
       });
     }
@@ -266,6 +276,7 @@ class GroupService {
         'allowOutsideArea': group.allowOutsideArea,
         'gpsLimitM': group.gpsLimitM,
         'allowMemberTags': group.allowMemberTags,
+        'allowChatMode': group.allowChatMode,
         'adminRootKey': group.adminRootKey,
         'creatorName': self?.displayName,
         'creatorAgreementKey': self?.agreementKey,
@@ -276,6 +287,7 @@ class GroupService {
               'label': hotKeys[i].label,
               'colorValue': hotKeys[i].colorValue,
               'iconName': hotKeys[i].iconName,
+              'description': hotKeys[i].description,
               'position': i,
             },
         ],
@@ -600,6 +612,18 @@ class GroupService {
   }) async {
     await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
       GroupsCompanion(allowMemberTags: Value(value)),
+    );
+    await _publishFullMeta(groupId);
+  }
+
+  /// Toggles whether members may switch a thread into chat mode, and
+  /// republishes so every device learns the setting.
+  Future<void> setAllowChatMode(
+    String groupId, {
+    required bool value,
+  }) async {
+    await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
+      GroupsCompanion(allowChatMode: Value(value)),
     );
     await _publishFullMeta(groupId);
   }

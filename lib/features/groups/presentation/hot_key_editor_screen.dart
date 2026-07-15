@@ -33,6 +33,7 @@ class _HotKeyEditorScreenState extends State<HotKeyEditorScreen> {
         label: h.label,
         colorValue: h.colorValue,
         iconName: h.iconName,
+        description: h.description,
       ),
   ];
 
@@ -49,7 +50,8 @@ class _HotKeyEditorScreenState extends State<HotKeyEditorScreen> {
         existing
           ..label = result.label
           ..colorValue = result.colorValue
-          ..iconName = result.iconName;
+          ..iconName = result.iconName
+          ..description = result.description;
       }
     });
   }
@@ -79,6 +81,11 @@ class _HotKeyEditorScreenState extends State<HotKeyEditorScreen> {
                             ),
                     ),
                     title: Text(hotKey.label),
+                    subtitle:
+                        (hotKey.description != null &&
+                            hotKey.description!.isNotEmpty)
+                        ? Text(hotKey.description!)
+                        : null,
                     trailing: widget.editable
                         ? IconButton(
                             icon: const Icon(
@@ -135,6 +142,8 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
   late final TextEditingController _controller = TextEditingController(
     text: widget.existing?.label ?? '',
   );
+  late final TextEditingController _descriptionController =
+      TextEditingController(text: widget.existing?.description ?? '');
   late int _color =
       widget.existing?.colorValue ?? TagColors.palette.first.toARGB32();
   late String? _icon = widget.existing?.iconName;
@@ -143,6 +152,7 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
   @override
   void dispose() {
     _controller.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -171,6 +181,15 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: l10n.groupTagLabelHint,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: _descriptionController,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: l10n.groupTagDescriptionHint,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -252,12 +271,14 @@ class _HotKeyDialogState extends State<_HotKeyDialog> {
           onPressed: () {
             final label = _controller.text.trim();
             if (label.isEmpty) return;
+            final description = _descriptionController.text.trim();
             Navigator.of(context).pop(
               EditableHotKey(
                 id: widget.existing?.id,
                 label: label,
                 colorValue: _color,
                 iconName: _icon,
+                description: description.isEmpty ? null : description,
               ),
             );
           },

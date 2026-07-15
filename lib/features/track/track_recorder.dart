@@ -2,9 +2,11 @@ import 'package:hulaki/core/geo.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/features/capture/gps_gate.dart';
 
-/// Keeps the user's breadcrumb trail. Records a point once they have moved at
-/// least [minDistanceM] from the last one, so a stationary phone does not fill
-/// the trail. Reading the trail purges anything older than 24 hours.
+/// Keeps the user's breadcrumb trail. Records a point once they have moved a
+/// meaningful distance from the last one, so a stationary phone does not fill
+/// the trail. The bar is the larger of [minDistanceM] and the fix's own
+/// accuracy, so a wandering fix in poor signal reads as noise, not movement.
+/// Reading the trail purges anything older than 24 hours.
 class TrackRecorder {
   TrackRecorder(this._db, {this.minDistanceM = 10});
 
@@ -25,7 +27,10 @@ class TrackRecorder {
     final lastLng = _lastLng;
     if (lastLat != null && lastLng != null) {
       final moved = distanceMeters(lastLat, lastLng, fix.lat, fix.lng);
-      if (moved < minDistanceM) return false;
+      final threshold = fix.accuracyM > minDistanceM
+          ? fix.accuracyM
+          : minDistanceM;
+      if (moved < threshold) return false;
     }
 
     await _db

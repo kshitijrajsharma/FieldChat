@@ -135,6 +135,11 @@ final syncingGroupsProvider = StreamProvider<Set<String>>(
   (ref) => ref.watch(syncServiceProvider).syncingGroups,
 );
 
+/// When each group last completed a pull, so a thread can show how fresh it is.
+final lastSyncedProvider = StreamProvider<Map<String, DateTime>>(
+  (ref) => ref.watch(syncServiceProvider).lastSyncedTimes,
+);
+
 /// Live count of captures not yet uploaded (device-wide), so the app can show
 /// upload progress and reassure the user nothing is lost offline.
 final pendingUploadCountProvider = StreamProvider<int>(

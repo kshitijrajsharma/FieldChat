@@ -56,6 +56,11 @@ class Groups extends Table {
   BoolColumn get allowMemberTags =>
       boolean().withDefault(const Constant(false))();
 
+  /// When true, members may switch a thread into chat mode: plain messages with
+  /// no tag and no location, for coordinating without dropping points.
+  BoolColumn get allowChatMode =>
+      boolean().withDefault(const Constant(false))();
+
   BlobColumn get photo => blob().nullable()();
 
   /// The cover photo shared with members: its encrypted blob id in object
@@ -80,6 +85,10 @@ class HotKeys extends Table {
   IntColumn get colorValue => integer()();
   TextColumn get iconName => text().nullable()();
   IntColumn get position => integer().withDefault(const Constant(0))();
+
+  /// An optional one-line note on what the tag is for, shown from its info dot
+  /// so members tag consistently.
+  TextColumn get description => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -227,7 +236,7 @@ class LocalDatabase extends _$LocalDatabase {
     : super(executor ?? driftDatabase(name: 'hulaki'));
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -284,6 +293,10 @@ class LocalDatabase extends _$LocalDatabase {
       }
       if (from < 15) {
         await m.createTable(webSnapshots);
+      }
+      if (from < 16) {
+        await m.addColumn(hotKeys, hotKeys.description);
+        await m.addColumn(groups, groups.allowChatMode);
       }
     },
   );

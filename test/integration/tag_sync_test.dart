@@ -99,6 +99,55 @@ class _ReverseTransport implements MessageTransport {
   }
 }
 
+/// A relay that upserts on the envelope id the way the Supabase table's unique
+/// (group_id, message_id) key does: re-publishing the same id updates the row
+/// in place, keeping its seq and skipping the realtime fan-out. An edit only
+/// reaches other members if it rides on a fresh envelope id.
+class _UpsertTransport implements MessageTransport {
+  final Map<String, List<Envelope>> _log = {};
+  final Map<String, StreamController<Envelope>> _streams = {};
+  int _seq = 0;
+
+  @override
+  Future<int> publish(Envelope envelope) async {
+    final log = _log.putIfAbsent(envelope.groupId, () => []);
+    final at = log.indexWhere((e) => e.messageId == envelope.messageId);
+    if (at >= 0) {
+      final seq = log[at].seq;
+      log[at] = envelope.withSeq(seq);
+      return seq;
+    }
+    final seq = ++_seq;
+    final stored = envelope.withSeq(seq);
+    log.add(stored);
+    _streams[envelope.groupId]?.add(stored);
+    return seq;
+  }
+
+  @override
+  Stream<Envelope> subscribe(String groupId) => _streams
+      .putIfAbsent(groupId, StreamController<Envelope>.broadcast)
+      .stream;
+
+  @override
+  Future<List<Envelope>> fetchSince(String groupId, int afterSeq) async {
+    final log = _log[groupId] ?? const [];
+    return log.where((e) => e.seq > afterSeq).toList()
+      ..sort((a, b) => a.seq.compareTo(b.seq));
+  }
+
+  @override
+  Future<void> purgeGroup(String groupId) async {
+    _log.remove(groupId);
+  }
+
+  Future<void> dispose() async {
+    for (final controller in _streams.values) {
+      await controller.close();
+    }
+  }
+}
+
 /// One simulated device: its own store and sync engine on a shared relay.
 class _Device {
   _Device(
@@ -328,6 +377,112 @@ void main() {
         group.id,
       )).where((m) => m.lat != null).length;
       return labels.containsAll({'Alpha', 'Beta'}) && points == 1;
+    });
+  });
+
+  test('an edit, re-tag and delete from the author reach a joiner', () async {
+    final transport = _UpsertTransport();
+    final blobs = InMemoryBlobStore();
+    final owner = await _makeDevice('owner', transport, blobs);
+    final joiner = await _makeDevice('joiner', transport, blobs);
+    addTearDown(() async {
+      await owner.dispose();
+      await joiner.dispose();
+      await transport.dispose();
+    });
+
+    final group = await owner.groups.createGroup(
+      name: 'Ward survey',
+      identity: owner.identity,
+      hotKeys: const [
+        HotKeySpec(label: 'Trash', colorValue: 0xFF15181B, iconName: 'delete'),
+        HotKeySpec(label: 'Pole', colorValue: 0xFFB0503D),
+      ],
+    );
+    await joiner.groups.joinViaLink(
+      owner.groups.inviteLinkFor(group),
+      joiner.identity,
+    );
+
+    final messageId = await owner.sync.sendText(
+      groupId: group.id,
+      text: 'Overflowing bin',
+      geo: const GeoResult.placed(85.307, 27.695),
+      senderName: 'owner',
+    );
+    await _waitFor(() async {
+      final rows = await joiner.db.messagesFor(group.id);
+      return rows.any((m) => m.id == messageId && m.body == 'Overflowing bin');
+    });
+
+    await owner.sync.editMessage(messageId: messageId, newBody: 'Bin cleared');
+    await _waitFor(() async {
+      final rows = await joiner.db.messagesFor(group.id);
+      return rows.any((m) => m.id == messageId && m.body == 'Bin cleared');
+    });
+
+    final pole = (await owner.db.hotKeysFor(
+      group.id,
+    )).firstWhere((t) => t.label == 'Pole');
+    await owner.sync.setMessageTag(messageId: messageId, tagId: pole.id);
+    await _waitFor(() async {
+      final rows = await joiner.db.messagesFor(group.id);
+      return rows.any((m) => m.id == messageId && m.tagId == pole.id);
+    });
+
+    // A deleted message drops out of the visible list; confirm the joiner's
+    // copy is actually flagged deleted, not merely filtered.
+    await owner.sync.deleteMessage(messageId);
+    await _waitFor(() async {
+      final row = await (joiner.db.select(
+        joiner.db.messages,
+      )..where((m) => m.id.equals(messageId))).getSingleOrNull();
+      return row != null && row.deletedAt != null;
+    });
+  });
+
+  test('the chat-mode setting and a tag description reach a joiner', () async {
+    final transport = _UpsertTransport();
+    final blobs = InMemoryBlobStore();
+    final owner = await _makeDevice('owner', transport, blobs);
+    final joiner = await _makeDevice('joiner', transport, blobs);
+    addTearDown(() async {
+      await owner.dispose();
+      await joiner.dispose();
+      await transport.dispose();
+    });
+
+    final group = await owner.groups.createGroup(
+      name: 'Ward survey',
+      identity: owner.identity,
+      hotKeys: const [
+        HotKeySpec(
+          label: 'Trash',
+          colorValue: 0xFF15181B,
+          description: 'Overflowing bins and dumping',
+        ),
+      ],
+    );
+    await joiner.groups.joinViaLink(
+      owner.groups.inviteLinkFor(group),
+      joiner.identity,
+    );
+
+    // The tag arrives with its description.
+    await _waitFor(() async {
+      final tags = await joiner.db.hotKeysFor(group.id);
+      return tags.any(
+        (t) =>
+            t.label == 'Trash' &&
+            t.description == 'Overflowing bins and dumping',
+      );
+    });
+
+    // Enabling chat mode propagates through group-meta.
+    await owner.groups.setAllowChatMode(group.id, value: true);
+    await _waitFor(() async {
+      final g = await joiner.db.groupById(group.id);
+      return g?.allowChatMode ?? false;
     });
   });
 

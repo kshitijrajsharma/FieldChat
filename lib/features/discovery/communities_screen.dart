@@ -83,33 +83,43 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              AppSpacing.xs,
-            ),
-            child: _SearchField(
-              controller: _searchController,
-              onChanged: _onQueryChanged,
-            ),
-          ),
-          if (_query.isEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.xs,
-                AppSpacing.md,
-                AppSpacing.sm,
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                ),
+                child: _SearchField(
+                  controller: _searchController,
+                  onChanged: _onQueryChanged,
+                ),
               ),
+              Expanded(
+                child: _query.isNotEmpty
+                    ? _searchSection(l10n, units)
+                    : _tab == 'nearby'
+                    ? _nearbySection(l10n, live, units)
+                    : _globalSection(l10n, units),
+              ),
+            ],
+          ),
+          // The scope toggle floats at the bottom, matching the map's toggle.
+          if (_query.isEmpty)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: AppSpacing.lg,
               child: Center(
                 child: PillToggle(
                   left: l10n.discoverNearby,
                   right: l10n.discoverGlobal,
                   rightSelected: _tab == 'global',
+                  elevation: 4,
                   onChanged: (global) {
                     setState(() {
                       _tab = global ? 'global' : 'nearby';
@@ -121,13 +131,6 @@ class _CommunitiesScreenState extends ConsumerState<CommunitiesScreen> {
                 ),
               ),
             ),
-          Expanded(
-            child: _query.isNotEmpty
-                ? _searchSection(l10n, units)
-                : _tab == 'nearby'
-                ? _nearbySection(l10n, live, units)
-                : _globalSection(l10n, units),
-          ),
         ],
       ),
     );
@@ -240,7 +243,13 @@ class _GroupList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      // Extra bottom room so the last tile clears the floating scope toggle.
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        72,
+      ),
       itemCount: groups.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, i) => _NearbyTile(group: groups[i], units: units),
@@ -320,26 +329,39 @@ class _Centered extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (spinner) ...[
-              const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
+    // Scrollable and viewport-filling so a pull-to-refresh still triggers when
+    // the message is the only content (e.g. an empty global feed).
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xxl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (spinner) ...[
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
-          ],
+          ),
         ),
       ),
     );

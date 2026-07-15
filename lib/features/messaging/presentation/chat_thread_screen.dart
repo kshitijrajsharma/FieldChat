@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/connectivity.dart';
 import 'package:hulaki/app/providers.dart';
+import 'package:hulaki/core/time_format.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/design/widgets/hot_key_chip.dart';
+import 'package:hulaki/design/widgets/info_dot.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/auth/application/auth_state.dart';
 import 'package:hulaki/features/capture/gps_gate.dart';
@@ -39,6 +41,7 @@ class ChatThreadScreen extends ConsumerStatefulWidget {
     required this.groupName,
     this.stagedPoint,
     this.showComposerTour = false,
+    this.highlightMessageId,
     super.key,
   });
 
@@ -47,6 +50,10 @@ class ChatThreadScreen extends ConsumerStatefulWidget {
 
   /// A map-tapped location to drop the next send at, instead of the live fix.
   final StagedPoint? stagedPoint;
+
+  /// A message to reveal and briefly flash on open, so a point tapped on the
+  /// map lands the user on its exact entry in the thread.
+  final String? highlightMessageId;
 
   /// Runs the one-time capture walkthrough (pick a tag, add a note, send) the
   /// first time a user lands here from the guided tour.
@@ -66,10 +73,25 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
   StagedPoint? _stagedPoint;
 
   // Targets for the capture walkthrough spotlight.
+  final GlobalKey _gpsStripKey = GlobalKey();
   final GlobalKey _tagBarKey = GlobalKey();
   final GlobalKey _fieldKey = GlobalKey();
   final GlobalKey _sendKey = GlobalKey();
   late bool _composerTour = widget.showComposerTour;
+
+  // The thread opens pinned to the newest message; the jump button appears when
+  // the user scrolls up (or a message arrives while they are scrolled up).
+  bool _showJumpToLatest = false;
+  bool _didInitialScroll = false;
+
+  // Chat mode sends plain messages with no tag or location. Off on every open,
+  // so the map stays the default and a session never silently stops mapping.
+  bool _chatMode = false;
+
+  // A map-linked message is revealed once on open and flashed briefly.
+  late final String? _highlightId = widget.highlightMessageId;
+  final GlobalKey _highlightKey = GlobalKey();
+  bool _highlightActive = false;
 
   /// The last non-null compass heading. The magnetometer often reports null
   /// while it settles (especially on iOS), so a fresh read at send time is
@@ -78,11 +100,59 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
 
   bool _resyncing = false;
 
+  // Ticks the relative "last synced" label forward while the thread stays open.
+  Timer? _syncLabelTimer;
+
   @override
   void initState() {
     super.initState();
     _stagedPoint = widget.stagedPoint;
+    _scrollController.addListener(_onScroll);
+    _syncLabelTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) {
+        if (mounted) setState(() {});
+      },
+    );
     unawaited(_catchUpAndRepublish());
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    final show = position.maxScrollExtent - position.pixels > 320;
+    if (show != _showJumpToLatest) setState(() => _showJumpToLatest = show);
+  }
+
+  /// Brings the map-linked message into view, then flashes it for a moment.
+  /// A coarse jump by index seeds the lazy list so the target is laid out,
+  /// then [Scrollable.ensureVisible] centres it precisely.
+  void _revealHighlight(List<Message> items, String targetId) {
+    final index = items.indexWhere((m) => m.id == targetId);
+    if (index < 0) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      return;
+    }
+    final max = _scrollController.position.maxScrollExtent;
+    final approx = items.length <= 1 ? max : max * index / (items.length - 1);
+    _scrollController.jumpTo(approx.clamp(0.0, max));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final targetContext = _highlightKey.currentContext;
+      if (targetContext != null) {
+        unawaited(
+          Scrollable.ensureVisible(
+            targetContext,
+            alignment: 0.4,
+            duration: const Duration(milliseconds: 300),
+          ),
+        );
+      }
+      if (!mounted) return;
+      setState(() => _highlightActive = true);
+      Future.delayed(const Duration(milliseconds: 2200), () {
+        if (mounted) setState(() => _highlightActive = false);
+      });
+    });
   }
 
   /// Pulls anything published while this thread was closed, then, for an admin
@@ -232,6 +302,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
 
   @override
   void dispose() {
+    _syncLabelTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -320,8 +391,11 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       final live = ref.read(liveLocationProvider).asData?.value;
       final heading =
           ref.read(compassHeadingProvider).asData?.value ?? _lastHeading;
-      final GeoResult geo;
-      if (staged != null) {
+      final GeoResult? geo;
+      if (_chatMode) {
+        // A chat-mode message carries no location and no tag.
+        geo = null;
+      } else if (staged != null) {
         geo = GeoResult.placed(staged.lat, staged.lng);
       } else if (live != null) {
         geo = GeoResult.fix(
@@ -349,7 +423,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
               );
       }
 
-      if (!await _passesModeration(l10n, geo, placed: staged != null)) {
+      if (geo != null &&
+          !await _passesModeration(l10n, geo, placed: staged != null)) {
         return;
       }
       _controller.clear();
@@ -358,13 +433,14 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       final senderName = (anonymous || auth is! AuthSignedIn)
           ? null
           : auth.session.username;
+      final tagId = _chatMode ? null : _selectedTagId;
       final sync = ref.read(syncServiceProvider);
       if (photo != null) {
         await sync.sendPhoto(
           groupId: widget.groupId,
           bytes: photo,
           caption: text.isEmpty ? null : text,
-          tagId: _selectedTagId,
+          tagId: tagId,
           geo: geo,
           senderName: senderName,
           anonymous: anonymous,
@@ -373,7 +449,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         await sync.sendText(
           groupId: widget.groupId,
           text: text.isEmpty ? null : text,
-          tagId: _selectedTagId,
+          tagId: tagId,
           geo: geo,
           senderName: senderName,
           anonymous: anonymous,
@@ -409,6 +485,9 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       if (heading != null) _lastHeading = heading;
     });
     final l10n = AppLocalizations.of(context);
+    // While the keyboard is up the onboarding banners yield their space so the
+    // tag row and composer stay on screen instead of overflowing.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final messages = ref.watch(messagesProvider(widget.groupId));
     final hotKeys = ref.watch(hotKeysProvider(widget.groupId)).value ?? [];
     final hotKeysById = {for (final h in hotKeys) h.id: h};
@@ -424,6 +503,8 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         ref.watch(profileNamesProvider).asData?.value ??
         const <String, String>{};
     final anonymous = ref.watch(appearAnonymousProvider);
+    final lastSyncedAt =
+        ref.watch(lastSyncedProvider).asData?.value[widget.groupId];
 
     final items = messages.asData?.value ?? const <Message>[];
     final live = items.where((m) => m.deletedAt == null);
@@ -433,7 +514,25 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         ref.watch(activeGroupsProvider).asData?.value ?? const <Group>[];
     final match = groups.where((g) => g.id == widget.groupId);
     final photo = match.isEmpty ? null : match.first.photo;
+    // Live name so a rename shows here without reopening the thread.
+    final groupName = match.isEmpty ? widget.groupName : match.first.name;
+
+    // On first content, reveal the map-linked message if one was requested,
+    // otherwise pin to the newest.
+    if (items.isNotEmpty && !_didInitialScroll) {
+      _didInitialScroll = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_scrollController.hasClients) return;
+        final targetId = _highlightId;
+        if (targetId != null) {
+          _revealHighlight(items, targetId);
+        } else {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    }
     final isSample = match.isNotEmpty && match.first.isSample;
+    final chatModeAllowed = match.isNotEmpty && match.first.allowChatMode;
 
     final scaffold = Scaffold(
       backgroundColor: AppColors.mist,
@@ -455,7 +554,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      widget.groupName,
+                      groupName,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 15,
@@ -476,16 +575,13 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
           ),
         ),
         actions: [
-          IconButton(
+          _SyncAction(
             tooltip: l10n.threadRefreshTooltip,
-            icon: _resyncing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync),
-            onPressed: _resyncing ? null : () => unawaited(_resync(l10n)),
+            syncing: _resyncing,
+            lastSyncedLabel: lastSyncedAt == null
+                ? null
+                : relativePhrase(lastSyncedAt),
+            onTap: _resyncing ? null : () => unawaited(_resync(l10n)),
           ),
           IconButton(
             icon: const Icon(Icons.map_outlined),
@@ -496,19 +592,29 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       body: Column(
         children: [
           const OfflineBanner(),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.sm,
               AppSpacing.md,
               0,
             ),
-            child: LiveGpsStrip(),
+            child: _chatMode
+                ? const _ChatModeBanner()
+                : LiveGpsStrip(key: _gpsStripKey),
           ),
+          if (chatModeAllowed)
+            _ChatModeToggle(
+              value: _chatMode,
+              onChanged: (on) => setState(() {
+                _chatMode = on;
+                if (on) _selectedTagId = null;
+              }),
+            ),
           PendingUploadBanner(groupId: widget.groupId),
-          if (isSample)
+          if (!keyboardOpen && isSample)
             _SampleBanner(onRemove: () => unawaited(_removeSample()))
-          else ...[
+          else if (!keyboardOpen && !isSample) ...[
             CoachTip(
               tipKey: 'thread',
               message: l10n.threadCoachTapTag,
@@ -563,42 +669,68 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                               final tagColor = tag == null
                                   ? null
                                   : Color(tag.colorValue);
-                              return GestureDetector(
-                                onLongPress: () =>
-                                    _messageActions(l10n, message),
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => PointDetailScreen(
-                                      groupId: widget.groupId,
-                                      message: message,
-                                      tagLabel: tag?.label,
-                                      tagColor: tagColor,
-                                      tagIcon: tag?.iconName,
-                                      mediaResolver: ref
-                                          .read(databaseProvider)
-                                          .mediaBytes,
-                                    ),
+                              final isHighlight = message.id == _highlightId;
+                              return AnimatedContainer(
+                                key: isHighlight ? _highlightKey : null,
+                                duration: const Duration(milliseconds: 320),
+                                curve: Curves.easeOut,
+                                decoration: BoxDecoration(
+                                  color: isHighlight && _highlightActive
+                                      ? AppColors.ink.withValues(alpha: 0.06)
+                                      : const Color(0x00000000),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.bubble,
                                   ),
                                 ),
-                                child: MessageBubble(
-                                  message: message,
-                                  isMine: message.senderId == me,
-                                  anonymous: message.anonymous,
-                                  senderName:
-                                      names[message.senderId] ??
-                                      l10n.threadMemberFallback,
-                                  tagLabel: tag?.label,
-                                  tagColor: tagColor,
-                                  tagIcon: hotKeyIcon(tag?.iconName),
-                                  mediaResolver: ref
-                                      .read(databaseProvider)
-                                      .mediaBytes,
+                                child: GestureDetector(
+                                  onLongPress: () =>
+                                      _messageActions(l10n, message),
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => PointDetailScreen(
+                                        groupId: widget.groupId,
+                                        message: message,
+                                        tagLabel: tag?.label,
+                                        tagColor: tagColor,
+                                        tagIcon: tag?.iconName,
+                                        mediaResolver: ref
+                                            .read(databaseProvider)
+                                            .mediaBytes,
+                                      ),
+                                    ),
+                                  ),
+                                  child: MessageBubble(
+                                    message: message,
+                                    isMine: message.senderId == me,
+                                    anonymous: message.anonymous,
+                                    senderName:
+                                        names[message.senderId] ??
+                                        l10n.threadMemberFallback,
+                                    tagLabel: tag?.label,
+                                    tagColor: tagColor,
+                                    tagIcon: hotKeyIcon(tag?.iconName),
+                                    mediaResolver: ref
+                                        .read(databaseProvider)
+                                        .mediaBytes,
+                                  ),
                                 ),
                               );
                             },
                           ),
                         ),
                 ),
+                if (_showJumpToLatest)
+                  Positioned(
+                    right: AppSpacing.md,
+                    bottom: AppSpacing.md,
+                    child: _JumpToLatest(
+                      onTap: () => _scrollController.animateTo(
+                        _scrollController.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeOut,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -607,14 +739,15 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
               onClear: () => setState(() => _stagedPoint = null),
             ),
           if (anonymous) const _AnonymousBar(),
-          _HotKeyBar(
-            key: _tagBarKey,
-            hotKeys: hotKeys,
-            selectedId: _selectedTagId,
-            onSelect: (id) => setState(
-              () => _selectedTagId = _selectedTagId == id ? null : id,
+          if (!_chatMode)
+            _HotKeyBar(
+              key: _tagBarKey,
+              hotKeys: hotKeys,
+              selectedId: _selectedTagId,
+              onSelect: (id) => setState(
+                () => _selectedTagId = _selectedTagId == id ? null : id,
+              ),
             ),
-          ),
           _Composer(
             controller: _controller,
             sending: _sending,
@@ -638,6 +771,13 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
           onStep: (_) {},
           onFinish: (_) => setState(() => _composerTour = false),
           steps: [
+            TourStep(
+              tabIndex: 0,
+              targetKey: _gpsStripKey,
+              icon: Icons.my_location_outlined,
+              title: l10n.tourGpsTitle,
+              body: l10n.tourGpsBody,
+            ),
             TourStep(
               tabIndex: 0,
               targetKey: _tagBarKey,
@@ -702,6 +842,183 @@ class _EditMessageDialogState extends State<_EditMessageDialog> {
           child: Text(l10n.threadSave),
         ),
       ],
+    );
+  }
+}
+
+/// A round button that returns the thread to the newest message, shown while
+/// the user is scrolled up.
+class _JumpToLatest extends StatelessWidget {
+  const _JumpToLatest({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.white,
+      shape: const CircleBorder(side: BorderSide(color: AppColors.mist)),
+      elevation: 3,
+      shadowColor: const Color(0x33000000),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.all(9),
+          child: Icon(Icons.arrow_downward, size: 20, color: AppColors.ink),
+        ),
+      ),
+    );
+  }
+}
+
+/// The app-bar resync control: the sync glyph with a small caption of how long
+/// ago the group last pulled, so freshness is visible at a glance.
+class _SyncAction extends StatelessWidget {
+  const _SyncAction({
+    required this.tooltip,
+    required this.syncing,
+    required this.lastSyncedLabel,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final bool syncing;
+  final String? lastSyncedLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = lastSyncedLabel;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.field),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (syncing)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(Icons.sync, size: 22),
+              if (label != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    height: 1,
+                    color: AppColors.textFaint,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Replaces the GPS strip while chat mode is on, so it reads at a glance that
+/// messages are not dropping points or sharing location.
+class _ChatModeBanner extends StatelessWidget {
+  const _ChatModeBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.ink.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: AppColors.ink.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.chat_bubble_outline,
+            size: 16,
+            color: AppColors.ink,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              l10n.chatModeBanner,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The switch under the GPS bar that enters chat mode. Right-aligned so it
+/// stays out of the way, with an info dot that explains what it does.
+class _ChatModeToggle extends StatelessWidget {
+  const _ChatModeToggle({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.sm,
+        0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            l10n.chatModeLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          InfoDot(
+            title: l10n.chatModeInfoTitle,
+            message: l10n.chatModeInfoBody,
+          ),
+          const SizedBox(width: 2),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: AppColors.white,
+              activeTrackColor: AppColors.ink,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

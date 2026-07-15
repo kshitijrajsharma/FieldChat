@@ -50,10 +50,10 @@ class _MeScreenState extends ConsumerState<MeScreen> {
     'https://github.com/sponsors/kshitijrajsharma',
   );
 
-  /// Reaches the child safety point of contact published at
-  /// kshitijrajsharma.github.io/Hulaki/child-safety.html.
+  /// Reaches the developer: safety reports (the point of contact published at
+  /// kshitijrajsharma.github.io/Hulaki/child-safety.html) and collaboration.
   static final Uri _reportUri = Uri.parse(
-    'mailto:krschap@proton.me?subject=Safety%20report',
+    'mailto:krschap@proton.me?subject=Hulaki',
   );
 
   Future<void> _openLink(Uri uri, String failureMessage) async {

@@ -41,6 +41,33 @@ void main() {
     expect(trail.length, 2);
   });
 
+  test('treats movement within a poor accuracy margin as noise', () async {
+    final recorder = TrackRecorder(db);
+    final start = DateTime(2026, 6, 30, 9);
+
+    final first = await recorder.record(
+      ownerId: 'me',
+      fix: const GpsFix(lat: 27.700, lng: 85.300, accuracyM: 20),
+      at: start,
+    );
+    // ~11 m north, inside the 20 m error, so read as jitter and dropped.
+    final withinError = await recorder.record(
+      ownerId: 'me',
+      fix: const GpsFix(lat: 27.70010, lng: 85.300, accuracyM: 20),
+      at: start.add(const Duration(seconds: 5)),
+    );
+    // ~22 m north, clear of the error, so recorded.
+    final beyondError = await recorder.record(
+      ownerId: 'me',
+      fix: const GpsFix(lat: 27.70020, lng: 85.300, accuracyM: 20),
+      at: start.add(const Duration(seconds: 10)),
+    );
+
+    expect(first, isTrue);
+    expect(withinError, isFalse);
+    expect(beyondError, isTrue);
+  });
+
   test('purges points older than 24 hours', () async {
     final recorder = TrackRecorder(db);
     final now = DateTime(2026, 6, 30, 12);

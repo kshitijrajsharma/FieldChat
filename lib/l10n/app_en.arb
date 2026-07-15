@@ -276,11 +276,11 @@
   "@meSupportSubtitle": {
     "description": "Subtitle of the support link row"
   },
-  "meReportTitle": "Report a safety concern",
+  "meReportTitle": "Report or contact",
   "@meReportTitle": {
     "description": "Title of the row that emails the safety contact"
   },
-  "meReportSubtitle": "Email the developer about harmful or illegal content.",
+  "meReportSubtitle": "Report a safety concern, or contact the developer about collaboration.",
   "@meReportSubtitle": {
     "description": "Subtitle of the row that emails the safety contact"
   },
@@ -1033,6 +1033,10 @@
   "@groupEditTagTitle": {
     "description": "Title of the dialog that edits an existing quick tag"
   },
+  "groupTagDescriptionHint": "Description (optional), e.g. a broken road surface",
+  "@groupTagDescriptionHint": {
+    "description": "Tag editor: hint for the optional tag description field"
+  },
   "groupTagLabelHint": "Label, e.g. Pothole",
   "@groupTagLabelHint": {
     "description": "Placeholder text in the quick tag label field"
@@ -1563,6 +1567,14 @@
   "@tourSampleBody": {
     "description": "Guided tour: what the sample group is for"
   },
+  "tourGpsTitle": "Check your accuracy",
+  "@tourGpsTitle": {
+    "description": "Capture walkthrough: the live GPS accuracy strip"
+  },
+  "tourGpsBody": "This bar shows how accurate your location is. Green is sharp, amber and red are looser, and the number is the margin (±5 m). Wait for green so your points land in the right place.",
+  "@tourGpsBody": {
+    "description": "Capture walkthrough: what the GPS accuracy strip means"
+  },
   "tourTagTitle": "Pick a tag",
   "@tourTagTitle": {
     "description": "Capture walkthrough: the quick-tag row"
@@ -1590,6 +1602,34 @@
   "tourNext": "Next",
   "@tourNext": {
     "description": "Guided tour: advance to the next stop"
+  },
+  "infoGotIt": "Got it",
+  "@infoGotIt": {
+    "description": "Info sheet: dismiss button"
+  },
+  "chatModeLabel": "Chat mode",
+  "@chatModeLabel": {
+    "description": "Thread: the chat-mode switch label"
+  },
+  "chatModeBanner": "Chat mode on. Messages carry no tag and no location.",
+  "@chatModeBanner": {
+    "description": "Thread: the banner shown in place of the GPS strip"
+  },
+  "chatModeInfoTitle": "Chat mode",
+  "@chatModeInfoTitle": {
+    "description": "Info sheet title for chat mode"
+  },
+  "chatModeInfoBody": "Turn this on to talk with the group without dropping a point. Messages carry no tag and no location. Turn it off to go back to mapping. It starts off each time you open the chat.",
+  "@chatModeInfoBody": {
+    "description": "Info sheet body explaining chat mode"
+  },
+  "groupAllowChatMode": "Allow chat mode",
+  "@groupAllowChatMode": {
+    "description": "Group setting: enable chat mode for the group"
+  },
+  "groupAllowChatModeDetail": "Let members switch a thread to plain messages with no tag or location.",
+  "@groupAllowChatModeDetail": {
+    "description": "Group setting subtitle for chat mode"
   },
   "tourDone": "Got it",
   "@tourDone": {

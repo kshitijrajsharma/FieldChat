@@ -54,6 +54,9 @@ class SyncService {
   final Set<String> _syncing = {};
   final StreamController<Set<String>> _syncingController =
       StreamController<Set<String>>.broadcast();
+  final Map<String, DateTime> _lastSynced = {};
+  final StreamController<Map<String, DateTime>> _lastSyncedController =
+      StreamController<Map<String, DateTime>>.broadcast();
   bool _online = true;
   bool _draining = false;
   bool _disposed = false;
@@ -72,6 +75,14 @@ class SyncService {
   /// show a syncing state instead of looking empty.
   Stream<Set<String>> get syncingGroups => _syncingController.stream;
 
+  /// When each group last completed a pull from the server, so a thread can
+  /// show how fresh its data is. Yields the current snapshot first so a
+  /// subscriber that arrives after a sync still sees the last time.
+  Stream<Map<String, DateTime>> get lastSyncedTimes async* {
+    yield Map.unmodifiable(_lastSynced);
+    yield* _lastSyncedController.stream;
+  }
+
   void _markSyncing(String groupId, {required bool active}) {
     if (active) {
       _syncing.add(groupId);
@@ -80,6 +91,13 @@ class SyncService {
     }
     if (!_syncingController.isClosed) {
       _syncingController.add(Set.unmodifiable(_syncing));
+    }
+  }
+
+  void _markSynced(String groupId) {
+    _lastSynced[groupId] = DateTime.now();
+    if (!_lastSyncedController.isClosed) {
+      _lastSyncedController.add(Map.unmodifiable(_lastSynced));
     }
   }
 
@@ -157,6 +175,9 @@ class SyncService {
       // Apply strictly by seq: group-meta is last-writer-wins, so a transport
       // that returns rows in any other order must not decide which edit sticks.
       ..sort((a, b) => a.seq.compareTo(b.seq));
+    // Reaching the server is what "last synced" reflects, even if an envelope
+    // below cannot apply yet (its author key is still unknown).
+    _markSynced(groupId);
     for (final envelope in envelopes) {
       if (_disposed) return;
       // Stop if an author's key is not known yet: leave the cursor below this
@@ -199,6 +220,7 @@ class SyncService {
     try {
       final envelopes = await transport.fetchSince(groupId, 0)
         ..sort((a, b) => a.seq.compareTo(b.seq));
+      _markSynced(groupId);
       for (final envelope in envelopes) {
         if (await _ingest(envelope, applyOwnMeta: true)) return;
       }
@@ -501,10 +523,14 @@ class SyncService {
     final signed = payload.toJson()
       ..['sig'] = base64Encode(await identity.sign(payload.bytesToSign()));
     final ciphertext = await GroupCipher.encryptJson(signed, key);
+    // The envelope id is the outbox entry, not the message: an edit or delete
+    // re-sends the same message id but as a fresh envelope, so the relay gives
+    // it a new seq that realtime and catch-up both deliver to other members.
+    // Ingest folds it back onto the message by the payload's own id.
     final seq = await transport.publish(
       Envelope(
         groupId: payload.groupId,
-        messageId: payload.id,
+        messageId: entry.id,
         senderId: currentUserId,
         ciphertext: ciphertext,
         senderPubkey: base64Encode(identity.signingPublic),
@@ -809,6 +835,9 @@ class SyncService {
             allowMemberTags: Value(
               meta['allowMemberTags'] as bool? ?? false,
             ),
+            allowChatMode: Value(
+              meta['allowChatMode'] as bool? ?? false,
+            ),
           ),
           onConflict: DoUpdate(
             (_) => GroupsCompanion(
@@ -833,6 +862,9 @@ class SyncService {
               gpsLimitM: Value((meta['gpsLimitM'] as num?)?.toInt()),
               allowMemberTags: Value(
                 meta['allowMemberTags'] as bool? ?? false,
+              ),
+              allowChatMode: Value(
+                meta['allowChatMode'] as bool? ?? false,
               ),
             ),
           ),
@@ -877,6 +909,7 @@ class SyncService {
               label: hk['label'] as String,
               colorValue: hk['colorValue'] as int,
               iconName: Value(hk['iconName'] as String?),
+              description: Value(hk['description'] as String?),
               position: Value(hk['position'] as int? ?? 0),
             ),
             mode: InsertMode.insertOrReplace,
@@ -921,6 +954,22 @@ class SyncService {
     required String sendState,
     int? remoteSeq,
   }) async {
+    final editedAt = payload.editedAtMs == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(payload.editedAtMs!);
+    final deletedAt = payload.deletedAtMs == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(payload.deletedAtMs!);
+    // A re-send from another member (an edit, re-tag or delete) folds onto the
+    // existing row only when its envelope is newer than the one applied, so a
+    // reordered stale copy cannot undo a later change. Own local writes carry
+    // no seq yet and always apply.
+    Expression<bool> Function($MessagesTable)? guard;
+    if (remoteSeq != null) {
+      final seq = remoteSeq;
+      guard = (m) =>
+          m.remoteSeq.isNull() | m.remoteSeq.isSmallerThanValue(seq);
+    }
     await db
         .into(db.messages)
         .insert(
@@ -942,16 +991,8 @@ class SyncService {
             mediaKey: Value(payload.mediaKeyB64),
             replyToId: Value(payload.replyToId),
             createdAt: DateTime.fromMillisecondsSinceEpoch(payload.createdAtMs),
-            editedAt: Value(
-              payload.editedAtMs == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(payload.editedAtMs!),
-            ),
-            deletedAt: Value(
-              payload.deletedAtMs == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(payload.deletedAtMs!),
-            ),
+            editedAt: Value(editedAt),
+            deletedAt: Value(deletedAt),
             sendState: Value(sendState),
             remoteSeq: Value(remoteSeq),
             anonymous: Value(payload.anonymous),
@@ -959,19 +1000,13 @@ class SyncService {
           onConflict: DoUpdate(
             (_) => MessagesCompanion(
               body: Value(payload.body),
-              editedAt: Value(
-                payload.editedAtMs == null
-                    ? null
-                    : DateTime.fromMillisecondsSinceEpoch(payload.editedAtMs!),
-              ),
-              deletedAt: Value(
-                payload.deletedAtMs == null
-                    ? null
-                    : DateTime.fromMillisecondsSinceEpoch(payload.deletedAtMs!),
-              ),
+              tagId: Value(payload.tagId),
+              editedAt: Value(editedAt),
+              deletedAt: Value(deletedAt),
               sendState: Value(sendState),
               remoteSeq: Value(remoteSeq),
             ),
+            where: guard,
           ),
         );
   }
@@ -1027,5 +1062,6 @@ class SyncService {
     // so none touches the database after the caller closes it.
     await _liveTail;
     await _syncingController.close();
+    await _lastSyncedController.close();
   }
 }

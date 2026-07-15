@@ -16,6 +16,7 @@ import 'package:hulaki/features/groups/group_member_view.dart';
 import 'package:hulaki/features/groups/hot_key_icons.dart';
 import 'package:hulaki/features/map/map_screen.dart';
 import 'package:hulaki/features/map/navigate_sheet.dart';
+import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
 import 'package:hulaki/features/settings/units.dart';
 import 'package:hulaki/features/settings/units_provider.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
@@ -72,6 +73,26 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
     _noteController.dispose();
     _noteFocus.dispose();
     super.dispose();
+  }
+
+  /// Opens the thread scrolled to this point, briefly flashing it so the user
+  /// can place the observation among the conversation.
+  void _openInChat() {
+    final groups =
+        ref.read(activeGroupsProvider).asData?.value ?? const <Group>[];
+    final match = groups.where((g) => g.id == widget.groupId);
+    final name = match.isEmpty ? '' : match.first.name;
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ChatThreadScreen(
+            groupId: widget.groupId,
+            groupName: name,
+            highlightMessageId: widget.message.id,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _onStyleLoaded() async {
@@ -422,7 +443,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).maybePop(),
+                        onPressed: _openInChat,
                         icon: const Icon(Icons.chat_bubble_outline, size: 16),
                         label: Text(l10n.pointOpenInChat),
                       ),
