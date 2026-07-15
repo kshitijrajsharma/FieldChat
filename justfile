@@ -5,9 +5,10 @@
 default:
     @just --list
 
-# Install dependencies.
+# Install dependencies and activate the git hooks.
 setup:
     flutter pub get
+    git config core.hooksPath tool/hooks
 
 # Format check + static analysis. Must pass with zero issues.
 lint:
