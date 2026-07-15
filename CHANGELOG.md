@@ -1,3 +1,12 @@
+## v0.0.13 (2026-07-15)
+
+### Fix
+
+- **map**: fix map cleaning ni the ui with chat thread
+- **empty-map**: fix flickering issue
+- **map**: centering isseu flickering
+- **tiny-fixes**: map loading screen info button gps accuracies
+
 ## v0.0.12 (2026-07-14)
 
 ### Feat
