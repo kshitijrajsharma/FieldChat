@@ -967,8 +967,7 @@ class SyncService {
     Expression<bool> Function($MessagesTable)? guard;
     if (remoteSeq != null) {
       final seq = remoteSeq;
-      guard = (m) =>
-          m.remoteSeq.isNull() | m.remoteSeq.isSmallerThanValue(seq);
+      guard = (m) => m.remoteSeq.isNull() | m.remoteSeq.isSmallerThanValue(seq);
     }
     await db
         .into(db.messages)

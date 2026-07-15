@@ -93,6 +93,8 @@
   "threadOutsideAreaBlocked": "Ce point est hors de la zone de cartographie.",
   "threadOutsideAreaTitle": "Hors de la zone de cartographie",
   "threadOutsideAreaBody": "Ce point est hors de la zone de cartographie du groupe. L'envoyer quand même ?",
+  "threadNoTagTitle": "Aucune étiquette",
+  "threadNoTagBody": "Vous n'avez pas attaché d'étiquette à ce point. Il sera classé dans Autres. L'envoyer quand même ?",
   "threadCancel": "Annuler",
   "threadSendAnyway": "Envoyer quand même",
   "threadSave": "Enregistrer",

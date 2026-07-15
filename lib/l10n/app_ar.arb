@@ -93,6 +93,8 @@
   "threadOutsideAreaBlocked": "هذه النقطة خارج منطقة رسم الخرائط.",
   "threadOutsideAreaTitle": "خارج منطقة رسم الخرائط",
   "threadOutsideAreaBody": "هذه النقطة خارج منطقة رسم خرائط المجموعة. هل تريد إرسالها على أي حال؟",
+  "threadNoTagTitle": "بدون وسم",
+  "threadNoTagBody": "لم ترفق وسمًا بهذه النقطة. سيتم تصنيفها ضمن أخرى. هل تريد إرسالها على أي حال؟",
   "threadCancel": "إلغاء",
   "threadSendAnyway": "إرسال على أي حال",
   "threadSave": "حفظ",

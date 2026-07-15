@@ -10,11 +10,15 @@ import 'package:hulaki/features/export/supabase_snapshot_store.dart';
 import 'package:hulaki/features/identity/supabase_admin_registry.dart';
 import 'package:hulaki/features/sync/supabase_blob_store.dart';
 import 'package:hulaki/features/sync/supabase_transport.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Hybrid composition renders the Android map through a texture layer,
+  // avoiding the Virtual Display resize-on-dispose crash when a map is removed.
+  MapLibreMap.useHybridComposition = true;
   FlutterForegroundTask.initCommunicationPort();
   final preferences = await SharedPreferences.getInstance();
 

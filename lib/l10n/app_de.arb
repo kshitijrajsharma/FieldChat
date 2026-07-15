@@ -93,6 +93,8 @@
   "threadOutsideAreaBlocked": "Dieser Punkt liegt außerhalb des Kartierungsgebiets.",
   "threadOutsideAreaTitle": "Außerhalb des Kartierungsgebiets",
   "threadOutsideAreaBody": "Dieser Punkt liegt außerhalb des Kartierungsgebiets der Gruppe. Trotzdem senden?",
+  "threadNoTagTitle": "Kein Tag angehängt",
+  "threadNoTagBody": "Du hast diesem Punkt kein Tag angehängt. Er wird unter Andere abgelegt. Trotzdem senden?",
   "threadCancel": "Abbrechen",
   "threadSendAnyway": "Trotzdem senden",
   "threadSave": "Speichern",

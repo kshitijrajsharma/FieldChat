@@ -420,6 +420,14 @@
   "@threadOutsideAreaBody": {
     "description": "Body of the dialog confirming a point outside the group mapping area"
   },
+  "threadNoTagTitle": "No tag attached",
+  "@threadNoTagTitle": {
+    "description": "Title of the dialog confirming a point sent without a tag"
+  },
+  "threadNoTagBody": "You haven't attached a tag to this point. It will be filed under Others. Send anyway?",
+  "@threadNoTagBody": {
+    "description": "Body of the dialog confirming a point sent without a tag"
+  },
   "threadCancel": "Cancel",
   "@threadCancel": {
     "description": "Dialog button that dismisses without acting"

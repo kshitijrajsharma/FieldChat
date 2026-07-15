@@ -93,6 +93,8 @@
   "threadOutsideAreaBlocked": "Este punto está fuera del área de mapeo.",
   "threadOutsideAreaTitle": "Fuera del área de mapeo",
   "threadOutsideAreaBody": "Este punto está fuera del área de mapeo del grupo. ¿Enviarlo igualmente?",
+  "threadNoTagTitle": "Sin etiqueta",
+  "threadNoTagBody": "No has adjuntado una etiqueta a este punto. Se archivará en Otros. ¿Enviarlo igualmente?",
   "threadCancel": "Cancelar",
   "threadSendAnyway": "Enviar igualmente",
   "threadSave": "Guardar",

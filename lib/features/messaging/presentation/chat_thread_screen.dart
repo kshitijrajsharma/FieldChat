@@ -405,6 +405,27 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     return proceed ?? false;
   }
 
+  Future<bool> _confirmNoTag(AppLocalizations l10n) async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.threadNoTagTitle),
+        content: Text(l10n.threadNoTagBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.threadCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.threadSendAnyway),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
+  }
+
   Future<void> _send(AppLocalizations l10n) async {
     final text = _controller.text.trim();
     final photo = _pendingPhoto;
@@ -452,6 +473,15 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
 
       if (geo != null &&
           !await _passesModeration(l10n, geo, placed: staged != null)) {
+        return;
+      }
+      final hasTags =
+          (ref.read(hotKeysProvider(widget.groupId)).value ?? const [])
+              .isNotEmpty;
+      if (!_chatMode &&
+          _selectedTagId == null &&
+          hasTags &&
+          !await _confirmNoTag(l10n)) {
         return;
       }
       _controller.clear();
@@ -530,8 +560,10 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
         ref.watch(profileNamesProvider).asData?.value ??
         const <String, String>{};
     final anonymous = ref.watch(appearAnonymousProvider);
-    final lastSyncedAt =
-        ref.watch(lastSyncedProvider).asData?.value[widget.groupId];
+    final lastSyncedAt = ref
+        .watch(lastSyncedProvider)
+        .asData
+        ?.value[widget.groupId];
 
     final items = messages.asData?.value ?? const <Message>[];
     final live = items.where((m) => m.deletedAt == null);

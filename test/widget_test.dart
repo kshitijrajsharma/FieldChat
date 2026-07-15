@@ -132,6 +132,12 @@ void main() {
       'Overflowing bin near gate',
     );
     await tester.tap(find.byIcon(Icons.send));
+    await _settle(tester);
+
+    // Sending a point with no tag selected asks for confirmation and files it
+    // under Others once confirmed.
+    expect(find.text('No tag attached'), findsOneWidget);
+    await tester.tap(find.text('Send anyway'));
 
     var appeared = false;
     for (var i = 0; i < 60; i++) {
