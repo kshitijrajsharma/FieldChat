@@ -307,6 +307,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     final area =
         (await ref.read(databaseProvider).groupById(groupId))?.aoiGeoJson;
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     final geoJson = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
         builder: (_) => AreaDrawScreen(initialArea: area),
@@ -317,6 +318,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       await ref.read(groupServiceProvider).setMappingArea(groupId, geoJson);
       await refreshPublicListing(ref, groupId);
       _reload();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.groupBoundarySaved)),
+        );
+      }
     });
   }
 
@@ -461,6 +467,14 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                 groupId: group.id,
                 inviteLink: ref.read(groupServiceProvider).inviteLinkFor(group),
               ),
+              if (iAmAdmin) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _AreaCard(
+                  groupId: group.id,
+                  hasZones: group.zonesGeoJson != null,
+                  onEditArea: () => unawaited(_editMappingArea(group.id)),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               _ManageCard(
                 caching: _caching,
@@ -487,14 +501,6 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   builder: (_) => ShareWebSheet(group: group),
                 ),
               ),
-              if (iAmAdmin) ...[
-                const SizedBox(height: AppSpacing.lg),
-                _AreaCard(
-                  groupId: group.id,
-                  hasZones: group.zonesGeoJson != null,
-                  onEditArea: () => unawaited(_editMappingArea(group.id)),
-                ),
-              ],
               if (iAmAdmin && group.isPublic && group.joinApproval) ...[
                 const SizedBox(height: AppSpacing.lg),
                 _JoinRequestsCard(groupId: group.id),

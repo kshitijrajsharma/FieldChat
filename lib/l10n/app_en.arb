@@ -553,10 +553,6 @@
   "@zoneRenameTitle": {
     "description": "Title of the rename-zone dialog"
   },
-  "zoneHowMany": "How many zones?",
-  "@zoneHowMany": {
-    "description": "Title of the dialog choosing how many even zones to make"
-  },
   "zoneSeedTitle": "Tap where teams start",
   "@zoneSeedTitle": {
     "description": "Title of the seed-placement screen"
@@ -1192,6 +1188,14 @@
   "@groupMappingAreaSet": {
     "description": "Button label once a mapping area has been drawn"
   },
+  "groupSplitZonesOptional": "Split into zones (optional)",
+  "@groupSplitZonesOptional": {
+    "description": "Button to split the area into zones while creating a group"
+  },
+  "groupZonesSet": "Zones set",
+  "@groupZonesSet": {
+    "description": "Button label once the area has been split into zones"
+  },
   "groupCreating": "Creating…",
   "@groupCreating": {
     "description": "Create group button label while the group is being created"
@@ -1311,6 +1315,22 @@
   "groupAreaImportedHint": "Imported area shown. Clear to draw a new one, or upload a replacement.",
   "@groupAreaImportedHint": {
     "description": "Hint shown when a large imported boundary opens read-only"
+  },
+  "groupBoundarySaved": "Boundary saved",
+  "@groupBoundarySaved": {
+    "description": "Confirmation shown after the mapping boundary is saved"
+  },
+  "groupBoundaryUploaded": "Boundary uploaded",
+  "@groupBoundaryUploaded": {
+    "description": "Confirmation shown when an uploaded boundary is loaded for review"
+  },
+  "zoneSplitCleared": "Split cleared",
+  "@zoneSplitCleared": {
+    "description": "Confirmation shown after the zone split is removed"
+  },
+  "zoneRenamed": "Zone renamed",
+  "@zoneRenamed": {
+    "description": "Confirmation shown after a zone is renamed"
   },
   "groupAreaCornerCount": "{count, plural, =1{1 corner. Tap to add more.} other{{count} corners. Tap to add more.}}",
   "@groupAreaCornerCount": {

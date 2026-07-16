@@ -29,6 +29,7 @@ class ZoneSeedScreen extends StatefulWidget {
 class _ZoneSeedScreenState extends State<ZoneSeedScreen> {
   MapLibreMapController? _controller;
   final List<LatLng> _seeds = [];
+  final List<Circle> _seedCircles = [];
 
   List<Zone> _split() => _seeds.length < 2
       ? const []
@@ -48,7 +49,10 @@ class _ZoneSeedScreenState extends State<ZoneSeedScreen> {
         title: Text(l10n.zoneSeedTitle),
         actions: [
           if (_seeds.isNotEmpty)
-            TextButton(onPressed: _undo, child: Text(l10n.groupUndo)),
+            TextButton(
+              onPressed: () => unawaited(_undo()),
+              child: Text(l10n.groupUndo),
+            ),
         ],
       ),
       body: Stack(
@@ -129,17 +133,7 @@ class _ZoneSeedScreenState extends State<ZoneSeedScreen> {
         lineWidth: 2,
       ),
     );
-    await controller.addGeoJsonSource('seeds', _empty());
-    await controller.addCircleLayer(
-      'seeds',
-      'seeds-dots',
-      const CircleLayerProperties(
-        circleColor: '#15181B',
-        circleStrokeColor: '#ffffff',
-        circleStrokeWidth: 2,
-        circleRadius: 6,
-      ),
-    );
+    controller.onFeatureDrag.add(_onSeedDrag);
 
     final bounds = aoiBounds(widget.aoiGeoJson);
     if (bounds != null) {
@@ -159,39 +153,55 @@ class _ZoneSeedScreenState extends State<ZoneSeedScreen> {
   }
 
   Future<void> _onTap(Point<double> point, LatLng latLng) async {
-    setState(() => _seeds.add(latLng));
-    await _redraw();
-  }
-
-  void _undo() {
-    if (_seeds.isEmpty) return;
-    setState(_seeds.removeLast);
-    unawaited(_redraw());
-  }
-
-  Future<void> _redraw() async {
     final controller = _controller;
     if (controller == null) return;
-    await controller.setGeoJsonSource('seeds', _seedsFeatures());
-    await controller.setGeoJsonSource('zones-preview', _previewFeatures());
+    final circle = await controller.addCircle(
+      CircleOptions(
+        geometry: latLng,
+        circleColor: '#15181B',
+        circleStrokeColor: '#ffffff',
+        circleStrokeWidth: 2,
+        circleRadius: 8,
+        draggable: true,
+      ),
+    );
+    setState(() {
+      _seeds.add(latLng);
+      _seedCircles.add(circle);
+    });
+    await _redrawPreview();
+  }
+
+  /// Follows a seed as it is dragged, re-flowing the split live so a boundary
+  /// can be nudged off a feature it would otherwise cut.
+  void _onSeedDrag(
+    Point<double> point,
+    LatLng origin,
+    LatLng current,
+    LatLng delta,
+    String id,
+    Annotation? annotation,
+    DragEventType eventType,
+  ) {
+    final index = _seedCircles.indexWhere((c) => c.id == id);
+    if (index == -1) return;
+    _seeds[index] = current;
+    unawaited(_redrawPreview());
+  }
+
+  Future<void> _undo() async {
+    if (_seeds.isEmpty) return;
+    final circle = _seedCircles.removeLast();
+    await _controller?.removeCircle(circle);
+    setState(_seeds.removeLast);
+    await _redrawPreview();
+  }
+
+  Future<void> _redrawPreview() async {
+    await _controller?.setGeoJsonSource('zones-preview', _previewFeatures());
   }
 
   void _use() => Navigator.of(context).pop(_split());
-
-  Map<String, dynamic> _seedsFeatures() => {
-    'type': 'FeatureCollection',
-    'features': [
-      for (final s in _seeds)
-        {
-          'type': 'Feature',
-          'properties': <String, dynamic>{},
-          'geometry': {
-            'type': 'Point',
-            'coordinates': [s.longitude, s.latitude],
-          },
-        },
-    ],
-  };
 
   Map<String, dynamic> _previewFeatures() => {
     'type': 'FeatureCollection',

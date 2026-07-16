@@ -14,6 +14,8 @@ import 'package:hulaki/features/groups/presentation/area_draw_screen.dart';
 import 'package:hulaki/features/groups/presentation/group_avatar.dart';
 import 'package:hulaki/features/groups/presentation/hot_key_editor_screen.dart';
 import 'package:hulaki/features/messaging/presentation/chat_thread_screen.dart';
+import 'package:hulaki/features/zones/domain/zone.dart';
+import 'package:hulaki/features/zones/presentation/zone_split_picker.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -31,6 +33,7 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
   final _picker = ImagePicker();
   bool _busy = false;
   String? _aoiGeoJson;
+  List<Zone> _zones = const [];
   Uint8List? _photo;
   List<EditableHotKey>? _hotKeysOrNull;
 
@@ -103,7 +106,19 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
     final aoi = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(builder: (_) => const AreaDrawScreen()),
     );
-    if (aoi != null) setState(() => _aoiGeoJson = aoi);
+    if (aoi != null) {
+      setState(() {
+        _aoiGeoJson = aoi;
+        _zones = const [];
+      });
+    }
+  }
+
+  Future<void> _splitZones() async {
+    final aoi = _aoiGeoJson;
+    if (aoi == null) return;
+    final zones = await pickZoneSplit(context, aoi);
+    if (zones != null && mounted) setState(() => _zones = zones);
   }
 
   Future<void> _create() async {
@@ -131,6 +146,9 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
             aoiGeoJson: _aoiGeoJson,
             photo: _photo,
           );
+      if (_zones.isNotEmpty) {
+        await ref.read(groupServiceProvider).setZones(group.id, _zones);
+      }
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
@@ -313,6 +331,28 @@ class _CreateGroupScreenState extends ConsumerState<CreateGroupScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
+                    if (_aoiGeoJson != null) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      OutlinedButton.icon(
+                        onPressed: _splitZones,
+                        icon: Icon(
+                          _zones.isEmpty
+                              ? Icons.grid_view_outlined
+                              : Icons.check,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _zones.isEmpty
+                              ? l10n.groupSplitZonesOptional
+                              : l10n.groupZonesSet,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.ink,
+                          side: const BorderSide(color: AppColors.mist),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

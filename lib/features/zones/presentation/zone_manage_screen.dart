@@ -8,7 +8,8 @@ import 'package:hulaki/app/providers.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
 import 'package:hulaki/features/zones/domain/zone.dart';
-import 'package:hulaki/features/zones/domain/zone_partition.dart';
+import 'package:hulaki/features/zones/presentation/zone_map.dart';
+import 'package:hulaki/features/zones/presentation/zone_preview_screen.dart';
 import 'package:hulaki/features/zones/presentation/zone_seed_screen.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 
@@ -55,9 +56,12 @@ class ZoneManageScreen extends ConsumerWidget {
   ) async {
     final aoi = await _aoi(ref);
     if (aoi == null || !context.mounted) return;
-    final count = await _askCount(context, l10n);
-    if (count == null || !context.mounted) return;
-    final zones = gridSplit(aoi, count, palette: zoneColorPalette());
+    final zones = await Navigator.of(context).push<List<Zone>>(
+      MaterialPageRoute<List<Zone>>(
+        builder: (_) => ZonePreviewScreen.grid(aoiGeoJson: aoi),
+      ),
+    );
+    if (zones == null || !context.mounted) return;
     await _save(context, ref, zones, l10n);
   }
 
@@ -82,12 +86,25 @@ class ZoneManageScreen extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l10n,
   ) async {
+    final aoi = await _aoi(ref);
+    if (aoi == null || !context.mounted) return;
     final file = await openFile();
     if (file == null || !context.mounted) return;
     final text = utf8.decode(await file.readAsBytes());
     final zones = zonesFromImport(text, palette: zoneColorPalette());
     if (!context.mounted) return;
-    await _save(context, ref, zones, l10n);
+    if (zones.isEmpty) {
+      _snack(context, l10n.zoneInvalidImport);
+      return;
+    }
+    final chosen = await Navigator.of(context).push<List<Zone>>(
+      MaterialPageRoute<List<Zone>>(
+        builder: (_) =>
+            ZonePreviewScreen.imported(aoiGeoJson: aoi, zones: zones),
+      ),
+    );
+    if (chosen == null || !context.mounted) return;
+    await _save(context, ref, chosen, l10n);
   }
 
   Future<void> _clear(
@@ -114,43 +131,8 @@ class ZoneManageScreen extends ConsumerWidget {
     );
     if (confirmed ?? false) {
       await ref.read(groupServiceProvider).clearZones(groupId);
+      if (context.mounted) _snack(context, l10n.zoneSplitCleared);
     }
-  }
-
-  Future<int?> _askCount(BuildContext context, AppLocalizations l10n) {
-    var count = 4;
-    return showDialog<int>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(l10n.zoneHowMany),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                onPressed: count > 2 ? () => setState(() => count--) : null,
-                icon: const Icon(Icons.remove_circle_outline),
-              ),
-              Text('$count', style: Theme.of(context).textTheme.headlineSmall),
-              IconButton(
-                onPressed: count < 8 ? () => setState(() => count++) : null,
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(l10n.threadCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(count),
-              child: Text(l10n.zoneSplitEvenly),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -159,43 +141,58 @@ class ZoneManageScreen extends ConsumerWidget {
     final zones = ref.watch(zonesProvider(groupId)).asData?.value ?? const [];
     final groups = ref.watch(activeGroupsProvider).asData?.value ?? const [];
     final match = groups.where((g) => g.id == groupId);
-    final hasArea = match.isNotEmpty && match.first.aoiGeoJson != null;
+    final aoi = match.isEmpty ? null : match.first.aoiGeoJson;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.zoneManageTitle)),
-      body: !hasArea
+      body: aoi == null
           ? _Message(text: l10n.zoneNeedArea)
-          : ListView(
-              padding: const EdgeInsets.all(16),
+          : Column(
               children: [
-                Text(l10n.zoneManageSubtitle, style: theme(context).bodyMedium),
-                const SizedBox(height: 16),
-                _Action(
-                  icon: Icons.grid_view_outlined,
-                  title: l10n.zoneSplitEvenly,
-                  detail: l10n.zoneSplitEvenlyDetail,
-                  onTap: () => unawaited(_splitEvenly(context, ref, l10n)),
+                SizedBox(
+                  height: 200,
+                  child: ZoneMap(zones: zones, aoiGeoJson: aoi),
                 ),
-                _Action(
-                  icon: Icons.place_outlined,
-                  title: l10n.zoneSplitSeeds,
-                  detail: l10n.zoneSplitSeedsDetail,
-                  onTap: () => unawaited(_splitBySeeds(context, ref, l10n)),
-                ),
-                _Action(
-                  icon: Icons.file_upload_outlined,
-                  title: l10n.zoneImport,
-                  detail: l10n.zoneImportDetail,
-                  onTap: () => unawaited(_import(context, ref, l10n)),
-                ),
-                if (zones.isNotEmpty)
-                  _Action(
-                    icon: Icons.layers_clear_outlined,
-                    title: l10n.zoneClear,
-                    detail: l10n.zoneClearDetail,
-                    danger: true,
-                    onTap: () => unawaited(_clear(context, ref, l10n)),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Text(
+                        l10n.zoneManageSubtitle,
+                        style: theme(context).bodyMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      _Action(
+                        icon: Icons.grid_view_outlined,
+                        title: l10n.zoneSplitEvenly,
+                        detail: l10n.zoneSplitEvenlyDetail,
+                        onTap: () =>
+                            unawaited(_splitEvenly(context, ref, l10n)),
+                      ),
+                      _Action(
+                        icon: Icons.place_outlined,
+                        title: l10n.zoneSplitSeeds,
+                        detail: l10n.zoneSplitSeedsDetail,
+                        onTap: () =>
+                            unawaited(_splitBySeeds(context, ref, l10n)),
+                      ),
+                      _Action(
+                        icon: Icons.file_upload_outlined,
+                        title: l10n.zoneImport,
+                        detail: l10n.zoneImportDetail,
+                        onTap: () => unawaited(_import(context, ref, l10n)),
+                      ),
+                      if (zones.isNotEmpty)
+                        _Action(
+                          icon: Icons.layers_clear_outlined,
+                          title: l10n.zoneClear,
+                          detail: l10n.zoneClearDetail,
+                          danger: true,
+                          onTap: () => unawaited(_clear(context, ref, l10n)),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
     );

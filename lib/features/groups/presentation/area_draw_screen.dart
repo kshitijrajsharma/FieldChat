@@ -38,6 +38,10 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
   bool _locating = false;
   bool _readOnlyArea = false;
 
+  /// An uploaded boundary awaiting confirmation: shown framed as a backdrop,
+  /// committed as is when the user accepts it.
+  String? _pendingImport;
+
   /// Above this many corners an area is treated as imported: shown read-only to
   /// clear or replace, since editing thousands of vertices by tapping is not
   /// feasible and would choke the map.
@@ -171,7 +175,9 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _points.length >= 3 ? () => _use(l10n) : null,
+                    onPressed: _points.length >= 3 || _pendingImport != null
+                        ? () => _use(l10n)
+                        : null,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.ink,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -272,6 +278,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
     setState(() {
       _points.clear();
       _readOnlyArea = false;
+      _pendingImport = null;
     });
     unawaited(_redraw());
   }
@@ -362,6 +369,11 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
   static const _minAreaSqMeters = 100.0;
 
   void _use(AppLocalizations l10n) {
+    final pending = _pendingImport;
+    if (pending != null) {
+      Navigator.of(context).pop(pending);
+      return;
+    }
     if (_areaSqMeters() < _minAreaSqMeters) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.groupAreaTooSmall)),
@@ -393,7 +405,25 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
       }
       return;
     }
-    if (mounted) Navigator.of(context).pop(text);
+    setState(() {
+      _points.clear();
+      _pendingImport = text;
+      _readOnlyArea = true;
+    });
+    await _controller?.setGeoJsonSource(
+      'aoi-verts',
+      _empty(),
+    );
+    await _controller?.setGeoJsonSource(
+      'aoi-poly',
+      jsonDecode(text) as Map<String, dynamic>,
+    );
+    await _frameToArea(text);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.groupBoundaryUploaded)),
+      );
+    }
   }
 
   Map<String, dynamic> _empty() => {
