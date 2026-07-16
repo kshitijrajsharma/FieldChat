@@ -428,6 +428,173 @@
   "@threadNoTagBody": {
     "description": "Body of the dialog confirming a point sent without a tag"
   },
+  "threadOutsideZoneTitle": "Outside your zone",
+  "@threadOutsideZoneTitle": {
+    "description": "Title of the dialog confirming a point outside the member's assigned zone"
+  },
+  "threadOutsideZoneBody": "This point is outside your zone. Drop it here anyway?",
+  "@threadOutsideZoneBody": {
+    "description": "Body of the dialog confirming a point outside the member's assigned zone"
+  },
+  "zonePickTitle": "Choose your zone",
+  "@zonePickTitle": {
+    "description": "Title of the sheet where a member picks which zone to map"
+  },
+  "zonePickSubtitle": "Pick one to focus on. You can switch or map anywhere later.",
+  "@zonePickSubtitle": {
+    "description": "Subtitle of the zone picker sheet"
+  },
+  "zonePickJoin": "Join",
+  "@zonePickJoin": {
+    "description": "Button to join a zone"
+  },
+  "zonePickCurrent": "Your zone",
+  "@zonePickCurrent": {
+    "description": "Label on the zone the member is currently assigned to"
+  },
+  "zoneMapAnywhere": "Map anywhere for now",
+  "@zoneMapAnywhere": {
+    "description": "Button that dismisses the zone picker without joining a zone"
+  },
+  "zoneLeave": "Leave zone",
+  "@zoneLeave": {
+    "description": "Button that clears the member's zone assignment"
+  },
+  "zonePoints": "{count, plural, =1{1 point} other{{count} points}}",
+  "@zonePoints": {
+    "description": "Point count for a zone",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoneChipPick": "Pick your zone",
+  "@zoneChipPick": {
+    "description": "Map overlay button prompting an unassigned member to choose a zone"
+  },
+  "zoneManageTitle": "Zones",
+  "@zoneManageTitle": {
+    "description": "Title of the admin screen that splits the area into zones"
+  },
+  "zoneManageSubtitle": "Split the mapping area so mappers can each take a patch.",
+  "@zoneManageSubtitle": {
+    "description": "Subtitle of the zone management screen"
+  },
+  "zoneManageEntry": "Zones",
+  "@zoneManageEntry": {
+    "description": "Group settings row that opens zone management"
+  },
+  "zoneManageEntryDetail": "Split the area into patches",
+  "@zoneManageEntryDetail": {
+    "description": "Subtitle of the zones row in group settings"
+  },
+  "zoneNeedArea": "Set a mapping area first, then split it into zones.",
+  "@zoneNeedArea": {
+    "description": "Shown when the group has no mapping area to split"
+  },
+  "zoneSplitEvenly": "Split evenly",
+  "@zoneSplitEvenly": {
+    "description": "Action that splits the area into an even grid"
+  },
+  "zoneSplitEvenlyDetail": "A quick grid of equal areas.",
+  "@zoneSplitEvenlyDetail": {
+    "description": "Detail for the even-grid split action"
+  },
+  "zoneSplitSeeds": "Split by seeds",
+  "@zoneSplitSeeds": {
+    "description": "Action that splits the area by tapped seed points"
+  },
+  "zoneSplitSeedsDetail": "Tap where each team starts; nearest ground wins.",
+  "@zoneSplitSeedsDetail": {
+    "description": "Detail for the seed split action"
+  },
+  "zoneImport": "Import a file",
+  "@zoneImport": {
+    "description": "Action that imports zones from a GeoJSON file"
+  },
+  "zoneImportDetail": "Use a GeoJSON of real boundaries.",
+  "@zoneImportDetail": {
+    "description": "Detail for the import action"
+  },
+  "zoneClear": "Clear the split",
+  "@zoneClear": {
+    "description": "Action that removes all zones"
+  },
+  "zoneClearDetail": "Back to one area. The mapping boundary stays.",
+  "@zoneClearDetail": {
+    "description": "Detail for the clear action"
+  },
+  "zoneClearConfirm": "Clear the split? Zones and assignments are removed. The mapping area stays.",
+  "@zoneClearConfirm": {
+    "description": "Confirmation body for clearing the split"
+  },
+  "zoneRename": "Rename",
+  "@zoneRename": {
+    "description": "Action to rename a zone"
+  },
+  "zoneRenameTitle": "Zone name",
+  "@zoneRenameTitle": {
+    "description": "Title of the rename-zone dialog"
+  },
+  "zoneHowMany": "How many zones?",
+  "@zoneHowMany": {
+    "description": "Title of the dialog choosing how many even zones to make"
+  },
+  "zoneSeedTitle": "Tap where teams start",
+  "@zoneSeedTitle": {
+    "description": "Title of the seed-placement screen"
+  },
+  "zoneSeedHint": "Tap the map to drop a seed for each team.",
+  "@zoneSeedHint": {
+    "description": "Hint on the seed-placement screen before seeds are dropped"
+  },
+  "zoneSeedCount": "{count} seeds",
+  "@zoneSeedCount": {
+    "description": "Count of dropped seeds",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoneUseSplit": "Use split",
+  "@zoneUseSplit": {
+    "description": "Button that saves the current split"
+  },
+  "zoneSplitDone": "{count} zones created",
+  "@zoneSplitDone": {
+    "description": "Confirmation that zones were created",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zoneInvalidImport": "That file has no zones.",
+  "@zoneInvalidImport": {
+    "description": "Shown when an imported file yields no zones"
+  },
+  "zoneCoverageTitle": "Coverage",
+  "@zoneCoverageTitle": {
+    "description": "Title of the admin coverage screen"
+  },
+  "zoneCoverageSummary": "{points, plural, =1{1 point} other{{points} points}} across {zones, plural, =1{1 zone} other{{zones} zones}}",
+  "@zoneCoverageSummary": {
+    "description": "Summary line on the coverage screen",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      },
+      "zones": {
+        "type": "int"
+      }
+    }
+  },
+  "zoneNeedsMapper": "Needs a mapper",
+  "@zoneNeedsMapper": {
+    "description": "Shown for a zone with no assigned member"
+  },
   "threadCancel": "Cancel",
   "@threadCancel": {
     "description": "Dialog button that dismisses without acting"

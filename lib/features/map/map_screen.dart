@@ -22,6 +22,9 @@ import 'package:hulaki/features/map/marker_images.dart';
 import 'package:hulaki/features/map/point_sheet.dart';
 import 'package:hulaki/features/onboarding/coach_tip.dart';
 import 'package:hulaki/features/track/track_recorder.dart';
+import 'package:hulaki/features/zones/domain/zone.dart';
+import 'package:hulaki/features/zones/domain/zone_bucketing.dart';
+import 'package:hulaki/features/zones/presentation/zone_picker_sheet.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide buildFeatureCollection;
 
@@ -106,6 +109,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _satellite = false;
   final Set<String> _pinImageKeys = {};
   String? _aoiGeoJson;
+  bool _zonesActive = false;
   bool _canPlace = true;
   bool _dataInView = true;
   LatLng? _lastLocation;
@@ -354,6 +358,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                     ],
                   ),
+                  if ((ref.watch(zonesProvider(widget.groupId)).asData?.value ??
+                          const <Zone>[])
+                      .isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _ZoneChip(
+                          zone: ref.watch(
+                            myAssignedZoneProvider(widget.groupId),
+                          ),
+                          onTap: () async {
+                            await showZonePickerSheet(context, widget.groupId);
+                            await _refreshZones();
+                          },
+                        ),
+                      ),
+                    ),
                   CoachTip(
                     tipKey: 'map',
                     translucent: true,
@@ -434,6 +456,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         const LineLayerProperties(lineColor: '#E0922A', lineWidth: 1.5),
       );
     }
+
+    await _addZoneLayers(controller);
 
     await controller.addGeoJsonSource('track', await _trackLine());
     await controller.addLineLayer(
@@ -866,6 +890,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (value == _mineOnly) return;
     setState(() => _mineOnly = value);
     unawaited(_refreshPins());
+    unawaited(_refreshZones());
   }
 
   /// Shows or hides a tag's points on the map from the legend.
@@ -1008,6 +1033,149 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       },
       'properties': <String, dynamic>{},
     };
+  }
+
+  /// Draws the group's zones as coloured outlines, the member's own zone in ink
+  /// so it reads at a glance. No-op when the area is not split, so a group with
+  /// no zones renders exactly as before.
+  Future<void> _addZoneLayers(MapLibreMapController controller) async {
+    final data = await _zonesData();
+    if (data == null) return;
+    _zonesActive = true;
+    await controller.addGeoJsonSource('zones', data);
+    await controller.addLineLayer(
+      'zones',
+      'zones-outline',
+      const LineLayerProperties(
+        lineColor: [Expressions.get, 'lineColor'],
+        lineWidth: [Expressions.get, 'lineWidth'],
+        lineOpacity: 0.9,
+      ),
+    );
+    await controller.addSymbolLayer(
+      'zones',
+      'zones-label',
+      const SymbolLayerProperties(
+        textField: [Expressions.get, 'label'],
+        textSize: 13,
+        textColor: '#15181B',
+        textHaloColor: '#F6F4EE',
+        textHaloWidth: 1.4,
+        textFont: ['Open Sans Regular'],
+        symbolPlacement: 'point',
+      ),
+    );
+  }
+
+  /// Rebuilds the zone source so the highlight follows the member's pick with
+  /// no layer churn. No-op until zones are active.
+  Future<void> _refreshZones() async {
+    final controller = _controller;
+    if (controller == null || !_zonesActive) return;
+    final data = await _zonesData();
+    if (data == null) return;
+    await controller.setGeoJsonSource('zones', data);
+  }
+
+  /// The zones as a FeatureCollection with per-feature colour, width and label,
+  /// or null when the group has no split. Honours the label and only-my-zone
+  /// toggles: an empty label hides a zone's name, and only-my-zone drops the
+  /// other zones' features entirely.
+  Future<Map<String, dynamic>?> _zonesData() async {
+    final db = ref.read(databaseProvider);
+    final group = await db.groupById(widget.groupId);
+    final allZones = zonesFromGeoJson(group?.zonesGeoJson);
+    if (allZones.isEmpty) return null;
+    final assignedId = ref.read(myAssignedZoneProvider(widget.groupId))?.id;
+    final located = (await db.messagesFor(widget.groupId))
+        .where((m) => m.lat != null && m.lng != null)
+        .map((m) => (lat: m.lat!, lng: m.lng!))
+        .toList();
+    final counts = countsByZone(allZones, located);
+    final zones = (_mineOnly && assignedId != null)
+        ? allZones.where((zone) => zone.id == assignedId).toList()
+        : allZones;
+    return {
+      'type': 'FeatureCollection',
+      'features': [
+        for (final zone in zones)
+          {
+            'type': 'Feature',
+            'properties': {
+              'lineColor': zone.id == assignedId
+                  ? '#15181B'
+                  : _hexColor(zone.colorValue),
+              'lineWidth': zone.id == assignedId ? 3.0 : 1.8,
+              'label': _zoneLabel(zone, counts[zone.id]!),
+            },
+            'geometry': {
+              'type': 'MultiPolygon',
+              'coordinates': [
+                for (final ring in zone.pieces) [ring],
+              ],
+            },
+          },
+      ],
+    };
+  }
+
+  String _zoneLabel(Zone zone, int count) =>
+      count > 0 ? '${zone.name}  $count' : zone.name;
+
+  String _hexColor(int argb) =>
+      '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+}
+
+/// The map overlay chip: names the member's zone, or prompts an unassigned one
+/// to pick. Tapping opens the zone picker.
+class _ZoneChip extends StatelessWidget {
+  const _ZoneChip({required this.zone, required this.onTap});
+
+  final Zone? zone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final zone = this.zone;
+    return Material(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(999),
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: zone != null
+                      ? Color(zone.colorValue)
+                      : AppColors.textMuted,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                zone?.name ?? l10n.zoneChipPick,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.expand_more,
+                size: 16,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -24,6 +24,8 @@ import 'package:hulaki/features/groups/presentation/hot_key_editor_screen.dart';
 import 'package:hulaki/features/identity/identity_crypto.dart';
 import 'package:hulaki/features/map/offline_areas.dart';
 import 'package:hulaki/features/map/offline_downloads.dart';
+import 'package:hulaki/features/zones/presentation/zone_coverage_screen.dart';
+import 'package:hulaki/features/zones/presentation/zone_manage_screen.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -483,6 +485,13 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   builder: (_) => ShareWebSheet(group: group),
                 ),
               ),
+              if (iAmAdmin) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _ZonesCard(
+                  groupId: group.id,
+                  hasZones: group.zonesGeoJson != null,
+                ),
+              ],
               if (iAmAdmin && group.isPublic && group.joinApproval) ...[
                 const SizedBox(height: AppSpacing.lg),
                 _JoinRequestsCard(groupId: group.id),
@@ -1522,6 +1531,68 @@ class _MemberRow extends StatelessWidget {
               ],
             )
           : null,
+    );
+  }
+}
+
+class _ZonesCard extends StatelessWidget {
+  const _ZonesCard({required this.groupId, required this.hasZones});
+
+  final String groupId;
+  final bool hasZones;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: AppColors.mist),
+      ),
+      child: Material(
+        color: AppColors.white,
+        child: Column(
+          children: [
+            ListTile(
+              leading: const Icon(
+                Icons.grid_view_outlined,
+                color: AppColors.ink,
+              ),
+              title: Text(l10n.zoneManageEntry),
+              subtitle: Text(l10n.zoneManageEntryDetail),
+              trailing: const Icon(
+                Icons.chevron_right,
+                color: AppColors.textFaint,
+              ),
+              onTap: () => Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => ZoneManageScreen(groupId: groupId),
+                ),
+              ),
+            ),
+            if (hasZones) ...[
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.insights_outlined,
+                  color: AppColors.ink,
+                ),
+                title: Text(l10n.zoneCoverageTitle),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textFaint,
+                ),
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ZoneCoverageScreen(groupId: groupId),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

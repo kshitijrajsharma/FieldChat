@@ -85,6 +85,18 @@ bool pointInAoi(String geoJson, double lat, double lng) {
   return false;
 }
 
+/// Exterior rings ([lng, lat] pairs) of every Polygon and MultiPolygon in
+/// [geoJson]. The zone geometry reuses this instead of re-parsing coordinates.
+List<List<List<double>>> polygonRings(String geoJson) {
+  final rings = <List<List<double>>>[];
+  _collectPolygonRings(jsonDecode(geoJson), rings);
+  return rings;
+}
+
+/// Ray-casting test: whether [lng]/[lat] lies within the closed [ring].
+bool ringContainsPoint(List<List<double>> ring, double lng, double lat) =>
+    _ringContains(ring, lng, lat);
+
 void _collectPolygonRings(Object? node, List<List<List<double>>> into) {
   if (node is Map) {
     final coords = node['coordinates'];

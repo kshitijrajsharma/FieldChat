@@ -1,0 +1,26 @@
+#!/bin/sh
+# Mirrors the CI "Analyze & test" format and analyze gates so an unformatted or
+# failing file is caught here instead of after the push. Requires the Flutter
+# SDK on PATH (export PATH="$HOME/flutter/bin:$PATH").
+set -e
+
+# GUI git clients and non-login shells do not inherit the interactive PATH, so
+# add the SDK's known locations before looking for dart.
+for dir in "$FLUTTER_ROOT/bin" "$HOME/flutter/bin"; do
+  case ":$PATH:" in
+    *":$dir:"*) ;;
+    *) [ -x "$dir/dart" ] && PATH="$dir:$PATH" ;;
+  esac
+done
+export PATH
+
+if ! command -v dart >/dev/null 2>&1; then
+  echo "pre-commit: dart not on PATH. export PATH=\"\$HOME/flutter/bin:\$PATH\"" >&2
+  exit 1
+fi
+
+echo "pre-commit: dart format check"
+dart format --set-exit-if-changed .
+
+echo "pre-commit: flutter analyze"
+flutter analyze

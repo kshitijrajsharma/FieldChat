@@ -11,6 +11,7 @@ import 'package:hulaki/features/identity/identity_crypto.dart';
 import 'package:hulaki/features/messaging/domain/message_payload.dart';
 import 'package:hulaki/features/sync/group_cipher.dart';
 import 'package:hulaki/features/sync/sync_service.dart';
+import 'package:hulaki/features/zones/domain/zone.dart';
 import 'package:uuid/uuid.dart';
 
 /// A tag to create on a new group: its label, ARGB colour, optional icon and
@@ -268,6 +269,7 @@ class GroupService {
         'name': group.name,
         'description': group.description,
         'aoiGeoJson': group.aoiGeoJson,
+        'zonesGeoJson': group.zonesGeoJson,
         'isPublic': group.isPublic,
         'joinApproval': group.joinApproval,
         'scope': group.scope,
@@ -356,6 +358,31 @@ class GroupService {
       GroupsCompanion(aoiGeoJson: Value(aoiGeoJson)),
     );
     await _publishFullMeta(groupId);
+  }
+
+  /// Sets or clears the group's zones and republishes so members converge on
+  /// the split. An empty list clears it, leaving the mapping area intact.
+  Future<void> setZones(String groupId, List<Zone> zones) async {
+    await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
+      GroupsCompanion(
+        zonesGeoJson: Value(zones.isEmpty ? null : zonesToGeoJson(zones)),
+      ),
+    );
+    await _publishFullMeta(groupId);
+  }
+
+  /// Clears the split, dropping every zone but keeping the mapping area.
+  Future<void> clearZones(String groupId) => setZones(groupId, const []);
+
+  /// Records the caller's own zone pick and shares it. Null leaves the member
+  /// unassigned. Authored only for oneself; peers reject a pick naming another.
+  Future<void> assignMyZone(String groupId, String? zoneId) async {
+    await sync.publishControl(
+      groupId: groupId,
+      kind: MessageKind.zoneAssign,
+      body: {'profileId': currentUserId, 'zoneId': zoneId},
+    );
+    await db.setAssignedZone(groupId, currentUserId, zoneId);
   }
 
   /// Sets the group's directory reach and republishes. Private clears the

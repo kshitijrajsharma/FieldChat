@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 /// What a message can carry. The trailing kinds are control messages, not
-/// chat: identity announces a member's public keys, and the admin pair drives
-/// the signed promotion handshake.
+/// chat: identity announces a member's public keys, the admin pair drives the
+/// signed promotion handshake, and zoneAssign records a member's own zone pick.
 enum MessageKind {
   text,
   photo,
@@ -12,6 +12,7 @@ enum MessageKind {
   identityAnnounce,
   adminInvite,
   adminAccept,
+  zoneAssign,
 }
 
 /// The decrypted contents of one message. This is the plaintext that gets

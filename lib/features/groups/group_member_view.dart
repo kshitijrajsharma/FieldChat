@@ -6,6 +6,7 @@ class GroupMemberView {
     required this.joinedAt,
     this.displayName,
     this.phone,
+    this.assignedZoneId,
   });
 
   final String profileId;
@@ -13,6 +14,7 @@ class GroupMemberView {
   final DateTime joinedAt;
   final String? displayName;
   final String? phone;
+  final String? assignedZoneId;
 
   bool get isAdmin => role == 'admin';
 

@@ -707,6 +707,8 @@ class SyncService {
     } else if (payload.kind == MessageKind.adminInvite ||
         payload.kind == MessageKind.adminAccept) {
       await _applyAdminEventPayload(payload, seq: envelope.seq);
+    } else if (payload.kind == MessageKind.zoneAssign) {
+      await _applyZoneAssign(payload);
     } else {
       final name = payload.senderName;
       if (name != null && name.isNotEmpty) {
@@ -764,6 +766,22 @@ class SyncService {
     await _recordMember(payload.groupId, payload.senderId);
   }
 
+  /// Applies a member's own zone pick. A zoneAssign naming another profile is
+  /// dropped even when authentically signed, so no one can assign anyone else.
+  Future<void> _applyZoneAssign(MessagePayload payload) async {
+    final body = jsonDecode(payload.body ?? '{}') as Map<String, dynamic>;
+    final profileId = body['profileId'] as String?;
+    if (profileId == null || profileId != payload.senderId) {
+      developer.log('Dropping zoneAssign naming another member');
+      return;
+    }
+    await db.setAssignedZone(
+      payload.groupId,
+      profileId,
+      body['zoneId'] as String?,
+    );
+  }
+
   /// Adds a participant to the local roster so admins can see and promote them.
   /// insertOrIgnore never downgrades an existing admin row.
   Future<void> _recordMember(String groupId, String profileId) => db
@@ -819,6 +837,7 @@ class SyncService {
             createdBy: Value(payload.senderId),
             encKey: Value(existing?.encKey ?? ''),
             aoiGeoJson: Value(meta['aoiGeoJson'] as String?),
+            zonesGeoJson: Value(meta['zonesGeoJson'] as String?),
             isPublic: Value(meta['isPublic'] as bool? ?? false),
             joinApproval: Value(meta['joinApproval'] as bool? ?? false),
             scope: Value(meta['scope'] as String? ?? 'local'),
@@ -847,6 +866,7 @@ class SyncService {
                   : const Value.absent(),
               description: Value(meta['description'] as String?),
               aoiGeoJson: Value(meta['aoiGeoJson'] as String?),
+              zonesGeoJson: Value(meta['zonesGeoJson'] as String?),
               isPublic: Value(meta['isPublic'] as bool? ?? false),
               joinApproval: Value(meta['joinApproval'] as bool? ?? false),
               scope: Value(meta['scope'] as String? ?? 'local'),

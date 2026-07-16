@@ -29,6 +29,10 @@ class Groups extends Table {
   TextColumn get createdBy => text()();
   TextColumn get encKey => text()();
   TextColumn get aoiGeoJson => text().nullable()();
+
+  /// Optional zone split (a GeoJSON FeatureCollection) shared through
+  /// group-meta. Null means unsplit; clearing the split is nulling this.
+  TextColumn get zonesGeoJson => text().nullable()();
   BoolColumn get isPublic => boolean().withDefault(const Constant(false))();
   BoolColumn get joinApproval => boolean().withDefault(const Constant(false))();
   TextColumn get adminRootKey => text().nullable()();
@@ -100,6 +104,10 @@ class GroupMembers extends Table {
   TextColumn get profileId => text().references(Profiles, #id)();
   TextColumn get role => text().withDefault(const Constant('member'))();
   DateTimeColumn get joinedAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// The zone this member picked, or null. Set only by the member; an id absent
+  /// from the current split reads as unassigned.
+  TextColumn get assignedZoneId => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {groupId, profileId};
@@ -236,7 +244,7 @@ class LocalDatabase extends _$LocalDatabase {
     : super(executor ?? driftDatabase(name: 'hulaki'));
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -298,6 +306,10 @@ class LocalDatabase extends _$LocalDatabase {
         await m.addColumn(hotKeys, hotKeys.description);
         await m.addColumn(groups, groups.allowChatMode);
       }
+      if (from < 17) {
+        await m.addColumn(groups, groups.zonesGeoJson);
+        await m.addColumn(groupMembers, groupMembers.assignedZoneId);
+      }
     },
   );
 
@@ -355,6 +367,29 @@ class LocalDatabase extends _$LocalDatabase {
         role: Value(role),
       ),
       onConflict: DoUpdate((_) => GroupMembersCompanion(role: Value(role))),
+    );
+  }
+
+  /// Records a member's own zone choice without disturbing their role. Called
+  /// both when the member picks locally and when the pick syncs from them.
+  Future<void> setAssignedZone(
+    String groupId,
+    String profileId,
+    String? zoneId,
+  ) async {
+    await into(profiles).insert(
+      ProfilesCompanion.insert(id: profileId, phone: ''),
+      mode: InsertMode.insertOrIgnore,
+    );
+    await into(groupMembers).insert(
+      GroupMembersCompanion.insert(
+        groupId: groupId,
+        profileId: profileId,
+        assignedZoneId: Value(zoneId),
+      ),
+      onConflict: DoUpdate(
+        (_) => GroupMembersCompanion(assignedZoneId: Value(zoneId)),
+      ),
     );
   }
 
@@ -416,6 +451,9 @@ class LocalDatabase extends _$LocalDatabase {
   Future<Group?> groupById(String id) =>
       (select(groups)..where((g) => g.id.equals(id))).getSingleOrNull();
 
+  Stream<Group?> watchGroupById(String id) =>
+      (select(groups)..where((g) => g.id.equals(id))).watchSingleOrNull();
+
   Future<List<HotKey>> hotKeysFor(String groupId) =>
       (select(hotKeys)
             ..where((h) => h.groupId.equals(groupId))
@@ -449,6 +487,7 @@ class LocalDatabase extends _$LocalDatabase {
                 joinedAt: row.readTable(groupMembers).joinedAt,
                 displayName: row.readTableOrNull(profiles)?.displayName,
                 phone: row.readTableOrNull(profiles)?.phone,
+                assignedZoneId: row.readTable(groupMembers).assignedZoneId,
               ),
           ]..sort((a, b) {
             if (a.isAdmin != b.isAdmin) return a.isAdmin ? -1 : 1;

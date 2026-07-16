@@ -30,6 +30,9 @@ import 'package:hulaki/features/onboarding/demo_group.dart';
 import 'package:hulaki/features/onboarding/guided_tour.dart';
 import 'package:hulaki/features/settings/privacy_provider.dart';
 import 'package:hulaki/features/sync/presentation/pending_upload_banner.dart';
+import 'package:hulaki/features/zones/domain/zone.dart';
+import 'package:hulaki/features/zones/domain/zone_bucketing.dart';
+import 'package:hulaki/features/zones/presentation/zone_picker_sheet.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -374,6 +377,14 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       }
       return _confirmOutsideArea(l10n);
     }
+
+    final myZone = ref.read(myAssignedZoneProvider(widget.groupId));
+    if (myZone != null &&
+        lat != null &&
+        lng != null &&
+        zoneForPoint([myZone], lat, lng) == null) {
+      return _confirmOutsideZone(l10n);
+    }
     return true;
   }
 
@@ -390,6 +401,27 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
       builder: (dialogContext) => AlertDialog(
         title: Text(l10n.threadOutsideAreaTitle),
         content: Text(l10n.threadOutsideAreaBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.threadCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.threadSendAnyway),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
+  }
+
+  Future<bool> _confirmOutsideZone(AppLocalizations l10n) async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.threadOutsideZoneTitle),
+        content: Text(l10n.threadOutsideZoneBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -662,14 +694,30 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
                 ? const _ChatModeBanner()
                 : LiveGpsStrip(key: _gpsStripKey),
           ),
-          if (chatModeAllowed)
-            _ChatModeToggle(
-              value: _chatMode,
-              onChanged: (on) => setState(() {
-                _chatMode = on;
-                if (on) _selectedTagId = null;
-              }),
-            ),
+          Builder(
+            builder: (context) {
+              final hasZones =
+                  (ref.watch(zonesProvider(widget.groupId)).asData?.value ??
+                          const <Zone>[])
+                      .isNotEmpty;
+              if (!hasZones && !chatModeAllowed) {
+                return const SizedBox.shrink();
+              }
+              return _ZoneChatBar(
+                zone: hasZones
+                    ? ref.watch(myAssignedZoneProvider(widget.groupId))
+                    : null,
+                showZone: hasZones,
+                onTapZone: () =>
+                    unawaited(showZonePickerSheet(context, widget.groupId)),
+                chatMode: chatModeAllowed ? _chatMode : null,
+                onChatModeChanged: (on) => setState(() {
+                  _chatMode = on;
+                  if (on) _selectedTagId = null;
+                }),
+              );
+            },
+          ),
           PendingUploadBanner(groupId: widget.groupId),
           if (!keyboardOpen && isSample)
             _SampleBanner(onRemove: () => unawaited(_removeSample()))
@@ -1049,11 +1097,23 @@ class _ChatModeBanner extends StatelessWidget {
 
 /// The switch under the GPS bar that enters chat mode. Right-aligned so it
 /// stays out of the way, with an info dot that explains what it does.
-class _ChatModeToggle extends StatelessWidget {
-  const _ChatModeToggle({required this.value, required this.onChanged});
+/// The bar above the composer: the member's zone on the left (when the group
+/// is split) and the chat-mode toggle on the right (when allowed). Either side
+/// may be absent; the bar itself is hidden only when both are.
+class _ZoneChatBar extends StatelessWidget {
+  const _ZoneChatBar({
+    required this.showZone,
+    required this.zone,
+    required this.onTapZone,
+    required this.chatMode,
+    required this.onChatModeChanged,
+  });
 
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final bool showZone;
+  final Zone? zone;
+  final VoidCallback onTapZone;
+  final bool? chatMode;
+  final ValueChanged<bool> onChatModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1066,32 +1126,90 @@ class _ChatModeToggle extends StatelessWidget {
         0,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(
-            l10n.chatModeLabel,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+          if (showZone) _ThreadZoneChip(zone: zone, onTap: onTapZone),
+          const Spacer(),
+          if (chatMode != null) ...[
+            Text(
+              l10n.chatModeLabel,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-          InfoDot(
-            title: l10n.chatModeInfoTitle,
-            message: l10n.chatModeInfoBody,
-          ),
-          const SizedBox(width: 2),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: AppColors.white,
-              activeTrackColor: AppColors.ink,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            InfoDot(
+              title: l10n.chatModeInfoTitle,
+              message: l10n.chatModeInfoBody,
             ),
-          ),
+            const SizedBox(width: 2),
+            Transform.scale(
+              scale: 0.8,
+              child: Switch(
+                value: chatMode!,
+                onChanged: onChatModeChanged,
+                activeThumbColor: AppColors.white,
+                activeTrackColor: AppColors.ink,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// Compact chip naming the member's zone (or prompting a pick) beside the
+/// composer. Tapping opens the zone picker.
+class _ThreadZoneChip extends StatelessWidget {
+  const _ThreadZoneChip({required this.zone, required this.onTap});
+
+  final Zone? zone;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final zone = this.zone;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: AppColors.field,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: zone != null
+                    ? Color(zone.colorValue)
+                    : AppColors.textMuted,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              zone?.name ?? l10n.zoneChipPick,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+            const Icon(
+              Icons.expand_more,
+              size: 14,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

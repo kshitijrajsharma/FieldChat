@@ -488,6 +488,17 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _zonesGeoJsonMeta = const VerificationMeta(
+    'zonesGeoJson',
+  );
+  @override
+  late final GeneratedColumn<String> zonesGeoJson = GeneratedColumn<String>(
+    'zones_geo_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _isPublicMeta = const VerificationMeta(
     'isPublic',
   );
@@ -702,6 +713,7 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     createdBy,
     encKey,
     aoiGeoJson,
+    zonesGeoJson,
     isPublic,
     joinApproval,
     adminRootKey,
@@ -775,6 +787,15 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         aoiGeoJson.isAcceptableOrUnknown(
           data['aoi_geo_json']!,
           _aoiGeoJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('zones_geo_json')) {
+      context.handle(
+        _zonesGeoJsonMeta,
+        zonesGeoJson.isAcceptableOrUnknown(
+          data['zones_geo_json']!,
+          _zonesGeoJsonMeta,
         ),
       );
     }
@@ -931,6 +952,10 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         DriftSqlType.string,
         data['${effectivePrefix}aoi_geo_json'],
       ),
+      zonesGeoJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}zones_geo_json'],
+      ),
       isPublic: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_public'],
@@ -1011,6 +1036,13 @@ class Group extends DataClass implements Insertable<Group> {
   final String createdBy;
   final String encKey;
   final String? aoiGeoJson;
+
+  /// Optional subdivision of the mapping area into named zones, set by an admin
+  /// and shared through group-meta. A GeoJSON FeatureCollection, one Feature per
+  /// zone. Null means the area is not split; the app behaves as if zones do not
+  /// exist. [aoiGeoJson] stays the outer boundary, so clearing the split is just
+  /// nulling this column.
+  final String? zonesGeoJson;
   final bool isPublic;
   final bool joinApproval;
   final String? adminRootKey;
@@ -1053,6 +1085,7 @@ class Group extends DataClass implements Insertable<Group> {
     required this.createdBy,
     required this.encKey,
     this.aoiGeoJson,
+    this.zonesGeoJson,
     required this.isPublic,
     required this.joinApproval,
     this.adminRootKey,
@@ -1082,6 +1115,9 @@ class Group extends DataClass implements Insertable<Group> {
     map['enc_key'] = Variable<String>(encKey);
     if (!nullToAbsent || aoiGeoJson != null) {
       map['aoi_geo_json'] = Variable<String>(aoiGeoJson);
+    }
+    if (!nullToAbsent || zonesGeoJson != null) {
+      map['zones_geo_json'] = Variable<String>(zonesGeoJson);
     }
     map['is_public'] = Variable<bool>(isPublic);
     map['join_approval'] = Variable<bool>(joinApproval);
@@ -1126,6 +1162,9 @@ class Group extends DataClass implements Insertable<Group> {
       aoiGeoJson: aoiGeoJson == null && nullToAbsent
           ? const Value.absent()
           : Value(aoiGeoJson),
+      zonesGeoJson: zonesGeoJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(zonesGeoJson),
       isPublic: Value(isPublic),
       joinApproval: Value(joinApproval),
       adminRootKey: adminRootKey == null && nullToAbsent
@@ -1169,6 +1208,7 @@ class Group extends DataClass implements Insertable<Group> {
       createdBy: serializer.fromJson<String>(json['createdBy']),
       encKey: serializer.fromJson<String>(json['encKey']),
       aoiGeoJson: serializer.fromJson<String?>(json['aoiGeoJson']),
+      zonesGeoJson: serializer.fromJson<String?>(json['zonesGeoJson']),
       isPublic: serializer.fromJson<bool>(json['isPublic']),
       joinApproval: serializer.fromJson<bool>(json['joinApproval']),
       adminRootKey: serializer.fromJson<String?>(json['adminRootKey']),
@@ -1197,6 +1237,7 @@ class Group extends DataClass implements Insertable<Group> {
       'createdBy': serializer.toJson<String>(createdBy),
       'encKey': serializer.toJson<String>(encKey),
       'aoiGeoJson': serializer.toJson<String?>(aoiGeoJson),
+      'zonesGeoJson': serializer.toJson<String?>(zonesGeoJson),
       'isPublic': serializer.toJson<bool>(isPublic),
       'joinApproval': serializer.toJson<bool>(joinApproval),
       'adminRootKey': serializer.toJson<String?>(adminRootKey),
@@ -1223,6 +1264,7 @@ class Group extends DataClass implements Insertable<Group> {
     String? createdBy,
     String? encKey,
     Value<String?> aoiGeoJson = const Value.absent(),
+    Value<String?> zonesGeoJson = const Value.absent(),
     bool? isPublic,
     bool? joinApproval,
     Value<String?> adminRootKey = const Value.absent(),
@@ -1246,6 +1288,7 @@ class Group extends DataClass implements Insertable<Group> {
     createdBy: createdBy ?? this.createdBy,
     encKey: encKey ?? this.encKey,
     aoiGeoJson: aoiGeoJson.present ? aoiGeoJson.value : this.aoiGeoJson,
+    zonesGeoJson: zonesGeoJson.present ? zonesGeoJson.value : this.zonesGeoJson,
     isPublic: isPublic ?? this.isPublic,
     joinApproval: joinApproval ?? this.joinApproval,
     adminRootKey: adminRootKey.present ? adminRootKey.value : this.adminRootKey,
@@ -1275,6 +1318,9 @@ class Group extends DataClass implements Insertable<Group> {
       aoiGeoJson: data.aoiGeoJson.present
           ? data.aoiGeoJson.value
           : this.aoiGeoJson,
+      zonesGeoJson: data.zonesGeoJson.present
+          ? data.zonesGeoJson.value
+          : this.zonesGeoJson,
       isPublic: data.isPublic.present ? data.isPublic.value : this.isPublic,
       joinApproval: data.joinApproval.present
           ? data.joinApproval.value
@@ -1321,6 +1367,7 @@ class Group extends DataClass implements Insertable<Group> {
           ..write('createdBy: $createdBy, ')
           ..write('encKey: $encKey, ')
           ..write('aoiGeoJson: $aoiGeoJson, ')
+          ..write('zonesGeoJson: $zonesGeoJson, ')
           ..write('isPublic: $isPublic, ')
           ..write('joinApproval: $joinApproval, ')
           ..write('adminRootKey: $adminRootKey, ')
@@ -1349,6 +1396,7 @@ class Group extends DataClass implements Insertable<Group> {
     createdBy,
     encKey,
     aoiGeoJson,
+    zonesGeoJson,
     isPublic,
     joinApproval,
     adminRootKey,
@@ -1376,6 +1424,7 @@ class Group extends DataClass implements Insertable<Group> {
           other.createdBy == this.createdBy &&
           other.encKey == this.encKey &&
           other.aoiGeoJson == this.aoiGeoJson &&
+          other.zonesGeoJson == this.zonesGeoJson &&
           other.isPublic == this.isPublic &&
           other.joinApproval == this.joinApproval &&
           other.adminRootKey == this.adminRootKey &&
@@ -1401,6 +1450,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<String> createdBy;
   final Value<String> encKey;
   final Value<String?> aoiGeoJson;
+  final Value<String?> zonesGeoJson;
   final Value<bool> isPublic;
   final Value<bool> joinApproval;
   final Value<String?> adminRootKey;
@@ -1425,6 +1475,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.createdBy = const Value.absent(),
     this.encKey = const Value.absent(),
     this.aoiGeoJson = const Value.absent(),
+    this.zonesGeoJson = const Value.absent(),
     this.isPublic = const Value.absent(),
     this.joinApproval = const Value.absent(),
     this.adminRootKey = const Value.absent(),
@@ -1450,6 +1501,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     required String createdBy,
     required String encKey,
     this.aoiGeoJson = const Value.absent(),
+    this.zonesGeoJson = const Value.absent(),
     this.isPublic = const Value.absent(),
     this.joinApproval = const Value.absent(),
     this.adminRootKey = const Value.absent(),
@@ -1478,6 +1530,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Expression<String>? createdBy,
     Expression<String>? encKey,
     Expression<String>? aoiGeoJson,
+    Expression<String>? zonesGeoJson,
     Expression<bool>? isPublic,
     Expression<bool>? joinApproval,
     Expression<String>? adminRootKey,
@@ -1503,6 +1556,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       if (createdBy != null) 'created_by': createdBy,
       if (encKey != null) 'enc_key': encKey,
       if (aoiGeoJson != null) 'aoi_geo_json': aoiGeoJson,
+      if (zonesGeoJson != null) 'zones_geo_json': zonesGeoJson,
       if (isPublic != null) 'is_public': isPublic,
       if (joinApproval != null) 'join_approval': joinApproval,
       if (adminRootKey != null) 'admin_root_key': adminRootKey,
@@ -1530,6 +1584,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Value<String>? createdBy,
     Value<String>? encKey,
     Value<String?>? aoiGeoJson,
+    Value<String?>? zonesGeoJson,
     Value<bool>? isPublic,
     Value<bool>? joinApproval,
     Value<String?>? adminRootKey,
@@ -1555,6 +1610,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       createdBy: createdBy ?? this.createdBy,
       encKey: encKey ?? this.encKey,
       aoiGeoJson: aoiGeoJson ?? this.aoiGeoJson,
+      zonesGeoJson: zonesGeoJson ?? this.zonesGeoJson,
       isPublic: isPublic ?? this.isPublic,
       joinApproval: joinApproval ?? this.joinApproval,
       adminRootKey: adminRootKey ?? this.adminRootKey,
@@ -1595,6 +1651,9 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     }
     if (aoiGeoJson.present) {
       map['aoi_geo_json'] = Variable<String>(aoiGeoJson.value);
+    }
+    if (zonesGeoJson.present) {
+      map['zones_geo_json'] = Variable<String>(zonesGeoJson.value);
     }
     if (isPublic.present) {
       map['is_public'] = Variable<bool>(isPublic.value);
@@ -1659,6 +1718,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
           ..write('createdBy: $createdBy, ')
           ..write('encKey: $encKey, ')
           ..write('aoiGeoJson: $aoiGeoJson, ')
+          ..write('zonesGeoJson: $zonesGeoJson, ')
           ..write('isPublic: $isPublic, ')
           ..write('joinApproval: $joinApproval, ')
           ..write('adminRootKey: $adminRootKey, ')
@@ -2211,8 +2271,25 @@ class $GroupMembersTable extends GroupMembers
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _assignedZoneIdMeta = const VerificationMeta(
+    'assignedZoneId',
+  );
   @override
-  List<GeneratedColumn> get $columns => [groupId, profileId, role, joinedAt];
+  late final GeneratedColumn<String> assignedZoneId = GeneratedColumn<String>(
+    'assigned_zone_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    groupId,
+    profileId,
+    role,
+    joinedAt,
+    assignedZoneId,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2253,6 +2330,15 @@ class $GroupMembersTable extends GroupMembers
         joinedAt.isAcceptableOrUnknown(data['joined_at']!, _joinedAtMeta),
       );
     }
+    if (data.containsKey('assigned_zone_id')) {
+      context.handle(
+        _assignedZoneIdMeta,
+        assignedZoneId.isAcceptableOrUnknown(
+          data['assigned_zone_id']!,
+          _assignedZoneIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2278,6 +2364,10 @@ class $GroupMembersTable extends GroupMembers
         DriftSqlType.dateTime,
         data['${effectivePrefix}joined_at'],
       )!,
+      assignedZoneId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assigned_zone_id'],
+      ),
     );
   }
 
@@ -2292,11 +2382,18 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   final String profileId;
   final String role;
   final DateTime joinedAt;
+
+  /// The zone this member picked for themselves, or null when unassigned. Set
+  /// only by the member via a signed zoneAssign control message. Resolved
+  /// against the group's current zones; an id no longer present reads as
+  /// unassigned.
+  final String? assignedZoneId;
   const GroupMember({
     required this.groupId,
     required this.profileId,
     required this.role,
     required this.joinedAt,
+    this.assignedZoneId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2305,6 +2402,9 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
     map['profile_id'] = Variable<String>(profileId);
     map['role'] = Variable<String>(role);
     map['joined_at'] = Variable<DateTime>(joinedAt);
+    if (!nullToAbsent || assignedZoneId != null) {
+      map['assigned_zone_id'] = Variable<String>(assignedZoneId);
+    }
     return map;
   }
 
@@ -2314,6 +2414,9 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
       profileId: Value(profileId),
       role: Value(role),
       joinedAt: Value(joinedAt),
+      assignedZoneId: assignedZoneId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(assignedZoneId),
     );
   }
 
@@ -2327,6 +2430,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
       profileId: serializer.fromJson<String>(json['profileId']),
       role: serializer.fromJson<String>(json['role']),
       joinedAt: serializer.fromJson<DateTime>(json['joinedAt']),
+      assignedZoneId: serializer.fromJson<String?>(json['assignedZoneId']),
     );
   }
   @override
@@ -2337,6 +2441,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
       'profileId': serializer.toJson<String>(profileId),
       'role': serializer.toJson<String>(role),
       'joinedAt': serializer.toJson<DateTime>(joinedAt),
+      'assignedZoneId': serializer.toJson<String?>(assignedZoneId),
     };
   }
 
@@ -2345,11 +2450,15 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
     String? profileId,
     String? role,
     DateTime? joinedAt,
+    Value<String?> assignedZoneId = const Value.absent(),
   }) => GroupMember(
     groupId: groupId ?? this.groupId,
     profileId: profileId ?? this.profileId,
     role: role ?? this.role,
     joinedAt: joinedAt ?? this.joinedAt,
+    assignedZoneId: assignedZoneId.present
+        ? assignedZoneId.value
+        : this.assignedZoneId,
   );
   GroupMember copyWithCompanion(GroupMembersCompanion data) {
     return GroupMember(
@@ -2357,6 +2466,9 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
       profileId: data.profileId.present ? data.profileId.value : this.profileId,
       role: data.role.present ? data.role.value : this.role,
       joinedAt: data.joinedAt.present ? data.joinedAt.value : this.joinedAt,
+      assignedZoneId: data.assignedZoneId.present
+          ? data.assignedZoneId.value
+          : this.assignedZoneId,
     );
   }
 
@@ -2366,13 +2478,15 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
           ..write('groupId: $groupId, ')
           ..write('profileId: $profileId, ')
           ..write('role: $role, ')
-          ..write('joinedAt: $joinedAt')
+          ..write('joinedAt: $joinedAt, ')
+          ..write('assignedZoneId: $assignedZoneId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(groupId, profileId, role, joinedAt);
+  int get hashCode =>
+      Object.hash(groupId, profileId, role, joinedAt, assignedZoneId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2380,7 +2494,8 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
           other.groupId == this.groupId &&
           other.profileId == this.profileId &&
           other.role == this.role &&
-          other.joinedAt == this.joinedAt);
+          other.joinedAt == this.joinedAt &&
+          other.assignedZoneId == this.assignedZoneId);
 }
 
 class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
@@ -2388,12 +2503,14 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
   final Value<String> profileId;
   final Value<String> role;
   final Value<DateTime> joinedAt;
+  final Value<String?> assignedZoneId;
   final Value<int> rowid;
   const GroupMembersCompanion({
     this.groupId = const Value.absent(),
     this.profileId = const Value.absent(),
     this.role = const Value.absent(),
     this.joinedAt = const Value.absent(),
+    this.assignedZoneId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupMembersCompanion.insert({
@@ -2401,6 +2518,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     required String profileId,
     this.role = const Value.absent(),
     this.joinedAt = const Value.absent(),
+    this.assignedZoneId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : groupId = Value(groupId),
        profileId = Value(profileId);
@@ -2409,6 +2527,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     Expression<String>? profileId,
     Expression<String>? role,
     Expression<DateTime>? joinedAt,
+    Expression<String>? assignedZoneId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2416,6 +2535,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
       if (profileId != null) 'profile_id': profileId,
       if (role != null) 'role': role,
       if (joinedAt != null) 'joined_at': joinedAt,
+      if (assignedZoneId != null) 'assigned_zone_id': assignedZoneId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2425,6 +2545,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     Value<String>? profileId,
     Value<String>? role,
     Value<DateTime>? joinedAt,
+    Value<String?>? assignedZoneId,
     Value<int>? rowid,
   }) {
     return GroupMembersCompanion(
@@ -2432,6 +2553,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
       profileId: profileId ?? this.profileId,
       role: role ?? this.role,
       joinedAt: joinedAt ?? this.joinedAt,
+      assignedZoneId: assignedZoneId ?? this.assignedZoneId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2451,6 +2573,9 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     if (joinedAt.present) {
       map['joined_at'] = Variable<DateTime>(joinedAt.value);
     }
+    if (assignedZoneId.present) {
+      map['assigned_zone_id'] = Variable<String>(assignedZoneId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2464,6 +2589,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
           ..write('profileId: $profileId, ')
           ..write('role: $role, ')
           ..write('joinedAt: $joinedAt, ')
+          ..write('assignedZoneId: $assignedZoneId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6193,6 +6319,7 @@ typedef $$GroupsTableCreateCompanionBuilder =
       required String createdBy,
       required String encKey,
       Value<String?> aoiGeoJson,
+      Value<String?> zonesGeoJson,
       Value<bool> isPublic,
       Value<bool> joinApproval,
       Value<String?> adminRootKey,
@@ -6219,6 +6346,7 @@ typedef $$GroupsTableUpdateCompanionBuilder =
       Value<String> createdBy,
       Value<String> encKey,
       Value<String?> aoiGeoJson,
+      Value<String?> zonesGeoJson,
       Value<bool> isPublic,
       Value<bool> joinApproval,
       Value<String?> adminRootKey,
@@ -6335,6 +6463,11 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<String> get aoiGeoJson => $composableBuilder(
     column: $table.aoiGeoJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get zonesGeoJson => $composableBuilder(
+    column: $table.zonesGeoJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6533,6 +6666,11 @@ class $$GroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get zonesGeoJson => $composableBuilder(
+    column: $table.zonesGeoJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isPublic => $composableBuilder(
     column: $table.isPublic,
     builder: (column) => ColumnOrderings(column),
@@ -6642,6 +6780,11 @@ class $$GroupsTableAnnotationComposer
 
   GeneratedColumn<String> get aoiGeoJson => $composableBuilder(
     column: $table.aoiGeoJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get zonesGeoJson => $composableBuilder(
+    column: $table.zonesGeoJson,
     builder: (column) => column,
   );
 
@@ -6825,6 +6968,7 @@ class $$GroupsTableTableManager
                 Value<String> createdBy = const Value.absent(),
                 Value<String> encKey = const Value.absent(),
                 Value<String?> aoiGeoJson = const Value.absent(),
+                Value<String?> zonesGeoJson = const Value.absent(),
                 Value<bool> isPublic = const Value.absent(),
                 Value<bool> joinApproval = const Value.absent(),
                 Value<String?> adminRootKey = const Value.absent(),
@@ -6849,6 +6993,7 @@ class $$GroupsTableTableManager
                 createdBy: createdBy,
                 encKey: encKey,
                 aoiGeoJson: aoiGeoJson,
+                zonesGeoJson: zonesGeoJson,
                 isPublic: isPublic,
                 joinApproval: joinApproval,
                 adminRootKey: adminRootKey,
@@ -6875,6 +7020,7 @@ class $$GroupsTableTableManager
                 required String createdBy,
                 required String encKey,
                 Value<String?> aoiGeoJson = const Value.absent(),
+                Value<String?> zonesGeoJson = const Value.absent(),
                 Value<bool> isPublic = const Value.absent(),
                 Value<bool> joinApproval = const Value.absent(),
                 Value<String?> adminRootKey = const Value.absent(),
@@ -6899,6 +7045,7 @@ class $$GroupsTableTableManager
                 createdBy: createdBy,
                 encKey: encKey,
                 aoiGeoJson: aoiGeoJson,
+                zonesGeoJson: zonesGeoJson,
                 isPublic: isPublic,
                 joinApproval: joinApproval,
                 adminRootKey: adminRootKey,
@@ -7385,6 +7532,7 @@ typedef $$GroupMembersTableCreateCompanionBuilder =
       required String profileId,
       Value<String> role,
       Value<DateTime> joinedAt,
+      Value<String?> assignedZoneId,
       Value<int> rowid,
     });
 typedef $$GroupMembersTableUpdateCompanionBuilder =
@@ -7393,6 +7541,7 @@ typedef $$GroupMembersTableUpdateCompanionBuilder =
       Value<String> profileId,
       Value<String> role,
       Value<DateTime> joinedAt,
+      Value<String?> assignedZoneId,
       Value<int> rowid,
     });
 
@@ -7451,6 +7600,11 @@ class $$GroupMembersTableFilterComposer
 
   ColumnFilters<DateTime> get joinedAt => $composableBuilder(
     column: $table.joinedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assignedZoneId => $composableBuilder(
+    column: $table.assignedZoneId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7520,6 +7674,11 @@ class $$GroupMembersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get assignedZoneId => $composableBuilder(
+    column: $table.assignedZoneId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GroupsTableOrderingComposer get groupId {
     final $$GroupsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -7581,6 +7740,11 @@ class $$GroupMembersTableAnnotationComposer
 
   GeneratedColumn<DateTime> get joinedAt =>
       $composableBuilder(column: $table.joinedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get assignedZoneId => $composableBuilder(
+    column: $table.assignedZoneId,
+    builder: (column) => column,
+  );
 
   $$GroupsTableAnnotationComposer get groupId {
     final $$GroupsTableAnnotationComposer composer = $composerBuilder(
@@ -7661,12 +7825,14 @@ class $$GroupMembersTableTableManager
                 Value<String> profileId = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 Value<DateTime> joinedAt = const Value.absent(),
+                Value<String?> assignedZoneId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupMembersCompanion(
                 groupId: groupId,
                 profileId: profileId,
                 role: role,
                 joinedAt: joinedAt,
+                assignedZoneId: assignedZoneId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7675,12 +7841,14 @@ class $$GroupMembersTableTableManager
                 required String profileId,
                 Value<String> role = const Value.absent(),
                 Value<DateTime> joinedAt = const Value.absent(),
+                Value<String?> assignedZoneId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupMembersCompanion.insert(
                 groupId: groupId,
                 profileId: profileId,
                 role: role,
                 joinedAt: joinedAt,
+                assignedZoneId: assignedZoneId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

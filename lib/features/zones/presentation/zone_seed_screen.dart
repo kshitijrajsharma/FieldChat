@@ -1,0 +1,220 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/features/export/geojson.dart';
+import 'package:hulaki/features/zones/domain/zone.dart';
+import 'package:hulaki/features/zones/domain/zone_partition.dart';
+import 'package:hulaki/features/zones/presentation/zone_manage_screen.dart';
+import 'package:hulaki/l10n/app_localizations.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+/// Drop a seed where each team starts; the area partitions to the nearest seed.
+/// Returns the resulting zones, or null if backed out. Live-previews the split
+/// as seeds are added.
+class ZoneSeedScreen extends StatefulWidget {
+  const ZoneSeedScreen({required this.aoiGeoJson, super.key});
+
+  final String aoiGeoJson;
+
+  static const _styleUrl =
+      'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+
+  @override
+  State<ZoneSeedScreen> createState() => _ZoneSeedScreenState();
+}
+
+class _ZoneSeedScreenState extends State<ZoneSeedScreen> {
+  MapLibreMapController? _controller;
+  final List<LatLng> _seeds = [];
+
+  List<Zone> _split() => _seeds.length < 2
+      ? const []
+      : seedSplit(
+          widget.aoiGeoJson,
+          [
+            for (final s in _seeds) [s.longitude, s.latitude],
+          ],
+          palette: zoneColorPalette(),
+        );
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.zoneSeedTitle),
+        actions: [
+          if (_seeds.isNotEmpty)
+            TextButton(onPressed: _undo, child: Text(l10n.groupUndo)),
+        ],
+      ),
+      body: Stack(
+        children: [
+          MapLibreMap(
+            styleString: ZoneSeedScreen._styleUrl,
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(27.7051, 85.3051),
+              zoom: 13,
+            ),
+            onMapCreated: (controller) => _controller = controller,
+            onStyleLoadedCallback: () => unawaited(_onStyleLoaded()),
+            onMapClick: _onTap,
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x22000000), blurRadius: 6),
+                    ],
+                  ),
+                  child: Text(
+                    _seeds.length < 2
+                        ? l10n.zoneSeedHint
+                        : l10n.zoneSeedCount(_seeds.length),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _seeds.length >= 2 ? _use : null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.ink,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(l10n.zoneUseSplit),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onStyleLoaded() async {
+    final controller = _controller;
+    if (controller == null) return;
+    await controller.addGeoJsonSource(
+      'aoi',
+      jsonDecode(widget.aoiGeoJson) as Map<String, dynamic>,
+    );
+    await controller.addLineLayer(
+      'aoi',
+      'aoi-line',
+      const LineLayerProperties(lineColor: '#E0922A', lineWidth: 1.5),
+    );
+    await controller.addGeoJsonSource('zones-preview', _empty());
+    await controller.addLineLayer(
+      'zones-preview',
+      'zones-preview-line',
+      const LineLayerProperties(
+        lineColor: [Expressions.get, 'lineColor'],
+        lineWidth: 2,
+      ),
+    );
+    await controller.addGeoJsonSource('seeds', _empty());
+    await controller.addCircleLayer(
+      'seeds',
+      'seeds-dots',
+      const CircleLayerProperties(
+        circleColor: '#15181B',
+        circleStrokeColor: '#ffffff',
+        circleStrokeWidth: 2,
+        circleRadius: 6,
+      ),
+    );
+
+    final bounds = aoiBounds(widget.aoiGeoJson);
+    if (bounds != null) {
+      await controller.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          LatLngBounds(
+            southwest: LatLng(bounds[1], bounds[0]),
+            northeast: LatLng(bounds[3], bounds[2]),
+          ),
+          left: 40,
+          right: 40,
+          top: 80,
+          bottom: 160,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onTap(Point<double> point, LatLng latLng) async {
+    setState(() => _seeds.add(latLng));
+    await _redraw();
+  }
+
+  void _undo() {
+    if (_seeds.isEmpty) return;
+    setState(_seeds.removeLast);
+    unawaited(_redraw());
+  }
+
+  Future<void> _redraw() async {
+    final controller = _controller;
+    if (controller == null) return;
+    await controller.setGeoJsonSource('seeds', _seedsFeatures());
+    await controller.setGeoJsonSource('zones-preview', _previewFeatures());
+  }
+
+  void _use() => Navigator.of(context).pop(_split());
+
+  Map<String, dynamic> _seedsFeatures() => {
+    'type': 'FeatureCollection',
+    'features': [
+      for (final s in _seeds)
+        {
+          'type': 'Feature',
+          'properties': <String, dynamic>{},
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [s.longitude, s.latitude],
+          },
+        },
+    ],
+  };
+
+  Map<String, dynamic> _previewFeatures() => {
+    'type': 'FeatureCollection',
+    'features': [
+      for (final zone in _split())
+        {
+          'type': 'Feature',
+          'properties': {'lineColor': _hex(zone.colorValue)},
+          'geometry': {
+            'type': 'MultiPolygon',
+            'coordinates': [
+              for (final ring in zone.pieces) [ring],
+            ],
+          },
+        },
+    ],
+  };
+
+  Map<String, dynamic> _empty() => {
+    'type': 'FeatureCollection',
+    'features': <dynamic>[],
+  };
+
+  String _hex(int argb) =>
+      '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+}

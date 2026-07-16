@@ -22,6 +22,7 @@ import 'package:hulaki/features/sync/blob_store.dart';
 import 'package:hulaki/features/sync/in_memory_transport.dart';
 import 'package:hulaki/features/sync/message_transport.dart';
 import 'package:hulaki/features/sync/sync_service.dart';
+import 'package:hulaki/features/zones/domain/zone.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// The message relay. In-memory today; swapped for the Supabase-backed
@@ -205,4 +206,38 @@ final isGroupAdminProvider = Provider.family<bool, String>((ref, groupId) {
       const <GroupMemberView>[];
   final selfId = ref.watch(currentUserIdProvider);
   return members.any((m) => m.profileId == selfId && m.isAdmin);
+});
+
+/// The group's zones, empty when unsplit. The feature keys off this being
+/// non-empty, so it stays invisible until an admin sets it up.
+// ignore: specify_nonobvious_property_types
+final zonesProvider = StreamProvider.family<List<Zone>, String>(
+  (ref, groupId) => ref
+      .watch(databaseProvider)
+      .watchGroupById(groupId)
+      .map((group) => zonesFromGeoJson(group?.zonesGeoJson)),
+);
+
+/// The zone this device picked, resolved against the current split. Null when
+/// unassigned or when the picked zone no longer exists after a re-split.
+// ignore: specify_nonobvious_property_types
+final myAssignedZoneProvider = Provider.family<Zone?, String>((ref, groupId) {
+  final zones = ref.watch(zonesProvider(groupId)).asData?.value ?? const [];
+  if (zones.isEmpty) return null;
+  final selfId = ref.watch(currentUserIdProvider);
+  final members =
+      ref.watch(groupMembersProvider(groupId)).asData?.value ??
+      const <GroupMemberView>[];
+  String? assignedId;
+  for (final member in members) {
+    if (member.profileId == selfId) {
+      assignedId = member.assignedZoneId;
+      break;
+    }
+  }
+  if (assignedId == null) return null;
+  for (final zone in zones) {
+    if (zone.id == assignedId) return zone;
+  }
+  return null;
 });
