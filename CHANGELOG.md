@@ -1,3 +1,9 @@
+## v0.0.16 (2026-07-16)
+
+### Fix
+
+- **mapping**: set mapping area WITH SEEDS
+
 ## v0.0.15 (2026-07-16)
 
 ### Feat
