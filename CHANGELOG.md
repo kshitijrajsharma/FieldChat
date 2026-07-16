@@ -1,3 +1,9 @@
+## v0.0.18 (2026-07-16)
+
+### Fix
+
+- **export**: fix the export snapshot and refresh option
+
 ## v0.0.17 (2026-07-16)
 
 ### Fix
