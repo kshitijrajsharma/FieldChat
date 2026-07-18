@@ -1544,7 +1544,7 @@
   "@groupRequireApproval": {
     "description": "Switch that gates joining a public group behind admin approval"
   },
-  "groupRequireApprovalDetail": "People request access; an admin approves",
+  "groupRequireApprovalDetail": "An admin approves each joiner",
   "@groupRequireApprovalDetail": {
     "description": "Explains the join approval switch"
   },
@@ -1552,7 +1552,7 @@
   "@groupAllowMemberExport": {
     "description": "Switch that lets members, not only admins, export the group data"
   },
-  "groupAllowMemberExportDetail": "Members can download the data, not just admins",
+  "groupAllowMemberExportDetail": "Members can download the data",
   "@groupAllowMemberExportDetail": {
     "description": "Explains the member export switch"
   },
@@ -1560,7 +1560,7 @@
   "@groupAllowMemberPlace": {
     "description": "Switch that lets members place points anywhere on the map"
   },
-  "groupAllowMemberPlaceDetail": "Off means members can only send their live GPS point",
+  "groupAllowMemberPlaceDetail": "Off: members send only live GPS",
   "@groupAllowMemberPlaceDetail": {
     "description": "Explains the member point placement switch"
   },
@@ -1568,7 +1568,7 @@
   "@groupAllowMemberTags": {
     "description": "Switch that lets members edit the group's quick tags"
   },
-  "groupAllowMemberTagsDetail": "Off means only admins change the quick tags",
+  "groupAllowMemberTagsDetail": "Off: only admins edit tags",
   "@groupAllowMemberTagsDetail": {
     "description": "Explains the member tag editing switch"
   },
@@ -1576,7 +1576,7 @@
   "@groupAllowOutsideArea": {
     "description": "Switch that allows sending points beyond the mapping area"
   },
-  "groupAllowOutsideAreaDetail": "Off blocks sending beyond the mapping area",
+  "groupAllowOutsideAreaDetail": "Off: no points outside the area",
   "@groupAllowOutsideAreaDetail": {
     "description": "Explains the outside area switch"
   },
@@ -1597,11 +1597,11 @@
       }
     }
   },
-  "groupGpsLimitOffDetail": "Off. Send at any GPS accuracy",
+  "groupGpsLimitOffDetail": "Any accuracy",
   "@groupGpsLimitOffDetail": {
     "description": "Subtitle of the GPS accuracy row when no cap is set"
   },
-  "groupGpsLimitDetail": "Block points less accurate than ±{meters} m",
+  "groupGpsLimitDetail": "Min accuracy ±{meters} m",
   "@groupGpsLimitDetail": {
     "description": "Subtitle of the GPS accuracy row when a cap is set",
     "placeholders": {
@@ -1614,7 +1614,7 @@
   "@groupReach": {
     "description": "Heading for the control that lists the group publicly"
   },
-  "groupReachDetail": "Private stays hidden. Nearby lists it on the map within 25 km. Everyone lists it in the worldwide feed.",
+  "groupReachDetail": "Who can find this group",
   "@groupReachDetail": {
     "description": "Explains the three discovery options"
   },
@@ -1670,21 +1670,9 @@
   "@groupDeleteAction": {
     "description": "Confirm button that deletes the group"
   },
-  "groupEditMappingArea": "Edit mapping area",
-  "@groupEditMappingArea": {
-    "description": "Row that redraws an existing mapping area"
-  },
-  "groupEditMappingAreaDetail": "Redraw the mapping area on the map",
-  "@groupEditMappingAreaDetail": {
-    "description": "Subtitle of the row that redraws an existing mapping area"
-  },
   "groupSetMappingArea": "Set mapping area",
   "@groupSetMappingArea": {
     "description": "Row that draws a mapping area for the first time"
-  },
-  "groupSetMappingAreaDetail": "Draw the mapping area on the map",
-  "@groupSetMappingAreaDetail": {
-    "description": "Subtitle of the row that draws a mapping area for the first time"
   },
   "groupMakeOffline": "Make available offline",
   "@groupMakeOffline": {
@@ -1862,7 +1850,7 @@
   "@groupAllowChatMode": {
     "description": "Group setting: enable chat mode for the group"
   },
-  "groupAllowChatModeDetail": "Let members switch a thread to plain messages with no tag or location.",
+  "groupAllowChatModeDetail": "Plain messages, no tag or location",
   "@groupAllowChatModeDetail": {
     "description": "Group setting subtitle for chat mode"
   },
@@ -1870,7 +1858,7 @@
   "@groupRequireZone": {
     "description": "Group setting: mappers must select a zone before mapping"
   },
-  "groupRequireZoneDetail": "Everyone must pick a zone before dropping points, so coverage is never unassigned.",
+  "groupRequireZoneDetail": "Everyone picks a zone before mapping",
   "@groupRequireZoneDetail": {
     "description": "Group setting subtitle for requiring a zone"
   },
@@ -1882,9 +1870,9 @@
   "@tourSkip": {
     "description": "Guided tour: dismiss the tour early"
   },
-  "groupShareWebTitle": "Share to web",
-  "@groupShareWebTitle": {
-    "description": "Manage row that opens the web sharing sheet"
+  "groupPublish": "Publish",
+  "@groupPublish": {
+    "description": "Admin row that publishes a read-only web link"
   },
   "groupShareWebDetail": "A read-only link to view and download",
   "@groupShareWebDetail": {

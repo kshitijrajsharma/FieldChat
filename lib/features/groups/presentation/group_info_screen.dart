@@ -506,8 +506,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
               const SizedBox(height: AppSpacing.lg),
               _ManageCard(
                 caching: _caching,
-                canExport: iAmAdmin || group.allowMemberExport,
-                exportForEveryone: group.allowMemberExport,
+                memberExport: !iAmAdmin && group.allowMemberExport,
                 onEditHotKeys: () => _editHotKeys(
                   context,
                   ref,
@@ -521,12 +520,6 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
                   builder: (_) => ExportSheet(group: group),
-                ),
-                onShareWeb: () => showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => ShareWebSheet(group: group),
                 ),
               ),
               if (iAmAdmin && group.isPublic && group.joinApproval) ...[
@@ -564,11 +557,23 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
                   onEditGpsLimit: () => unawaited(
                     _editGpsLimit(group.id, group.gpsLimitM, l10n),
                   ),
+                  reach: group.isPublic ? group.scope : 'private',
+                  onExport: () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => ExportSheet(group: group),
+                  ),
+                  onSetReach: (reach) => _setReach(group.id, reach, l10n),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 _AdminCard(
-                  reach: group.isPublic ? group.scope : 'private',
-                  onSetReach: (reach) => _setReach(group.id, reach, l10n),
+                  onPublish: () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => ShareWebSheet(group: group),
+                  ),
                   onArchive: () => _archive(group.id),
                   onDelete: () => _delete(group.id, group.name, l10n),
                 ),
@@ -812,6 +817,7 @@ class _ModerationCard extends StatefulWidget {
     required this.allowChatMode,
     required this.requireZone,
     required this.gpsLimitM,
+    required this.reach,
     required this.onToggleApproval,
     required this.onToggleMemberExport,
     required this.onToggleMemberPlace,
@@ -820,6 +826,8 @@ class _ModerationCard extends StatefulWidget {
     required this.onToggleChatMode,
     required this.onToggleRequireZone,
     required this.onEditGpsLimit,
+    required this.onExport,
+    required this.onSetReach,
   });
 
   final bool isPublic;
@@ -833,6 +841,9 @@ class _ModerationCard extends StatefulWidget {
   final bool allowChatMode;
   final bool requireZone;
   final int? gpsLimitM;
+
+  /// 'private', 'local' or 'global'.
+  final String reach;
   final ValueChanged<bool> onToggleApproval;
   final ValueChanged<bool> onToggleMemberExport;
   final ValueChanged<bool> onToggleMemberPlace;
@@ -841,6 +852,8 @@ class _ModerationCard extends StatefulWidget {
   final ValueChanged<bool> onToggleChatMode;
   final ValueChanged<bool> onToggleRequireZone;
   final VoidCallback onEditGpsLimit;
+  final VoidCallback onExport;
+  final ValueChanged<String> onSetReach;
 
   @override
   State<_ModerationCard> createState() => _ModerationCardState();
@@ -981,6 +994,72 @@ class _ModerationCardState extends State<_ModerationCard> {
                 ),
                 onTap: widget.onEditGpsLimit,
               ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  Icons.download_outlined,
+                  color: AppColors.ink,
+                ),
+                title: Text(l10n.groupExportTitle),
+                subtitle: Text(
+                  widget.allowMemberExport
+                      ? l10n.groupExportEveryoneDetail
+                      : l10n.groupExportAdminsOnlyDetail,
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textFaint,
+                ),
+                onTap: widget.onExport,
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.travel_explore_outlined,
+                          color: AppColors.ink,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Text(
+                          l10n.groupReach,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      l10n.groupReachDetail,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SegmentedButton<String>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: 'private',
+                          label: Text(l10n.groupReachPrivate),
+                        ),
+                        ButtonSegment(
+                          value: 'local',
+                          label: Text(l10n.groupReachNearby),
+                        ),
+                        ButtonSegment(
+                          value: 'global',
+                          label: Text(l10n.groupReachEveryone),
+                        ),
+                      ],
+                      selected: {widget.reach},
+                      onSelectionChanged: (selection) =>
+                          widget.onSetReach(selection.first),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ],
         ),
@@ -991,15 +1070,12 @@ class _ModerationCardState extends State<_ModerationCard> {
 
 class _AdminCard extends StatelessWidget {
   const _AdminCard({
-    required this.reach,
-    required this.onSetReach,
+    required this.onPublish,
     required this.onArchive,
     required this.onDelete,
   });
 
-  /// 'private', 'local' or 'global'.
-  final String reach;
-  final ValueChanged<String> onSetReach;
+  final VoidCallback onPublish;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
 
@@ -1016,49 +1092,15 @@ class _AdminCard extends StatelessWidget {
         color: AppColors.white,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.public, color: AppColors.ink),
-                      const SizedBox(width: AppSpacing.md),
-                      Text(
-                        l10n.groupReach,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    l10n.groupReachDetail,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SegmentedButton<String>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment(
-                        value: 'private',
-                        label: Text(l10n.groupReachPrivate),
-                      ),
-                      ButtonSegment(
-                        value: 'local',
-                        label: Text(l10n.groupReachNearby),
-                      ),
-                      ButtonSegment(
-                        value: 'global',
-                        label: Text(l10n.groupReachEveryone),
-                      ),
-                    ],
-                    selected: {reach},
-                    onSelectionChanged: (selection) =>
-                        onSetReach(selection.first),
-                  ),
-                ],
+            ListTile(
+              leading: const Icon(Icons.public, color: AppColors.ink),
+              title: Text(l10n.groupPublish),
+              subtitle: Text(l10n.groupShareWebDetail),
+              trailing: const Icon(
+                Icons.chevron_right,
+                color: AppColors.textFaint,
               ),
+              onTap: onPublish,
             ),
             const Divider(height: 1),
             ListTile(
@@ -1703,21 +1745,20 @@ class _AreaCard extends StatelessWidget {
 class _ManageCard extends StatelessWidget {
   const _ManageCard({
     required this.caching,
-    required this.canExport,
-    required this.exportForEveryone,
+    required this.memberExport,
     required this.onEditHotKeys,
     required this.onMakeOffline,
     required this.onExport,
-    required this.onShareWeb,
   });
 
   final bool caching;
-  final bool canExport;
-  final bool exportForEveryone;
+
+  /// A non-admin the group allows to export sees the export row here; an admin
+  /// reaches export from Moderation instead.
+  final bool memberExport;
   final VoidCallback onEditHotKeys;
   final VoidCallback onMakeOffline;
   final VoidCallback onExport;
-  final VoidCallback onShareWeb;
 
   @override
   Widget build(BuildContext context) {
@@ -1758,7 +1799,7 @@ class _ManageCard extends StatelessWidget {
                   : const Icon(Icons.chevron_right, color: AppColors.textFaint),
               onTap: caching ? null : onMakeOffline,
             ),
-            if (canExport) ...[
+            if (memberExport) ...[
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(
@@ -1766,27 +1807,12 @@ class _ManageCard extends StatelessWidget {
                   color: AppColors.ink,
                 ),
                 title: Text(l10n.groupExportTitle),
-                subtitle: Text(
-                  exportForEveryone
-                      ? l10n.groupExportEveryoneDetail
-                      : l10n.groupExportAdminsOnlyDetail,
-                ),
+                subtitle: Text(l10n.groupExportEveryoneDetail),
                 trailing: const Icon(
                   Icons.chevron_right,
                   color: AppColors.textFaint,
                 ),
                 onTap: onExport,
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.public, color: AppColors.ink),
-                title: Text(l10n.groupShareWebTitle),
-                subtitle: Text(l10n.groupShareWebDetail),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.textFaint,
-                ),
-                onTap: onShareWeb,
               ),
             ],
           ],
