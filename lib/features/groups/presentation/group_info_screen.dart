@@ -47,6 +47,10 @@ class GroupInfoScreen extends ConsumerStatefulWidget {
 class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
   final _picker = ImagePicker();
   late Future<Group?> _groupFuture = _loadGroup();
+
+  /// The last loaded group, shown while a reload is in flight so a setting
+  /// change does not flash a spinner and collapse the expanded cards.
+  Group? _lastGroup;
   bool _caching = false;
   bool _saving = false;
 
@@ -466,10 +470,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       body: FutureBuilder<Group?>(
         future: _groupFuture,
         builder: (context, snapshot) {
-          final group = snapshot.data;
+          final group = snapshot.data ?? _lastGroup;
           if (group == null) {
             return const Center(child: CircularProgressIndicator());
           }
+          _lastGroup = group;
           final members =
               ref.watch(groupMembersProvider(group.id)).asData?.value ??
               const <GroupMemberView>[];

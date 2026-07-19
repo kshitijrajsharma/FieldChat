@@ -18,6 +18,10 @@ A *hulaki* stands for a mail runner: the postman who carried message letters on 
   offline use.
 - **Track**: a 24 hour local breadcrumb, purged as it ages.
 
+## Design
+
+Ink-led and near-neutral, with amber reserved for GPS. Colour tokens live in `lib/design/app_colors.dart`; the palette, feedback, and web mirroring are documented in [docs/DESIGN.md](docs/DESIGN.md).
+
 ## Translations
 
 English, Arabic, German, Spanish, French, Portuguese and Nepali. A language is a file in `lib/l10n`, see [docs/TRANSLATING.md](docs/TRANSLATING.md).

@@ -27,14 +27,11 @@ abstract final class AppColors {
   static const Color gpsGood = Color(0xFF3E8E5A);
   static const Color danger = Color(0xFFC0392B);
 
-  // Feedback: a very faint tinted surface with ink text and no icon, plus a
-  // thin left edge in a soft accent (success or dangerSoft) as the only firm
-  // signal. Kept soft for the light house style; amber is never used here, and
-  // the stronger danger red stays reserved for destructive actions.
+  // Feedback: a white surface with plain ink text and no icon, plus a thin left
+  // edge in a soft accent (success or dangerSoft) as the only colour. Amber is
+  // never used here, and the stronger danger red stays for destructive actions.
   static const Color success = Color(0xFF2F7A50);
   static const Color dangerSoft = Color(0xFFBC4436);
-  static const Color successSurface = Color(0xFFF1F7F4);
-  static const Color dangerSurface = Color(0xFFFBF4F2);
 }
 
 /// Hot-key tag colours. Each tag carries one of these as its dot and pin
