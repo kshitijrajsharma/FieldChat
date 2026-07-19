@@ -18,9 +18,9 @@ A *hulaki* stands for a mail runner: the postman who carried message letters on 
   offline use.
 - **Track**: a 24 hour local breadcrumb, purged as it ages.
 
-## Languages
+## Translations
 
-English, Spanish, French and Portuguese. A language is a file in `lib/l10n`, see [docs/TRANSLATING.md](docs/TRANSLATING.md).
+English, Arabic, German, Spanish, French, Portuguese and Nepali. A language is a file in `lib/l10n`, see [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 ## Requirements
 
@@ -35,6 +35,10 @@ The app reads `SUPABASE_URL` and `SUPABASE_ANON_KEY` from `--dart-define`. With
 both absent it falls back to an in-memory relay, so tests and keyless local runs
 need no backend.
 
-## Licence
+## License
 
 AGPL-3.0.
+
+## AI use
+
+AI-assisted coding was used, and the translations were produced with an LLM subject to human review.

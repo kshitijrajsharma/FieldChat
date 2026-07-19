@@ -7,6 +7,7 @@ import 'package:hulaki/app/deep_link_watcher.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/auth/application/auth_state.dart';
 import 'package:hulaki/features/auth/presentation/username_screen.dart';
+import 'package:hulaki/features/notifications/join_request_watcher.dart';
 import 'package:hulaki/features/onboarding/onboarding_gate.dart';
 import 'package:hulaki/features/onboarding/splash_screen.dart';
 
@@ -24,7 +25,9 @@ class AuthGate extends ConsumerWidget {
       AuthSignedIn() => const ConnectivityWatcher(
         child: BackgroundServiceWatcher(
           child: DeepLinkWatcher(
-            child: OnboardingGate(child: AppShell()),
+            child: JoinRequestWatcher(
+              child: OnboardingGate(child: AppShell()),
+            ),
           ),
         ),
       ),

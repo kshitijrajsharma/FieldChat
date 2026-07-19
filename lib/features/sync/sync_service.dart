@@ -860,6 +860,7 @@ class SyncService {
             requireZone: Value(
               meta['requireZone'] as bool? ?? false,
             ),
+            webUrl: Value(meta['webUrl'] as String?),
           ),
           onConflict: DoUpdate(
             (_) => GroupsCompanion(
@@ -892,6 +893,7 @@ class SyncService {
               requireZone: Value(
                 meta['requireZone'] as bool? ?? false,
               ),
+              webUrl: Value(meta['webUrl'] as String?),
             ),
           ),
         );

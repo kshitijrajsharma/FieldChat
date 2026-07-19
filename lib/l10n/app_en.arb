@@ -916,6 +916,22 @@
   "@discoverRequestSent": {
     "description": "Button label after a join request is sent, before an admin approves"
   },
+  "joinRequestNotifyTitle": "New join request",
+  "@joinRequestNotifyTitle": {
+    "description": "Notification title when someone asks to join an admin's group"
+  },
+  "joinRequestNotifyBody": "{name} asked to join {group}",
+  "@joinRequestNotifyBody": {
+    "description": "Notification body naming the requester and the group",
+    "placeholders": {
+      "name": {"type": "String"},
+      "group": {"type": "String"}
+    }
+  },
+  "joinRequestNotifySomeone": "Someone",
+  "@joinRequestNotifySomeone": {
+    "description": "Fallback requester name when the join request carries none"
+  },
   "mapBackChat": "Chat",
   "@mapBackChat": {
     "description": "Back control label on the group map when it was opened from the chat thread"
@@ -1420,6 +1436,10 @@
   "groupInviteLinkHeading": "INVITE LINK",
   "@groupInviteLinkHeading": {
     "description": "Heading of the invite link card on the group info screen"
+  },
+  "groupPublishedHeading": "PUBLISHED RESULTS",
+  "@groupPublishedHeading": {
+    "description": "Heading of the published web link card, shown to all members"
   },
   "groupInviteLinkCopied": "Invite link copied",
   "@groupInviteLinkCopied": {

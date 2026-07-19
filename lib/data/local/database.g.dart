@@ -697,6 +697,15 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _webUrlMeta = const VerificationMeta('webUrl');
+  @override
+  late final GeneratedColumn<String> webUrl = GeneratedColumn<String>(
+    'web_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -744,6 +753,7 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     photo,
     photoBlobId,
     photoKey,
+    webUrl,
     createdAt,
     archivedAt,
   ];
@@ -932,6 +942,12 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         photoKey.isAcceptableOrUnknown(data['photo_key']!, _photoKeyMeta),
       );
     }
+    if (data.containsKey('web_url')) {
+      context.handle(
+        _webUrlMeta,
+        webUrl.isAcceptableOrUnknown(data['web_url']!, _webUrlMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1041,6 +1057,10 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         DriftSqlType.string,
         data['${effectivePrefix}photo_key'],
       ),
+      webUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}web_url'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1106,6 +1126,10 @@ class Group extends DataClass implements Insertable<Group> {
   /// synced photo. The bytes themselves live in [photo] once fetched.
   final String? photoBlobId;
   final String? photoKey;
+
+  /// The published web snapshot link, shared to members through group-meta so
+  /// everyone can browse the results. Null when nothing is published.
+  final String? webUrl;
   final DateTime createdAt;
   final DateTime? archivedAt;
   const Group({
@@ -1131,6 +1155,7 @@ class Group extends DataClass implements Insertable<Group> {
     this.photo,
     this.photoBlobId,
     this.photoKey,
+    this.webUrl,
     required this.createdAt,
     this.archivedAt,
   });
@@ -1174,6 +1199,9 @@ class Group extends DataClass implements Insertable<Group> {
     }
     if (!nullToAbsent || photoKey != null) {
       map['photo_key'] = Variable<String>(photoKey);
+    }
+    if (!nullToAbsent || webUrl != null) {
+      map['web_url'] = Variable<String>(webUrl);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || archivedAt != null) {
@@ -1222,6 +1250,9 @@ class Group extends DataClass implements Insertable<Group> {
       photoKey: photoKey == null && nullToAbsent
           ? const Value.absent()
           : Value(photoKey),
+      webUrl: webUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(webUrl),
       createdAt: Value(createdAt),
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
@@ -1257,6 +1288,7 @@ class Group extends DataClass implements Insertable<Group> {
       photo: serializer.fromJson<Uint8List?>(json['photo']),
       photoBlobId: serializer.fromJson<String?>(json['photoBlobId']),
       photoKey: serializer.fromJson<String?>(json['photoKey']),
+      webUrl: serializer.fromJson<String?>(json['webUrl']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
     );
@@ -1287,6 +1319,7 @@ class Group extends DataClass implements Insertable<Group> {
       'photo': serializer.toJson<Uint8List?>(photo),
       'photoBlobId': serializer.toJson<String?>(photoBlobId),
       'photoKey': serializer.toJson<String?>(photoKey),
+      'webUrl': serializer.toJson<String?>(webUrl),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
     };
@@ -1315,6 +1348,7 @@ class Group extends DataClass implements Insertable<Group> {
     Value<Uint8List?> photo = const Value.absent(),
     Value<String?> photoBlobId = const Value.absent(),
     Value<String?> photoKey = const Value.absent(),
+    Value<String?> webUrl = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> archivedAt = const Value.absent(),
   }) => Group(
@@ -1340,6 +1374,7 @@ class Group extends DataClass implements Insertable<Group> {
     photo: photo.present ? photo.value : this.photo,
     photoBlobId: photoBlobId.present ? photoBlobId.value : this.photoBlobId,
     photoKey: photoKey.present ? photoKey.value : this.photoKey,
+    webUrl: webUrl.present ? webUrl.value : this.webUrl,
     createdAt: createdAt ?? this.createdAt,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
   );
@@ -1391,6 +1426,7 @@ class Group extends DataClass implements Insertable<Group> {
           ? data.photoBlobId.value
           : this.photoBlobId,
       photoKey: data.photoKey.present ? data.photoKey.value : this.photoKey,
+      webUrl: data.webUrl.present ? data.webUrl.value : this.webUrl,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
@@ -1423,6 +1459,7 @@ class Group extends DataClass implements Insertable<Group> {
           ..write('photo: $photo, ')
           ..write('photoBlobId: $photoBlobId, ')
           ..write('photoKey: $photoKey, ')
+          ..write('webUrl: $webUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt')
           ..write(')'))
@@ -1453,6 +1490,7 @@ class Group extends DataClass implements Insertable<Group> {
     $driftBlobEquality.hash(photo),
     photoBlobId,
     photoKey,
+    webUrl,
     createdAt,
     archivedAt,
   ]);
@@ -1482,6 +1520,7 @@ class Group extends DataClass implements Insertable<Group> {
           $driftBlobEquality.equals(other.photo, this.photo) &&
           other.photoBlobId == this.photoBlobId &&
           other.photoKey == this.photoKey &&
+          other.webUrl == this.webUrl &&
           other.createdAt == this.createdAt &&
           other.archivedAt == this.archivedAt);
 }
@@ -1509,6 +1548,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<Uint8List?> photo;
   final Value<String?> photoBlobId;
   final Value<String?> photoKey;
+  final Value<String?> webUrl;
   final Value<DateTime> createdAt;
   final Value<DateTime?> archivedAt;
   final Value<int> rowid;
@@ -1535,6 +1575,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.photo = const Value.absent(),
     this.photoBlobId = const Value.absent(),
     this.photoKey = const Value.absent(),
+    this.webUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1562,6 +1603,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     this.photo = const Value.absent(),
     this.photoBlobId = const Value.absent(),
     this.photoKey = const Value.absent(),
+    this.webUrl = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1592,6 +1634,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Expression<Uint8List>? photo,
     Expression<String>? photoBlobId,
     Expression<String>? photoKey,
+    Expression<String>? webUrl,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? archivedAt,
     Expression<int>? rowid,
@@ -1619,6 +1662,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       if (photo != null) 'photo': photo,
       if (photoBlobId != null) 'photo_blob_id': photoBlobId,
       if (photoKey != null) 'photo_key': photoKey,
+      if (webUrl != null) 'web_url': webUrl,
       if (createdAt != null) 'created_at': createdAt,
       if (archivedAt != null) 'archived_at': archivedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1648,6 +1692,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Value<Uint8List?>? photo,
     Value<String?>? photoBlobId,
     Value<String?>? photoKey,
+    Value<String?>? webUrl,
     Value<DateTime>? createdAt,
     Value<DateTime?>? archivedAt,
     Value<int>? rowid,
@@ -1675,6 +1720,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
       photo: photo ?? this.photo,
       photoBlobId: photoBlobId ?? this.photoBlobId,
       photoKey: photoKey ?? this.photoKey,
+      webUrl: webUrl ?? this.webUrl,
       createdAt: createdAt ?? this.createdAt,
       archivedAt: archivedAt ?? this.archivedAt,
       rowid: rowid ?? this.rowid,
@@ -1750,6 +1796,9 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     if (photoKey.present) {
       map['photo_key'] = Variable<String>(photoKey.value);
     }
+    if (webUrl.present) {
+      map['web_url'] = Variable<String>(webUrl.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1787,6 +1836,7 @@ class GroupsCompanion extends UpdateCompanion<Group> {
           ..write('photo: $photo, ')
           ..write('photoBlobId: $photoBlobId, ')
           ..write('photoKey: $photoKey, ')
+          ..write('webUrl: $webUrl, ')
           ..write('createdAt: $createdAt, ')
           ..write('archivedAt: $archivedAt, ')
           ..write('rowid: $rowid')
@@ -6442,6 +6492,7 @@ typedef $$GroupsTableCreateCompanionBuilder =
       Value<Uint8List?> photo,
       Value<String?> photoBlobId,
       Value<String?> photoKey,
+      Value<String?> webUrl,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -6470,6 +6521,7 @@ typedef $$GroupsTableUpdateCompanionBuilder =
       Value<Uint8List?> photo,
       Value<String?> photoBlobId,
       Value<String?> photoKey,
+      Value<String?> webUrl,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
       Value<int> rowid,
@@ -6652,6 +6704,11 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<String> get photoKey => $composableBuilder(
     column: $table.photoKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get webUrl => $composableBuilder(
+    column: $table.webUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6860,6 +6917,11 @@ class $$GroupsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get webUrl => $composableBuilder(
+    column: $table.webUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -6969,6 +7031,9 @@ class $$GroupsTableAnnotationComposer
 
   GeneratedColumn<String> get photoKey =>
       $composableBuilder(column: $table.photoKey, builder: (column) => column);
+
+  GeneratedColumn<String> get webUrl =>
+      $composableBuilder(column: $table.webUrl, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -7108,6 +7173,7 @@ class $$GroupsTableTableManager
                 Value<Uint8List?> photo = const Value.absent(),
                 Value<String?> photoBlobId = const Value.absent(),
                 Value<String?> photoKey = const Value.absent(),
+                Value<String?> webUrl = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -7134,6 +7200,7 @@ class $$GroupsTableTableManager
                 photo: photo,
                 photoBlobId: photoBlobId,
                 photoKey: photoKey,
+                webUrl: webUrl,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,
@@ -7162,6 +7229,7 @@ class $$GroupsTableTableManager
                 Value<Uint8List?> photo = const Value.absent(),
                 Value<String?> photoBlobId = const Value.absent(),
                 Value<String?> photoKey = const Value.absent(),
+                Value<String?> webUrl = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -7188,6 +7256,7 @@ class $$GroupsTableTableManager
                 photo: photo,
                 photoBlobId: photoBlobId,
                 photoKey: photoKey,
+                webUrl: webUrl,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
                 rowid: rowid,

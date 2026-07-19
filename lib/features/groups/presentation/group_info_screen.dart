@@ -30,6 +30,7 @@ import 'package:hulaki/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Manage a group after setup: its cover photo, invite link, hot-keys, area,
 /// offline tiles, and export.
@@ -521,6 +522,10 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
               _InviteLink(
                 link: ref.read(groupServiceProvider).inviteLinkFor(group),
               ),
+              if (group.webUrl != null) ...[
+                const SizedBox(height: AppSpacing.lg),
+                _PublishedLink(url: group.webUrl!),
+              ],
               const SizedBox(height: AppSpacing.lg),
               _QuickTagsCard(
                 onEdit: () => _editHotKeys(
@@ -1226,6 +1231,59 @@ class _InviteLink extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PublishedLink extends StatelessWidget {
+  const _PublishedLink({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: AppColors.mist),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.public, size: 18, color: AppColors.ink),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.groupPublishedHeading,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                Text(
+                  url,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.open_in_new, size: 18),
+            onPressed: () => unawaited(
+              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.share_outlined, size: 18),
+            onPressed: () =>
+                unawaited(SharePlus.instance.share(ShareParams(text: url))),
+          ),
+        ],
       ),
     );
   }

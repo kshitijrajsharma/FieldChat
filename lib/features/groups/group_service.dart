@@ -280,6 +280,7 @@ class GroupService {
         'allowMemberTags': group.allowMemberTags,
         'allowChatMode': group.allowChatMode,
         'requireZone': group.requireZone,
+        'webUrl': group.webUrl,
         'adminRootKey': group.adminRootKey,
         'creatorName': self?.displayName,
         'creatorAgreementKey': self?.agreementKey,
@@ -296,6 +297,15 @@ class GroupService {
         ],
       },
     );
+  }
+
+  /// Shares (or clears) the published web link with members through group-meta,
+  /// so everyone sees it in the group info. Admin-only, enforced on ingest.
+  Future<void> setPublishedUrl(String groupId, String? url) async {
+    await (db.update(db.groups)..where((g) => g.id.equals(groupId))).write(
+      GroupsCompanion(webUrl: Value(url)),
+    );
+    await _publishFullMeta(groupId);
   }
 
   /// Sets or clears the group's cover photo and shares it with members through

@@ -18,6 +18,8 @@ import 'package:hulaki/features/groups/group_service.dart';
 import 'package:hulaki/features/identity/admin_registry.dart';
 import 'package:hulaki/features/identity/device_identity_store.dart';
 import 'package:hulaki/features/identity/identity_crypto.dart';
+import 'package:hulaki/features/notifications/join_request_poller.dart';
+import 'package:hulaki/features/notifications/local_notifications.dart';
 import 'package:hulaki/features/sync/blob_store.dart';
 import 'package:hulaki/features/sync/in_memory_transport.dart';
 import 'package:hulaki/features/sync/message_transport.dart';
@@ -55,6 +57,23 @@ final deviceIdentityProvider = FutureProvider<IdentityKeys>(
 final publicDirectoryProvider = Provider<PublicDirectory>(
   (ref) => InMemoryPublicDirectory(),
 );
+
+/// Local notifications. No-op by default; the platform plugin is wired in from
+/// main so tests and keyless runs stay silent.
+final localNotificationsProvider = Provider<LocalNotifications>(
+  (ref) => const NoopLocalNotifications(),
+);
+
+final joinRequestPollerProvider = Provider<JoinRequestPoller>((ref) {
+  final db = ref.watch(databaseProvider);
+  final directory = ref.watch(publicDirectoryProvider);
+  final userId = ref.watch(currentUserIdProvider);
+  return JoinRequestPoller(
+    adminGroups: () => db.adminApprovalGroups(userId),
+    pending: directory.pendingRequests,
+    seen: SeenRequestStore(ref.watch(sharedPreferencesProvider)),
+  );
+});
 
 /// The server-readable admin set. In-memory today; swapped for the
 /// Supabase-backed registry once the project credentials are wired.

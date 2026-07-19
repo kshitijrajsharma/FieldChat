@@ -8,6 +8,7 @@ import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/discovery/supabase_public_directory.dart';
 import 'package:hulaki/features/export/supabase_snapshot_store.dart';
 import 'package:hulaki/features/identity/supabase_admin_registry.dart';
+import 'package:hulaki/features/notifications/plugin_local_notifications.dart';
 import 'package:hulaki/features/sync/supabase_blob_store.dart';
 import 'package:hulaki/features/sync/supabase_transport.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
@@ -38,6 +39,9 @@ Future<void> main() async {
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(preferences),
+        localNotificationsProvider.overrideWithValue(
+          PluginLocalNotifications(),
+        ),
         if (client != null) ...[
           transportProvider.overrideWith(
             (ref) => SupabaseTransport(

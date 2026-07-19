@@ -37,6 +37,9 @@ class _ShareWebSheetState extends ConsumerState<ShareWebSheet> {
       final url = await ref
           .read(snapshotPublisherProvider)
           .publish(widget.group, now: DateTime.now());
+      await ref
+          .read(groupServiceProvider)
+          .setPublishedUrl(widget.group.id, url);
       await Clipboard.setData(ClipboardData(text: url));
       if (mounted) _toast(AppLocalizations.of(context).shareWebCopied);
     } finally {
@@ -44,8 +47,10 @@ class _ShareWebSheetState extends ConsumerState<ShareWebSheet> {
     }
   }
 
-  Future<void> _revoke(String id) =>
-      ref.read(snapshotPublisherProvider).revoke(id);
+  Future<void> _revoke(String id) async {
+    await ref.read(snapshotPublisherProvider).revoke(id);
+    await ref.read(groupServiceProvider).setPublishedUrl(widget.group.id, null);
+  }
 
   Future<void> _update(WebSnapshot snapshot) async {
     final l10n = AppLocalizations.of(context);
@@ -53,6 +58,9 @@ class _ShareWebSheetState extends ConsumerState<ShareWebSheet> {
       await ref
           .read(snapshotPublisherProvider)
           .update(snapshot, now: DateTime.now());
+      await ref
+          .read(groupServiceProvider)
+          .setPublishedUrl(widget.group.id, snapshot.url);
       if (mounted) setState(() => _updateError = null);
     } on Exception {
       if (mounted) setState(() => _updateError = l10n.shareWebUpdateFailed);

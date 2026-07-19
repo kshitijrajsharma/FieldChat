@@ -76,6 +76,10 @@ class Groups extends Table {
   /// synced photo. The bytes themselves live in [photo] once fetched.
   TextColumn get photoBlobId => text().nullable()();
   TextColumn get photoKey => text().nullable()();
+
+  /// The published web snapshot link, shared to members through group-meta so
+  /// everyone can browse the results. Null when nothing is published.
+  TextColumn get webUrl => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get archivedAt => dateTime().nullable()();
 
@@ -214,8 +218,8 @@ class SyncCursors extends Table {
 }
 
 /// A published web snapshot, tracked locally so its author can re-share or
-/// revoke it later. The url holds the per-link key, so it never leaves the
-/// device; only the encrypted snapshot itself reaches the server.
+/// revoke it later. The url holds the per-link key; the server only ever stores
+/// the encrypted snapshot. The link is shared with members through group-meta.
 class WebSnapshots extends Table {
   TextColumn get id => text()();
   TextColumn get groupId => text()();
@@ -251,7 +255,7 @@ class LocalDatabase extends _$LocalDatabase {
     : super(executor ?? driftDatabase(name: 'hulaki'));
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -322,6 +326,9 @@ class LocalDatabase extends _$LocalDatabase {
       }
       if (from < 19) {
         await m.addColumn(webSnapshots, webSnapshots.updatedAt);
+      }
+      if (from < 20) {
+        await m.addColumn(groups, groups.webUrl);
       }
     },
   );
@@ -416,6 +423,26 @@ class LocalDatabase extends _$LocalDatabase {
 
   Future<List<Group>> activeGroups() =>
       (select(groups)..where((g) => g.archivedAt.isNull())).get();
+
+  /// Public, approval-gated groups this device administers, so join requests
+  /// can be polled only where this device is the one who approves them.
+  Future<List<Group>> adminApprovalGroups(String userId) async {
+    final query =
+        select(groups).join([
+          innerJoin(
+            groupMembers,
+            groupMembers.groupId.equalsExp(groups.id) &
+                groupMembers.profileId.equals(userId) &
+                groupMembers.role.equals('admin'),
+          ),
+        ])..where(
+          groups.archivedAt.isNull() &
+              groups.isPublic.equals(true) &
+              groups.joinApproval.equals(true),
+        );
+    final rows = await query.get();
+    return [for (final row in rows) row.readTable(groups)];
+  }
 
   Stream<List<Group>> watchActiveGroups() =>
       (select(groups)
