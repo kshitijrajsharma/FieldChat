@@ -1,3 +1,9 @@
+## v0.0.20 (2026-07-19)
+
+### Fix
+
+- **add-demo-group-non-admin-option**: fix the clear bug on the boundary
+
 ## v0.0.19 (2026-07-18)
 
 ### Fix
