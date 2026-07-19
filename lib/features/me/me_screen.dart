@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/providers.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/auth/application/auth_state.dart';
@@ -41,11 +42,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
   /// Confirms a saved preference so every change is acknowledged.
   void _saved() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).commonSaved)),
-      );
+    context.showSuccess(AppLocalizations.of(context).commonSaved);
   }
 
   Future<void> _setUnits(UnitSystem value) async {
@@ -96,9 +93,7 @@ class _MeScreenState extends ConsumerState<MeScreen> {
   Future<void> _openLink(Uri uri, String failureMessage) async {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failureMessage)));
+      context.showError(failureMessage);
     }
   }
 

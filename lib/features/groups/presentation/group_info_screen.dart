@@ -9,6 +9,7 @@ import 'package:hulaki/core/image_thumbnail.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/discovery/listing_publisher.dart';
@@ -79,11 +80,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
   /// silently, so every edit is acknowledged.
   void _saved() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).commonSaved)),
-      );
+    context.showSuccess(AppLocalizations.of(context).commonSaved);
   }
 
   Future<void> _editPhoto() async {
@@ -112,29 +109,15 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
         group.id,
       );
       if (bounds == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.groupNeedAreaOrPoints),
-            ),
-          );
-        }
+        if (mounted) context.showError(l10n.groupNeedAreaOrPoints);
         return;
       }
       await ref
           .read(offlineDownloadsProvider.notifier)
           .start(groupId: group.id, groupName: group.name, bounds: bounds);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupOfflineAreaSaved)),
-        );
-      }
+      if (mounted) context.showSuccess(l10n.groupOfflineAreaSaved);
     } on PlatformException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupOfflineDownloadFailed)),
-        );
-      }
+      if (mounted) context.showError(l10n.groupOfflineDownloadFailed);
     } finally {
       if (mounted) setState(() => _caching = false);
     }
@@ -242,9 +225,11 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final identity = await ref.read(deviceIdentityProvider.future);
     await ref.read(groupServiceProvider).acceptAdmin(groupId, identity);
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.groupNowAdmin)),
-    );
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        feedbackSnackBar(l10n.groupNowAdmin, FeedbackKind.success),
+      );
   }
 
   Future<void> _setReach(
@@ -269,11 +254,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
     if (reach == 'local') {
       center = await _groupCenter(groupId, group.aoiGeoJson);
       if (center == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.groupNeedAreaBeforePublic)),
-          );
-        }
+        if (mounted) context.showError(l10n.groupNeedAreaBeforePublic);
         return;
       }
     }
@@ -378,11 +359,7 @@ class _GroupInfoScreenState extends ConsumerState<GroupInfoScreen> {
       await ref.read(groupServiceProvider).setMappingArea(groupId, geoJson);
       await refreshPublicListing(ref, groupId);
       _reload();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupBoundarySaved)),
-        );
-      }
+      if (mounted) context.showSuccess(l10n.groupBoundarySaved);
     });
   }
 
@@ -679,11 +656,7 @@ Future<void> _editHotKeys(
   );
   if (result == null) return;
   await ref.read(groupServiceProvider).updateHotKeys(groupId, result);
-  if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.groupQuickTagsUpdated)),
-    );
-  }
+  if (context.mounted) context.showSuccess(l10n.groupQuickTagsUpdated);
 }
 
 /// The group's photo, name and description. An admin edits the name and
@@ -1183,9 +1156,7 @@ class _InviteLink extends StatelessWidget {
             icon: const Icon(Icons.copy_outlined, size: 18),
             onPressed: () {
               unawaited(Clipboard.setData(ClipboardData(text: link)));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.groupInviteLinkCopied)),
-              );
+              context.showInfo(l10n.groupInviteLinkCopied);
             },
           ),
           IconButton(
@@ -1338,15 +1309,19 @@ class _MembersCard extends ConsumerWidget {
     final invited = await ref
         .read(groupServiceProvider)
         .inviteAdmin(groupId, member.profileId, identity);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          invited
-              ? l10n.groupAdminInviteSent(member.name)
-              : l10n.groupMemberHasNoIdentity(member.name),
-        ),
-      ),
-    );
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        invited
+            ? feedbackSnackBar(
+                l10n.groupAdminInviteSent(member.name),
+                FeedbackKind.success,
+              )
+            : feedbackSnackBar(
+                l10n.groupMemberHasNoIdentity(member.name),
+                FeedbackKind.error,
+              ),
+      );
   }
 
   @override

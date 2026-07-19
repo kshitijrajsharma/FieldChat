@@ -9,6 +9,7 @@ import 'package:hulaki/core/time_format.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/design/widgets/hot_key_chip.dart';
 import 'package:hulaki/design/widgets/info_dot.dart';
@@ -184,9 +185,11 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(syncServiceProvider).resync(widget.groupId);
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.threadUpToDate)),
-      );
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          feedbackSnackBar(l10n.threadUpToDate, FeedbackKind.info),
+        );
     } finally {
       if (mounted) setState(() => _resyncing = false);
     }
@@ -402,9 +405,7 @@ class _ChatThreadScreenState extends ConsumerState<ChatThreadScreen> {
 
   void _blockedSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    context.showError(message);
   }
 
   Future<bool> _confirmOutsideArea(AppLocalizations l10n) async {

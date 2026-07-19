@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/providers.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/features/zones/domain/zone.dart';
 import 'package:hulaki/features/zones/presentation/zone_map.dart';
 import 'package:hulaki/features/zones/presentation/zone_preview_screen.dart';
@@ -29,12 +30,6 @@ class ZoneManageScreen extends ConsumerWidget {
   Future<String?> _aoi(WidgetRef ref) async =>
       (await ref.read(databaseProvider).groupById(groupId))?.aoiGeoJson;
 
-  void _snack(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   Future<void> _save(
     BuildContext context,
     WidgetRef ref,
@@ -42,11 +37,13 @@ class ZoneManageScreen extends ConsumerWidget {
     AppLocalizations l10n,
   ) async {
     if (zones.isEmpty) {
-      _snack(context, l10n.zoneInvalidImport);
+      context.showError(l10n.zoneInvalidImport);
       return;
     }
     await ref.read(groupServiceProvider).setZones(groupId, zones);
-    if (context.mounted) _snack(context, l10n.zoneSplitDone(zones.length));
+    if (context.mounted) {
+      context.showSuccess(l10n.zoneSplitDone(zones.length));
+    }
   }
 
   Future<void> _splitEvenly(
@@ -94,7 +91,7 @@ class ZoneManageScreen extends ConsumerWidget {
     final zones = zonesFromImport(text, palette: zoneColorPalette());
     if (!context.mounted) return;
     if (zones.isEmpty) {
-      _snack(context, l10n.zoneInvalidImport);
+      context.showError(l10n.zoneInvalidImport);
       return;
     }
     final chosen = await Navigator.of(context).push<List<Zone>>(
@@ -131,7 +128,7 @@ class ZoneManageScreen extends ConsumerWidget {
     );
     if (confirmed ?? false) {
       await ref.read(groupServiceProvider).clearZones(groupId);
-      if (context.mounted) _snack(context, l10n.zoneSplitCleared);
+      if (context.mounted) context.showSuccess(l10n.zoneSplitCleared);
     }
   }
 

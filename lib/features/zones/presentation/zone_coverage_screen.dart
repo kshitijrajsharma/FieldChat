@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/providers.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/features/zones/domain/zone_bucketing.dart';
 import 'package:hulaki/features/zones/presentation/zone_map.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
@@ -53,11 +54,7 @@ class _ZoneCoverageScreenState extends ConsumerState<ZoneCoverageScreen> {
         if (zone.id == zoneId) zone.copyWith(name: name) else zone,
     ];
     await ref.read(groupServiceProvider).setZones(widget.groupId, updated);
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.zoneRenamed)));
-    }
+    if (mounted) context.showSuccess(l10n.zoneRenamed);
   }
 
   @override

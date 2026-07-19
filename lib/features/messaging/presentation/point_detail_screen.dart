@@ -9,6 +9,7 @@ import 'package:hulaki/core/time_format.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/design/widgets/gps_strip.dart';
 import 'package:hulaki/features/export/geojson.dart';
@@ -167,11 +168,7 @@ class _PointDetailScreenState extends ConsumerState<PointDetailScreen> {
     await Clipboard.setData(
       ClipboardData(text: '${message.lat}, ${message.lng}'),
     );
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pointCoordinatesCopied)),
-      );
-    }
+    if (mounted) context.showInfo(l10n.pointCoordinatesCopied);
   }
 
   Future<void> _confirmDelete(AppLocalizations l10n) async {

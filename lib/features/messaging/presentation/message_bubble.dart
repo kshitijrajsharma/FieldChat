@@ -56,7 +56,7 @@ class MessageBubble extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 280),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isMine ? const Color(0xFFE9E6DE) : AppColors.white,
+          color: isMine ? AppColors.mist : AppColors.white,
           borderRadius: radius,
           boxShadow: const [
             BoxShadow(

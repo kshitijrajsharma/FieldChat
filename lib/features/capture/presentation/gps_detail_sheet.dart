@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/providers.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/design/widgets/gps_strip.dart';
 import 'package:hulaki/features/capture/utm.dart';
@@ -258,9 +259,7 @@ class _CoordinateBlock extends StatelessWidget {
               icon: const Icon(Icons.copy_outlined, size: 18),
               onPressed: () {
                 unawaited(Clipboard.setData(ClipboardData(text: _value)));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.gpsCoordsCopied)),
-                );
+                context.showInfo(l10n.gpsCoordsCopied);
               },
             ),
           ],

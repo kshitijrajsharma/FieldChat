@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/connectivity.dart';
 import 'package:hulaki/data/local/database_provider.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/features/auth/application/auth_providers.dart';
 import 'package:hulaki/features/chats/chats_home_screen.dart';
 import 'package:hulaki/features/discovery/communities_screen.dart';
@@ -113,9 +114,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _onTap(int value, String offlineMessage) {
     final online = ref.read(onlineProvider);
     if (value == _communitiesIndex && !online) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(offlineMessage)));
+      context.showInfo(offlineMessage);
       return;
     }
     setState(() {

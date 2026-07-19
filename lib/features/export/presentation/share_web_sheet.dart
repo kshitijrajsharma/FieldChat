@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hulaki/app/providers.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/design/widgets/primary_button.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
@@ -67,11 +68,7 @@ class _ShareWebSheetState extends ConsumerState<ShareWebSheet> {
     }
   }
 
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
+  void _toast(String message) => context.showInfo(message);
 
   @override
   Widget build(BuildContext context) {
@@ -244,9 +241,7 @@ class _LinkRow extends StatelessWidget {
             tooltip: l10n.shareWebCopy,
             onPressed: () {
               unawaited(Clipboard.setData(ClipboardData(text: link.url)));
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(content: Text(l10n.shareWebCopied)));
+              context.showInfo(l10n.shareWebCopied);
             },
           ),
           IconButton(

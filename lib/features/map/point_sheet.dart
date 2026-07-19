@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hulaki/data/local/database.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/design/app_spacing.dart';
 import 'package:hulaki/features/groups/hot_key_icons.dart';
 import 'package:hulaki/features/map/navigate_sheet.dart';
@@ -211,11 +212,7 @@ Future<void> _copyCoords(
   await Clipboard.setData(
     ClipboardData(text: '${message.lat}, ${message.lng}'),
   );
-  if (context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(confirmation)));
-  }
+  if (context.mounted) context.showInfo(confirmation);
 }
 
 class _TagChip extends StatelessWidget {

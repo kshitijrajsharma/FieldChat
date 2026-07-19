@@ -9,6 +9,7 @@ import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart' show Geolocator, LocationSettings;
 import 'package:hulaki/core/geo.dart';
 import 'package:hulaki/design/app_colors.dart';
+import 'package:hulaki/design/app_snackbar.dart';
 import 'package:hulaki/features/capture/location_permission.dart';
 import 'package:hulaki/features/export/geojson.dart';
 import 'package:hulaki/l10n/app_localizations.dart';
@@ -284,11 +285,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
         ),
       );
     } on TimeoutException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupLocationUnavailable)),
-        );
-      }
+      if (mounted) context.showError(l10n.groupLocationUnavailable);
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -303,9 +300,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
       final results = await geo.Geocoding().locationFromAddress(query);
       if (!mounted) return;
       if (results.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupNoPlaceFound)),
-        );
+        context.showError(l10n.groupNoPlaceFound);
         return;
       }
       final place = results.first;
@@ -316,11 +311,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
         ),
       );
     } on PlatformException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupPlaceSearchUnavailable)),
-        );
-      }
+      if (mounted) context.showError(l10n.groupPlaceSearchUnavailable);
     }
   }
 
@@ -358,9 +349,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
       return;
     }
     if (_areaSqMeters() < _minAreaSqMeters) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.groupAreaTooSmall)),
-      );
+      context.showError(l10n.groupAreaTooSmall);
       return;
     }
     Navigator.of(context).pop(jsonEncode(_polygonFeature()));
@@ -381,11 +370,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
     final text = utf8.decode(await file.readAsBytes());
 
     if (aoiBounds(text) == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.groupInvalidGeoJson)),
-        );
-      }
+      if (mounted) context.showError(l10n.groupInvalidGeoJson);
       return;
     }
     setState(() {
@@ -402,11 +387,7 @@ class _AreaDrawScreenState extends State<AreaDrawScreen> {
       jsonDecode(text) as Map<String, dynamic>,
     );
     await _frameToArea(text);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.groupBoundaryUploaded)),
-      );
-    }
+    if (mounted) context.showSuccess(l10n.groupBoundaryUploaded);
   }
 
   Map<String, dynamic> _empty() => {
