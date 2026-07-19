@@ -1,3 +1,9 @@
+## v0.0.25 (2026-07-19)
+
+### Fix
+
+- **backup**: fixes backup key rotation
+
 ## v0.0.24 (2026-07-19)
 
 ### Fix
